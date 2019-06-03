@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Package info -->
+  <PropertyGroup>
+    <PackageId>TagBites.DB</PackageId>
+    <Product>TagBites.DB</Product>
+    <Title>TagBites.DB</Title>
+
+    <Description></Description>
+    <PackageTags></PackageTags>
+
+    <PackageProjectUrl>https://www.tagbites.com/db</PackageProjectUrl>
+    <PackageIconUrl>https://www.tagbites.com/db/icon.png</PackageIconUrl>
+
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseUrl>https://www.tagbites.com/db/license.txt</PackageLicenseUrl>
+
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/TagBites/TagBites.DB-Docs.git</RepositoryUrl>
+  </PropertyGroup>
+
+  <!-- Targets -->
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <RootNamespace>TagBites</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Android\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="SQLiteLinkAdapter.cs" />
+    <Compile Remove="SQLiteLinkProvider.cs" />
+  </ItemGroup>
+
+</Project>
