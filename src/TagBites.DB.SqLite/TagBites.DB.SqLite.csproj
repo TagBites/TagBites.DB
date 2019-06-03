@@ -1,0 +1,39 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Package info -->
+  <PropertyGroup>
+    <PackageId>TagBites.DB.SqLite</PackageId>
+    <Product>TagBites.DB.SqLite</Product>
+    <Title>TagBites.DB.SqLite</Title>
+
+    <Description></Description>
+    <PackageTags></PackageTags>
+
+    <PackageProjectUrl>https://www.tagbites.com/db</PackageProjectUrl>
+    <PackageIconUrl>https://www.tagbites.com/db/icon.png</PackageIconUrl>
+
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseUrl>https://www.tagbites.com/db/license.txt</PackageLicenseUrl>
+
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/TagBites/TagBites.DB-Docs.git</RepositoryUrl>
+  </PropertyGroup>
+
+  <!-- Targets -->
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <RootNamespace>TagBites.DB.SqLite</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Data.SQLite" Version="1.0.110" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TagBites.DB\TagBites.DB.csproj" />
+  </ItemGroup>
+
+</Project>
