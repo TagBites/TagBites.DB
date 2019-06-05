@@ -237,25 +237,17 @@ namespace TBS.Data.DB
 
         public static int Insert<T>(this IDbLink link, T entity) where T : class
         {
-            return Insert(link, (IEnumerable<T>)new[] { entity }, false, null);
+            return Insert(link, (IEnumerable<T>)new[] { entity },  null);
         }
-        public static int Insert<T>(this IDbLink link, T entity, bool allowUnexpectedResult) where T : class
+        public static int Insert<T>(this IDbLink link, T entity, IList<string> properties, bool excludeProperties = false) where T : class
         {
-            return Insert(link, (IEnumerable<T>)new[] { entity }, allowUnexpectedResult, null);
-        }
-        public static int Insert<T>(this IDbLink link, T entity, bool allowUnexpectedResult, IList<string> properties, bool excludeProperties = false) where T : class
-        {
-            return Insert(link, (IEnumerable<T>)new[] { entity }, allowUnexpectedResult, properties, excludeProperties);
+            return Insert(link, (IEnumerable<T>)new[] { entity }, properties, excludeProperties);
         }
         public static int Insert<T>(this IDbLink link, IEnumerable<T> entities) where T : class
         {
-            return Insert(link, entities, false, null);
+            return Insert(link, entities,  null);
         }
-        public static int Insert<T>(this IDbLink link, IEnumerable<T> entities, bool allowUnexpectedResult) where T : class
-        {
-            return Insert(link, entities, allowUnexpectedResult, null);
-        }
-        public static int Insert<T>(this IDbLink link, IEnumerable<T> entities, bool allowUnexpectedResult, IList<string> properties, bool excludeProperties = false) where T : class
+        public static int Insert<T>(this IDbLink link, IEnumerable<T> entities, IList<string> properties, bool excludeProperties = false) where T : class
         {
             var items = GetItems(entities);
             if (items.Count == 0)
@@ -264,31 +256,22 @@ namespace TBS.Data.DB
             var q = EntityQueryBuilder.CreateInsertQuery(items, properties, excludeProperties);
             var result = link.ExecuteNonQuery(q);
 
-            CheckAffected(allowUnexpectedResult, items.Count, result);
             return result;
         }
 
         public static T InsertReturning<T>(this IDbLink link, T entity) where T : class
         {
-            return InsertReturning(link, (IEnumerable<T>)new[] { entity }, false, null).FirstOrDefault();
+            return InsertReturning(link, (IEnumerable<T>)new[] { entity },  null).FirstOrDefault();
         }
-        public static T InsertReturning<T>(this IDbLink link, T entity, bool allowUnexpectedResult) where T : class
+        public static T InsertReturning<T>(this IDbLink link, T entity, IList<string> properties, bool excludeProperties = false) where T : class
         {
-            return InsertReturning(link, (IEnumerable<T>)new[] { entity }, allowUnexpectedResult, null).FirstOrDefault();
-        }
-        public static T InsertReturning<T>(this IDbLink link, T entity, bool allowUnexpectedResult, IList<string> properties, bool excludeProperties = false) where T : class
-        {
-            return InsertReturning(link, (IEnumerable<T>)new[] { entity }, allowUnexpectedResult, properties, excludeProperties).FirstOrDefault();
+            return InsertReturning(link, (IEnumerable<T>)new[] { entity },  properties, excludeProperties).FirstOrDefault();
         }
         public static IList<T> InsertReturning<T>(this IDbLink link, IEnumerable<T> entities) where T : class
         {
-            return InsertReturning(link, entities, false, null);
+            return InsertReturning(link, entities,  null);
         }
-        public static IList<T> InsertReturning<T>(this IDbLink link, IEnumerable<T> entities, bool allowUnexpectedResult) where T : class
-        {
-            return InsertReturning(link, entities, allowUnexpectedResult, null);
-        }
-        public static IList<T> InsertReturning<T>(this IDbLink link, IEnumerable<T> entities, bool allowUnexpectedResult, IList<string> properties, bool excludeProperties = false) where T : class
+        public static IList<T> InsertReturning<T>(this IDbLink link, IEnumerable<T> entities, IList<string> properties, bool excludeProperties = false) where T : class
         {
             var items = GetItems(entities);
             if (items.Count == 0)
@@ -297,31 +280,22 @@ namespace TBS.Data.DB
             var q = EntityQueryBuilder.CreateInsertQuery(items, properties, excludeProperties, true);
             var result = link.Execute<T>(q);
 
-            CheckAffected(allowUnexpectedResult, items.Count, result.Count);
             return result;
         }
 
         public static int Update<T>(this IDbLink link, T entity) where T : class
         {
-            return Update(link, (IEnumerable<T>)new[] { entity }, false, null);
+            return Update(link, (IEnumerable<T>)new[] { entity },  null);
         }
-        public static int Update<T>(this IDbLink link, T entity, bool allowUnexpectedResult) where T : class
+        public static int Update<T>(this IDbLink link, T entity, IList<string> properties, bool excludeProperties = false) where T : class
         {
-            return Update(link, (IEnumerable<T>)new[] { entity }, allowUnexpectedResult, null);
-        }
-        public static int Update<T>(this IDbLink link, T entity, bool allowUnexpectedResult, IList<string> properties, bool excludeProperties = false) where T : class
-        {
-            return Update(link, (IEnumerable<T>)new[] { entity }, allowUnexpectedResult, properties, excludeProperties);
+            return Update(link, (IEnumerable<T>)new[] { entity }, properties, excludeProperties);
         }
         public static int Update<T>(this IDbLink link, IEnumerable<T> entities) where T : class
         {
-            return Update(link, entities, false, null);
+            return Update(link, entities,  null);
         }
-        public static int Update<T>(this IDbLink link, IEnumerable<T> entities, bool allowUnexpectedResult) where T : class
-        {
-            return Update(link, entities, allowUnexpectedResult, null);
-        }
-        public static int Update<T>(this IDbLink link, IEnumerable<T> entities, bool allowUnexpectedResult, IList<string> properties, bool excludeProperties = false) where T : class
+        public static int Update<T>(this IDbLink link, IEnumerable<T> entities, IList<string> properties, bool excludeProperties = false) where T : class
         {
             var items = GetItems(entities);
             if (items.Count == 0)
@@ -330,31 +304,22 @@ namespace TBS.Data.DB
             var q = EntityQueryBuilder.CreateUpdateQuery(items, properties, excludeProperties);
             var result = link.ExecuteNonQuery(q);
 
-            CheckAffected(allowUnexpectedResult, items.Count, result);
             return result;
         }
 
         public static T UpdateReturning<T>(this IDbLink link, T entity) where T : class
         {
-            return UpdateReturning(link, (IEnumerable<T>)new[] { entity }, false, null).FirstOrDefault();
+            return UpdateReturning(link, (IEnumerable<T>)new[] { entity }, null).FirstOrDefault();
         }
-        public static T UpdateReturning<T>(this IDbLink link, T entity, bool allowUnexpectedResult) where T : class
+        public static T UpdateReturning<T>(this IDbLink link, T entity, IList<string> properties, bool excludeProperties = false) where T : class
         {
-            return UpdateReturning(link, (IEnumerable<T>)new[] { entity }, allowUnexpectedResult, null).FirstOrDefault();
-        }
-        public static T UpdateReturning<T>(this IDbLink link, T entity, bool allowUnexpectedResult, IList<string> properties, bool excludeProperties = false) where T : class
-        {
-            return UpdateReturning(link, (IEnumerable<T>)new[] { entity }, allowUnexpectedResult, properties, excludeProperties).FirstOrDefault();
+            return UpdateReturning(link, (IEnumerable<T>)new[] { entity }, properties, excludeProperties).FirstOrDefault();
         }
         public static IList<T> UpdateReturning<T>(this IDbLink link, IEnumerable<T> entities) where T : class
         {
-            return UpdateReturning(link, entities, false, null);
+            return UpdateReturning(link, entities, null);
         }
-        public static IList<T> UpdateReturning<T>(this IDbLink link, IEnumerable<T> entities, bool allowUnexpectedResult) where T : class
-        {
-            return UpdateReturning(link, entities, allowUnexpectedResult, null);
-        }
-        public static IList<T> UpdateReturning<T>(this IDbLink link, IEnumerable<T> entities, bool allowUnexpectedResult, IList<string> properties, bool excludeProperties = false) where T : class
+        public static IList<T> UpdateReturning<T>(this IDbLink link, IEnumerable<T> entities, IList<string> properties, bool excludeProperties = false) where T : class
         {
             var items = GetItems(entities);
             if (items.Count == 0)
@@ -363,64 +328,46 @@ namespace TBS.Data.DB
             var q = EntityQueryBuilder.CreateUpdateQuery(items, properties, excludeProperties, true);
             var result = link.Execute<T>(q);
 
-            CheckAffected(allowUnexpectedResult, items.Count, result.Count);
             return result;
         }
 
         public static int Upsert<T>(this IDbLink link, T entity, DbUpsertMode mode = DbUpsertMode.BasedOnKey) where T : class
         {
-            return Upsert(link, (IEnumerable<T>)new[] { entity }, mode, false, null);
+            return Upsert(link, (IEnumerable<T>)new[] { entity }, mode, null);
         }
-        public static int Upsert<T>(this IDbLink link, T entity, DbUpsertMode mode, bool allowUnexpectedResult) where T : class
+        public static int Upsert<T>(this IDbLink link, T entity, DbUpsertMode mode, IList<string> properties, bool excludeProperties = false) where T : class
         {
-            return Upsert(link, (IEnumerable<T>)new[] { entity }, mode, allowUnexpectedResult, null);
-        }
-        public static int Upsert<T>(this IDbLink link, T entity, DbUpsertMode mode, bool allowUnexpectedResult, IList<string> properties, bool excludeProperties = false) where T : class
-        {
-            return Upsert(link, (IEnumerable<T>)new[] { entity }, mode, allowUnexpectedResult, properties, excludeProperties);
+            return Upsert(link, (IEnumerable<T>)new[] { entity }, mode, properties, excludeProperties);
         }
         public static int Upsert<T>(this IDbLink link, IEnumerable<T> entities, DbUpsertMode mode = DbUpsertMode.BasedOnKey) where T : class
         {
-            return Upsert(link, entities, mode, false, null);
+            return Upsert(link, entities, mode, null);
         }
-        public static int Upsert<T>(this IDbLink link, IEnumerable<T> entities, DbUpsertMode mode, bool allowUnexpectedResult) where T : class
-        {
-            return Upsert(link, entities, mode, allowUnexpectedResult, null);
-        }
-        public static int Upsert<T>(this IDbLink link, IEnumerable<T> entities, DbUpsertMode mode, bool allowUnexpectedResult, IList<string> properties, bool excludeProperties = false) where T : class
+        public static int Upsert<T>(this IDbLink link, IEnumerable<T> entities, DbUpsertMode mode, IList<string> properties, bool excludeProperties = false) where T : class
         {
             var items = GetItems(entities);
             if (items.Count == 0)
                 return 0;
 
             var q = EntityQueryBuilder.CreateUpsertQuery(items, mode, properties, excludeProperties);
-            var result = link.ExecuteNonQuery(q);
+            var result = link.ExecuteScalar<int>(q);
 
-            CheckAffected(allowUnexpectedResult, items.Count, result);
             return result;
         }
 
         public static T UpsertReturning<T>(this IDbLink link, T entity, DbUpsertMode mode = DbUpsertMode.BasedOnKey) where T : class
         {
-            return UpsertReturning(link, (IEnumerable<T>)new[] { entity }, mode, false, null).FirstOrDefault();
+            return UpsertReturning(link, (IEnumerable<T>)new[] { entity }, mode, null).FirstOrDefault();
         }
-        public static T UpsertReturning<T>(this IDbLink link, T entity, DbUpsertMode mode, bool allowUnexpectedResult) where T : class
+        public static T UpsertReturning<T>(this IDbLink link, T entity, DbUpsertMode mode, IList<string> properties, bool excludeProperties = false) where T : class
         {
-            return UpsertReturning(link, (IEnumerable<T>)new[] { entity }, mode, allowUnexpectedResult, null).FirstOrDefault();
-        }
-        public static T UpsertReturning<T>(this IDbLink link, T entity, DbUpsertMode mode, bool allowUnexpectedResult, IList<string> properties, bool excludeProperties = false) where T : class
-        {
-            return UpsertReturning(link, (IEnumerable<T>)new[] { entity }, mode, allowUnexpectedResult, properties, excludeProperties).FirstOrDefault();
+            return UpsertReturning(link, (IEnumerable<T>)new[] { entity }, mode, properties, excludeProperties).FirstOrDefault();
         }
         public static IList<T> UpsertReturning<T>(this IDbLink link, IEnumerable<T> entities, DbUpsertMode mode = DbUpsertMode.BasedOnKey) where T : class
         {
-            return UpsertReturning(link, entities, mode, false, null);
+            return UpsertReturning(link, entities, mode, null);
         }
-        public static IList<T> UpsertReturning<T>(this IDbLink link, IEnumerable<T> entities, DbUpsertMode mode, bool allowUnexpectedResult) where T : class
-        {
-            return UpsertReturning(link, entities, mode, allowUnexpectedResult, null);
-        }
-        public static IList<T> UpsertReturning<T>(this IDbLink link, IEnumerable<T> entities, DbUpsertMode mode, bool allowUnexpectedResult, IList<string> properties, bool excludeProperties = false) where T : class
+        public static IList<T> UpsertReturning<T>(this IDbLink link, IEnumerable<T> entities, DbUpsertMode mode, IList<string> properties, bool excludeProperties = false) where T : class
         {
             var items = GetItems(entities);
             if (items.Count == 0)
@@ -429,23 +376,14 @@ namespace TBS.Data.DB
             var q = EntityQueryBuilder.CreateUpsertQuery(items, mode, properties, excludeProperties, true);
             var result = link.Execute<T>(q);
 
-            CheckAffected(allowUnexpectedResult, items.Count, result.Count);
             return result;
         }
 
         public static int Delete<T>(this IDbLink link, T entity) where T : class
         {
-            return Delete(link, (IEnumerable<T>)new[] { entity }, link.ConnectionContext.Provider.Configuration.DefaultAllowUnexpectedRowCountOnDelete);
-        }
-        public static int Delete<T>(this IDbLink link, T entity, bool allowUnexpectedResult) where T : class
-        {
-            return Delete(link, (IEnumerable<T>)new[] { entity }, allowUnexpectedResult);
+            return Delete(link, (IEnumerable<T>)new[] { entity });
         }
         public static int Delete<T>(this IDbLink link, IEnumerable<T> entities) where T : class
-        {
-            return Delete(link, entities, link.ConnectionContext.Provider.Configuration.DefaultAllowUnexpectedRowCountOnDelete);
-        }
-        public static int Delete<T>(this IDbLink link, IEnumerable<T> entities, bool allowUnexpectedResult) where T : class
         {
             var items = GetItems(entities);
             if (items.Count == 0)
@@ -454,43 +392,27 @@ namespace TBS.Data.DB
             var q = EntityQueryBuilder.CreateDeleteQuery(items);
             var result = link.ExecuteNonQuery(q);
 
-            CheckAffected(allowUnexpectedResult, items.Count, result);
             return result;
         }
 
         public static int DeleteByKey<T>(this IDbLink link, object key) where T : class
         {
-            return DeleteByKeyCore<T>(link, (IList)new[] { key }, null);
-        }
-        public static int DeleteByKey<T>(this IDbLink link, object key, bool allowUnexpectedResult) where T : class
-        {
-            return DeleteByKeyCore<T>(link, (IList)new[] { key }, allowUnexpectedResult);
+            return DeleteByKeyCore<T>(link, (IList)new[] { key });
         }
         public static int DeleteByKey<T>(this IDbLink link, object[] key) where T : class
         {
-            return DeleteByKeyCore<T>(link, (IList)new[] { key }, null);
+            return DeleteByKeyCore<T>(link, (IList)new[] { key });
         }
-        public static int DeleteByKey<T>(this IDbLink link, object[] key, bool allowUnexpectedResult) where T : class
-        {
-            return DeleteByKeyCore<T>(link, (IList)new[] { key }, allowUnexpectedResult);
-        }
+
         public static int DeleteManyByKey<T>(this IDbLink link, IEnumerable<object> recordsKeys) where T : class
         {
-            return DeleteByKeyCore<T>(link, recordsKeys as IList ?? recordsKeys.ToList(), null);
-        }
-        public static int DeleteManyByKey<T>(this IDbLink link, IEnumerable<object> recordsKeys, bool allowUnexpectedResult) where T : class
-        {
-            return DeleteByKeyCore<T>(link, recordsKeys as IList ?? recordsKeys.ToList(), allowUnexpectedResult);
+            return DeleteByKeyCore<T>(link, recordsKeys as IList ?? recordsKeys.ToList());
         }
         public static int DeleteManyByKey<T>(this IDbLink link, IEnumerable<object[]> recordsKeys) where T : class
         {
-            return DeleteByKeyCore<T>(link, recordsKeys as IList ?? recordsKeys.ToList(), null);
+            return DeleteByKeyCore<T>(link, recordsKeys as IList ?? recordsKeys.ToList());
         }
-        public static int DeleteManyByKey<T>(this IDbLink link, IEnumerable<object[]> recordsKeys, bool allowUnexpectedResult) where T : class
-        {
-            return DeleteByKeyCore<T>(link, recordsKeys as IList ?? recordsKeys.ToList(), allowUnexpectedResult);
-        }
-        private static int DeleteByKeyCore<T>(this IDbLink link, IList recordsKeys, bool? allowUnexpectedResult) where T : class
+        private static int DeleteByKeyCore<T>(this IDbLink link, IList recordsKeys) where T : class
         {
             if (recordsKeys.Count == 0)
                 return 0;
@@ -498,8 +420,7 @@ namespace TBS.Data.DB
             var q = EntityQueryBuilder.CreateDeleteByKeyQuery<T>(recordsKeys);
             var result = link.ExecuteNonQuery(q);
 
-            CheckAffected(allowUnexpectedResult ?? link.ConnectionContext.Provider.Configuration.DefaultAllowUnexpectedRowCountOnDelete, recordsKeys.Count, result);
-            return result;
+           return result;
         }
 
         private static IList<T> GetItems<T>(IEnumerable<T> entities) => entities as IList<T> ?? entities.ToArray();

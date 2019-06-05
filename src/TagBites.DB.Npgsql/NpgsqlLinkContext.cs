@@ -1,7 +1,6 @@
 ﻿using Npgsql;
 using System;
 using System.Data;
-using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -30,37 +29,33 @@ namespace TBS.Data.DB.PostgreSql
             }
         }
 
-        internal NpgsqlLinkContext(DbLinkProvider linkProvider, Action<DbConnectionStringBuilder> connectionStringAdapter)
-            : base(linkProvider, connectionStringAdapter)
-        {
-            ConnectionOpen += OnConnectionOpen;
-        }
+        protected internal NpgsqlLinkContext()
+        { }
 
 
-        private void OnConnectionOpen(object sender, EventArgs e)
+        protected override void OnConnectionCreated()
         {
+            base.OnConnectionCreated();
+
             var connection = (NpgsqlConnection)GetConnection();
+            connection.Notification += OnNotification;
+            connection.Notice += OnNotice;
 
-            if (connection != null)
-            {
-                connection.Notification += OnNotification;
-                connection.Notice += OnNotice;
-                //connection.Commiting += OnCommiting;
+            //connection.Commiting += OnCommiting;
 
-                //try
-                //{
-                //    connection.TypeMapper.AddMapping(new NpgsqlTypeMappingBuilder
-                //    {
-                //        PgTypeName = "mpq",
-                //        ClrTypes = new[] { typeof(Fraction) },
-                //        TypeHandlerFactory = new FractionHandlerFactory()
-                //    }.Build());
-                //}
-                //catch
-                //{
+            //try
+            //{
+            //    connection.TypeMapper.AddMapping(new NpgsqlTypeMappingBuilder
+            //    {
+            //        PgTypeName = "mpq",
+            //        ClrTypes = new[] { typeof(Fraction) },
+            //        TypeHandlerFactory = new FractionHandlerFactory()
+            //    }.Build());
+            //}
+            //catch
+            //{
 
-                //}
-            }
+            //}
         }
 
         private void OnNotification(object sender, NpgsqlNotificationEventArgs e)

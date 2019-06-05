@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using TBS.Data.DB;
 using TBS.Data.DB.Entity;
-using TBS.Data.DB.Entity.Schema;
 using TBS.Sql;
 using TBS.Utils;
 

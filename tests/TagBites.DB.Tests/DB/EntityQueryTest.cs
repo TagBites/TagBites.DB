@@ -1,21 +1,15 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using TBS.DB.Entity;
-using TBS.Data.UnitTests.DB.Core;
-using TBS.Sql;
-using TBS.Data.DB.Entity;
-using System.Reflection;
-using TBS.Data.DB;
-using static TBS.Sql.SqlExpression;
-
-#if !NET_45
-using TBS.Data.DB.Entity.Schema;
-#else
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-#endif
+using System.Linq;
+using System.Reflection;
+using TBS.Data.DB;
+using TBS.Data.UnitTests.DB.Core;
+using TBS.DB.Entity;
+using TBS.Sql;
+using static TBS.Sql.SqlExpression;
 
 namespace TBS.Data.UnitTests.DB
 {
@@ -503,7 +497,7 @@ namespace TBS.Data.UnitTests.DB
                 link.ExecuteNonQuery(DbStructureSql);
                 if (values != null)
                     foreach (var item in values)
-                        EntityTable.Update(link, item, Data.DB.Utils.DbTableChangerExecuteMode.Insert);
+                        link.Insert(item);
 
                 var provider = new DbLinkQueryProvider(link);
                 if (querySelect != null)

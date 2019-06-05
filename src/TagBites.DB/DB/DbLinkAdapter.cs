@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
-using System.Text;
+﻿using System.Data.Common;
 using TBS.Sql;
 
 namespace TBS.Data.DB
@@ -10,28 +6,29 @@ namespace TBS.Data.DB
     public abstract class DbLinkAdapter
     {
         public abstract SqlQueryResolver QueryResolver { get; }
+        public abstract int DefaultPort { get; }
 
 
-        protected internal virtual DbLink CreateDbLink(DbLinkContext context)
+        protected internal virtual DbLink CreateDbLink()
         {
-            return new DbLink(context);
+            return new DbLink();
         }
-        protected internal virtual DbLinkContext CreateDbLinkContext(DbLinkProvider provider, Action<DbConnectionStringBuilder> connectionStringAdapter)
+        protected internal virtual DbLinkContext CreateDbLinkContext()
         {
-            return new DbLinkContext(provider, connectionStringAdapter);
+            return new DbLinkContext();
         }
 
         protected internal abstract DbConnection CreateConnection(string connectionString);
-        protected internal abstract DbConnectionStringBuilder CreateConnectionStringBuilder(string connectionString);
+        protected internal abstract string CreateConnectionString(DbConnectionArguments connectionArguments);
 
         internal DbCommand CreateCommand(DbConnection connection, DbTransaction transaction, IQuerySource querySource)
         {
-            var cmd = CreateCommandInner(QueryResolver.GetQuery(querySource));
+            var cmd = CreateCommand(QueryResolver.GetQuery(querySource));
             cmd.Connection = connection;
             cmd.Transaction = transaction;
             return cmd;
         }
-        protected abstract DbCommand CreateCommandInner(Query query);
+        protected abstract DbCommand CreateCommand(Query query);
 
         protected internal abstract DbDataAdapter CreateDataAdapter(DbCommand command);
     }

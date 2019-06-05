@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.SQLite;
+﻿using System.Data.SQLite;
 using System.IO;
-using System.Linq;
-using System.Text;
 
 namespace TBS.Data.DB.SQLite
 {
@@ -11,19 +7,16 @@ namespace TBS.Data.DB.SQLite
     public class SQLiteLinkProvider : DbLinkProvider
     {
         public SQLiteLinkProvider(string connectionString)
-            : base(new SQLiteLinkAdapter(), connectionString)
-        {
-            if (!File.Exists(Database))
-            {
-                var directory = Path.GetDirectoryName(Database);
-                if (directory != null)
-                    Directory.CreateDirectory(directory);
-
-                SQLiteConnection.CreateFile(Database);
-            }
-        }
+            : this(new DbConnectionArguments(connectionString))
+        { }
+        public SQLiteLinkProvider(DbConnectionArguments arguments)
+            : this(new SQLiteLinkAdapter(), arguments)
+        { }
         public SQLiteLinkProvider(SQLiteLinkAdapter adapter, string connectionString)
-            : base(adapter, connectionString)
+            : this(adapter, new DbConnectionArguments(connectionString))
+        { }
+        public SQLiteLinkProvider(SQLiteLinkAdapter adapter, DbConnectionArguments arguments)
+            : base(adapter, arguments)
         {
             if (!File.Exists(Database))
             {
@@ -46,4 +39,3 @@ namespace TBS.Data.DB.SQLite
         }
     }
 }
-

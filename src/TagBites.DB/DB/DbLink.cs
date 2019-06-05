@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.Data.Common;
 using System.Diagnostics;
 using TBS.Resources;
-using TBS.Utils;
 
 namespace TBS.Data.DB
 {
@@ -26,6 +25,13 @@ namespace TBS.Data.DB
                 CheckDispose();
                 return m_context;
             }
+            internal set
+            {
+                if (m_context != null)
+                    throw new InvalidOperationException();
+
+                m_context = value ?? throw new ArgumentNullException(nameof(value));
+            }
         }
         public IDbLinkTransactionContext TransactionContext
         {
@@ -46,13 +52,8 @@ namespace TBS.Data.DB
 
         IDbLinkContext IDbLink.ConnectionContext => ConnectionContext;
 
-        protected internal DbLink(DbLinkContext context)
-        {
-            Guard.ArgumentNotNull(context, "context");
-            m_context = context;
-
-            m_context.AttachInternal();
-        }
+        protected internal DbLink()
+        { }
         ~DbLink()
         {
             Debug.WriteLine(ErrorMessages.UnexpectedFinalizerCalled(nameof(DbLink)));

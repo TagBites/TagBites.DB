@@ -1,41 +1,22 @@
-﻿using System;
-using System.Data.Common;
-
-namespace TBS.Data.DB.PostgreSql
+﻿namespace TBS.Data.DB.PostgreSql
 {
     public abstract class PgSqlLinkProvider : DbLinkProvider
     {
         protected PgSqlLinkProvider(DbLinkAdapter adapter, string connectionString)
-            : base(adapter, connectionString)
+            : this(adapter, new DbConnectionArguments(connectionString))
+        { }
+        protected PgSqlLinkProvider(DbLinkAdapter adapter, DbConnectionArguments arguments)
+            : base(adapter, arguments)
         { }
 
 
-        public PgSqlCursorManager CreateCursorManager()
-        {
-            return (PgSqlCursorManager)CreateCursorManagerInner();
-        }
-        protected override IDbCursorManager CreateCursorManagerInner()
-        {
-            return new PgSqlCursorManager(this);
-        }
+        public PgSqlCursorManager CreateCursorManager() => (PgSqlCursorManager)CreateCursorManagerInner();
+        protected override IDbCursorManager CreateCursorManagerInner() => new PgSqlCursorManager(this);
 
-        public new PgSqlLink CreateLink()
-        {
-            return (PgSqlLink)base.CreateLink();
-        }
-        public new PgSqlLink CreateLink(DbLinkCreateOption createOption)
-        {
-            return (PgSqlLink)base.CreateLink(createOption);
-        }
+        public new PgSqlLink CreateLink() => (PgSqlLink)base.CreateLink();
+        public new PgSqlLink CreateLink(DbLinkCreateOption createOption) => (PgSqlLink)base.CreateLink(createOption);
 
-        public new PgSqlLink CreateExclusiveLink()
-        {
-            return (PgSqlLink)base.CreateExclusiveLink();
-        }
-        public new PgSqlLink CreateExclusiveLink(Action<DbConnectionStringBuilder> connectionStringAdapter)
-        {
-            return (PgSqlLink)base.CreateExclusiveLink(connectionStringAdapter);
-        }
+        public new PgSqlLink CreateExclusiveLink() => (PgSqlLink)base.CreateExclusiveLink();
 
         protected internal abstract PgSqlLink CreateExclusiveNotifyLink();
     }

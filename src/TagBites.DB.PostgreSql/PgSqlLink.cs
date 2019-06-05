@@ -4,8 +4,7 @@
     {
         public new PgSqlLinkContext ConnectionContext => (PgSqlLinkContext)base.ConnectionContext;
 
-        public PgSqlLink(PgSqlLinkContext context)
-            : base(context)
+        protected internal PgSqlLink()
         { }
 
 
