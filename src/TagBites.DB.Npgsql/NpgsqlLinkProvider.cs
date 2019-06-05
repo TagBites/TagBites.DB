@@ -5,20 +5,22 @@ namespace TBS.Data.DB.PostgreSql
     public class NpgsqlLinkProvider : PgSqlLinkProvider
     {
         public NpgsqlLinkProvider(string connectionString)
-            : base(new NpgsqlLinkAdapter(), connectionString)
+            : this(new DbConnectionArguments(connectionString))
+        { }
+        public NpgsqlLinkProvider(DbConnectionArguments arguments)
+            : base(new NpgsqlLinkAdapter(), arguments)
         { }
 
 
         protected override PgSqlLink CreateExclusiveNotifyLink()
         {
-            return CreateExclusiveLink(x =>
+            return (PgSqlLink)CreateExclusiveLink(x =>
             {
-                var cs = (NpgsqlConnectionStringBuilder)x;
-                cs.KeepAlive = 0;
-                cs.TcpKeepAlive = true;
-                cs.TcpKeepAliveTime = 1;
-                cs.TcpKeepAliveInterval = 50;
-                cs.Pooling = false;
+                x[nameof(NpgsqlConnectionStringBuilder.KeepAlive)] = "0";
+                x[nameof(NpgsqlConnectionStringBuilder.TcpKeepAlive)] = "true";
+                x[nameof(NpgsqlConnectionStringBuilder.TcpKeepAliveTime)] = "1";
+                x[nameof(NpgsqlConnectionStringBuilder.TcpKeepAliveInterval)] = "50";
+                x[nameof(NpgsqlConnectionStringBuilder.Pooling)] = "false";
             });
         }
     }

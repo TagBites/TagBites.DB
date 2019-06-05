@@ -1,12 +1,6 @@
 ﻿using System;
-using System.Reflection;
-using TBS.Utils;
-
-#if NET_45
 using System.ComponentModel.DataAnnotations.Schema;
-#else
-using TBS.Data.DB.Entity.Schema;
-#endif
+using System.Reflection;
 
 namespace TBS.Data.DB.Entity
 {

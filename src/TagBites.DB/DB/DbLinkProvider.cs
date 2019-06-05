@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Data.Common;
 using System.Linq;
 using System.Threading;
 using TBS.Data.DB.Configuration;
 using TBS.Sql;
-using TBS.Utils;
 
 namespace TBS.Data.DB
 {
@@ -114,49 +112,29 @@ namespace TBS.Data.DB
 
         #region Constructor
 
-        protected DbLinkProvider(DbLinkAdapter linkAdapter, string connectionString)
+        protected DbLinkProvider(DbLinkAdapter linkAdapter, DbConnectionArguments arguments)
         {
-            Guard.ArgumentNotNull(linkAdapter, "linkAdapter");
-            Guard.ArgumentNotNullOrEmpty(connectionString, "connectionString");
+            if (linkAdapter == null)
+                throw new ArgumentNullException(nameof(linkAdapter));
+            if (arguments == null)
+                throw new ArgumentNullException(nameof(arguments));
 
-            var sb = linkAdapter.CreateConnectionStringBuilder(connectionString);
+            Database = arguments.Database;
+            Server = arguments.Host;
+            Port = arguments.Port == 0 ? linkAdapter.DefaultPort : arguments.Port;
+            UsePooling = arguments.UsePooling;
 
-            if (sb.ContainsKey("DATABASE"))
-                Database = (string)sb["DATABASE"];
-            else if (sb.ContainsKey("data source"))
-                Database = (string)sb["data source"];
-            else if (sb.ContainsKey("uri"))
-                Database = (string)sb["uri"];
-            else if (sb.ContainsKey("fulluri"))
-                Database = (string)sb["fulluri"];
-
-            if (sb.ContainsKey("SERVER"))
-                Server = (string)sb["SERVER"];
-            else if (sb.ContainsKey("HOST"))
-                Server = (string)sb["HOST"];
-            else
-                Server = String.Empty;
-
-            if (sb.ContainsKey("PORT"))
-                Port = DataHelper.ChangeType<int>(sb["PORT"]);
-
-            UsePooling = !sb.ContainsKey("POOLING") || DataHelper.TryChangeTypeDefault(sb["POOLING"], true);
             if (UsePooling)
             {
-                MinPoolSize = sb.ContainsKey("MINPOOLSIZE") ? DataHelper.TryChangeTypeDefault(sb["MINPOOLSIZE"], 1) : 1;
-                MaxPoolSize = sb.ContainsKey("MAXPOOLSIZE") ? DataHelper.TryChangeTypeDefault(sb["MAXPOOLSIZE"], 100) : 100;
+                MinPoolSize = arguments.MinPoolSize;
+                MaxPoolSize = arguments.MaxPoolSize;
 
                 m_createContextSemaphore = new Semaphore(MaxPoolSize, MaxPoolSize);
                 m_poolContexts = new Queue<DbLinkContext>();
-
-                sb["POOLING"] = false;
-                sb.Remove("MINPOOLSIZE");
-                sb.Remove("MAXPOOLSIZE");
-                connectionString = sb.ToString();
             }
 
             LinkAdapter = linkAdapter;
-            ConnectionString = connectionString;
+            ConnectionString = linkAdapter.CreateConnectionString(arguments);
         }
 
         #endregion
@@ -250,7 +228,7 @@ namespace TBS.Data.DB
                     {
                         // Context from pool
                         if (!UsePooling)
-                            context = CreateLinkContext(null);
+                            context = CreateLinkContext();
                         else
                         {
                             m_createContextSemaphore.WaitOne();
@@ -265,7 +243,7 @@ namespace TBS.Data.DB
                             }
 
                             if (context == null)
-                                context = CreateLinkContext(null);
+                                context = CreateLinkContext();
                         }
 
                         // Attach to call context
@@ -305,7 +283,7 @@ namespace TBS.Data.DB
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public DbLink CreateExclusiveLink(Action<DbConnectionStringBuilder> connectionStringAdapter)
+        public DbLink CreateExclusiveLink(Action<DbConnectionArguments> connectionStringAdapter)
         {
             DbLink link;
 
@@ -314,7 +292,9 @@ namespace TBS.Data.DB
                 if (UsePooling)
                     m_createContextSemaphore.WaitOne();
 
-                var context = CreateLinkContext(connectionStringAdapter);
+                var context = CreateLinkContext();
+                context.ConnectionStringAdapter = connectionStringAdapter;
+
                 lock (SynchRootForContextCollections)
                     m_activeConnections.Add(context);
                 ContextCreated?.Invoke(this, new DbLinkContextEventArgs(context));
@@ -335,7 +315,10 @@ namespace TBS.Data.DB
 
         private DbLink CreateLinkCore(DbLinkContext context)
         {
-            return LinkAdapter.CreateDbLink(context);
+            var link = LinkAdapter.CreateDbLink();
+            link.ConnectionContext = context;
+            context.AttachInternal();
+            return link;
         }
         private void PrepareLink(DbLink link, bool allowTransactionBegin)
         {
@@ -371,9 +354,11 @@ namespace TBS.Data.DB
 
         #region Create link context
 
-        private DbLinkContext CreateLinkContext(Action<DbConnectionStringBuilder> connectionStringAdapter)
+        private DbLinkContext CreateLinkContext()
         {
-            return LinkAdapter.CreateDbLinkContext(this, connectionStringAdapter);
+            var context = LinkAdapter.CreateDbLinkContext();
+            context.Provider = this;
+            return context;
         }
 
         #endregion

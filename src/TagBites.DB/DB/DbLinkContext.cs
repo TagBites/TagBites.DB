@@ -29,7 +29,6 @@ namespace TBS.Data.DB
         internal readonly DbLinkContextKey Key = new DbLinkContextKey();
         public object SynchRoot { get; } = new object();
         private DbLinkProvider m_provider;
-        private readonly Action<DbConnectionStringBuilder> m_connectionStringAdapter;
         private DbConnection m_connection;
         private DbLinkTransactionContext m_transactionContext;
         private int m_connectionRefferenceCount;
@@ -286,8 +285,19 @@ namespace TBS.Data.DB
             }
         }
 
-        public DbLinkProvider Provider => m_provider;
+        public DbLinkProvider Provider
+        {
+            get => m_provider;
+            internal set
+            {
+                if (m_provider != null)
+                    throw new InvalidOperationException();
+
+                m_provider = value ?? throw new ArgumentNullException(nameof(value));
+            }
+        }
         IDbLinkProvider IDbLinkContext.Provider => m_provider;
+
         internal DbLinkTransactionContext TransactionContextInternal => m_transactionContext;
         private DbTransaction TransactionInternal => m_transactionContext?.DbTransactionInternal;
         private DbLinkTransactionStatus TransactionStatusInternal
@@ -300,6 +310,8 @@ namespace TBS.Data.DB
                 return m_transactionContext.TransactionStatusInternal;
             }
         }
+
+        internal Action<DbConnectionArguments> ConnectionStringAdapter { get; set; }
 
         public bool IsDisposed => m_provider == null;
         public bool IsActive => m_connection != null;
@@ -372,12 +384,8 @@ namespace TBS.Data.DB
             }
         }
 
-        protected internal DbLinkContext(DbLinkProvider provider, Action<DbConnectionStringBuilder> connectionStringAdapter)
+        protected internal DbLinkContext()
         {
-            Guard.ArgumentNotNull(provider, "provider");
-
-            m_provider = provider;
-            m_connectionStringAdapter = connectionStringAdapter;
             m_batchQueue = new DelayedBatchQueryQueue(this);
         }
 
@@ -991,16 +999,19 @@ namespace TBS.Data.DB
                             {
                                 // Connection String Adapter
                                 var cs = m_provider.ConnectionString;
+                                var adapter = ConnectionStringAdapter;
 
-                                if (m_connectionStringAdapter != null)
+                                if (adapter != null)
                                 {
-                                    var csb = m_provider.LinkAdapter.CreateConnectionStringBuilder(cs);
-                                    m_connectionStringAdapter(csb);
-                                    cs = csb.ToString();
+                                    var arguments = new DbConnectionArguments(cs);
+                                    adapter(arguments);
+
+                                    cs = m_provider.LinkAdapter.CreateConnectionString(arguments);
                                 }
 
-                                // Open Connection
+                                // Create Connection
                                 m_connection = m_provider.LinkAdapter.CreateConnection(cs);
+                                OnConnectionCreated();
                             }
                             catch
                             {
@@ -1018,6 +1029,7 @@ namespace TBS.Data.DB
                             try
                             {
                                 m_connection.Open();
+                                OnConnectionOpen();
 
                                 if (m_connectionOpen != null)
                                 {
@@ -1195,6 +1207,9 @@ namespace TBS.Data.DB
                 m_batchQueue.Flush();
             }
         }
+
+        protected virtual void OnConnectionCreated() { }
+        protected virtual void OnConnectionOpen() { }
 
         protected void CheckDispose()
         {

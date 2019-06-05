@@ -1,15 +1,8 @@
-﻿using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using TBS.Data.DB;
-using TBS.Data.DB.Entity;
-using TBS.DB.Entity;
-
-#if !NET_45
-using TBS.Data.DB.Entity.Schema;
-#else
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-#endif
+using System.Linq;
+using TBS.Data.DB;
 
 namespace TBS.Data.UnitTests.DB
 {
@@ -27,19 +20,24 @@ namespace TBS.Data.UnitTests.DB
                 var entity = new Entity();
                 entity.Value = "V";
 
-                EntityTable.Update(link, entity);
-                var entity2 = TBS.Data.DB.Entity.EntityTable.GetByKey<Entity>(link, 1);
+                entity = link.UpsertReturning(entity);
+                Assert.AreEqual("V", entity.Value);
+                Assert.AreEqual(1, entity.Id);
+
+                var entity2 = link.GetByKey<Entity>(1);
                 Assert.AreEqual(entity.Value, entity2.Value);
                 Assert.AreEqual(entity.Id, entity2.Id);
 
-                EntityTable.Update(link, entity);
+                entity.Value = "V2";
+                entity = link.UpsertReturning(entity);
+                Assert.AreEqual("V2", entity.Value);
                 Assert.AreEqual(1, entity2.Id);
 
-                var entity3 = EntityTable.Where<Entity>(link, x => x.Id, 1).FirstOrDefault();
-                Assert.AreEqual(entity.Value, entity3.Value);
+                var entity3 = link.EntityQuery<Entity>().FirstOrDefault(x => x.Id == 1);
+                Assert.AreEqual(entity.Value, entity3?.Value);
 
-                EntityTable.Delete<Entity>(link, 1);
-                var entity4 = TBS.Data.DB.Entity.EntityTable.GetByKey<Entity>(link, 1);
+                link.DeleteByKey<Entity>(1);
+                var entity4 = link.GetByKey<Entity>(1);
                 Assert.IsNull(entity4);
 
                 transaction.Rollback();
@@ -56,7 +54,8 @@ namespace TBS.Data.UnitTests.DB
 
                 var entity = new Entity();
                 entity.Value = "V";
-                EntityTable.Update(link, entity);
+
+                entity = link.UpsertReturning(entity);
                 Assert.AreEqual(entity.Id, 1);
 
                 var entity2 = link.EntityQuery<Entity>().First(x => x.Value == "V");

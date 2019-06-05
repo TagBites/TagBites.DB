@@ -17,7 +17,6 @@ namespace TBS.Data.DB.Configuration
         public DbLinkCreateOnDifferentSystemTransaction LinkCreateOnDifferentSystemTransaction { get; set; }
         public int DefaultWindowSize { get; set; } = 70;
 
-        public bool DefaultAllowUnexpectedRowCountOnDelete { get; set; } = false;
         public bool MergeNextQueryWithDelayedBatchQuery { get; set; } = false;
 
         public DbLinkConfiguration Clone()

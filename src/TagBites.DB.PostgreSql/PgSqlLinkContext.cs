@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -38,10 +37,6 @@ namespace TBS.Data.DB.PostgreSql
         }
 
         public abstract int? ProcessId { get; }
-
-        protected PgSqlLinkContext(DbLinkProvider linkProvider, Action<DbConnectionStringBuilder> connectionStringAdapter)
-            : base(linkProvider, connectionStringAdapter)
-        { }
 
 
         public void Notify(string chanelName, string message)

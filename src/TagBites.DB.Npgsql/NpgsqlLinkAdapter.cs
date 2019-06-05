@@ -2,36 +2,45 @@
 using NpgsqlTypes;
 using System;
 using System.Data.Common;
-using TBS.Sql;
-using TBS.Sql.PostgreSql;
 
 namespace TBS.Data.DB.PostgreSql
 {
-    public class NpgsqlLinkAdapter : DbLinkAdapter
+    public class NpgsqlLinkAdapter : PgSqlLinkAdapter
     {
-        public override SqlQueryResolver QueryResolver { get; } = new PqSqlQueryResolver();
-
-
-        protected override DbLink CreateDbLink(DbLinkContext context)
-        {
-            return new PgSqlLink((PgSqlLinkContext)context);
-        }
-        protected override DbLinkContext CreateDbLinkContext(DbLinkProvider provider, Action<DbConnectionStringBuilder> connectionStringAdapter)
-        {
-            return new NpgsqlLinkContext(provider, connectionStringAdapter);
-        }
+        protected override DbLinkContext CreateDbLinkContext() => new NpgsqlLinkContext();
 
         protected override DbConnection CreateConnection(string connectionString)
         {
             var connection = new NpgsqlConnection(connectionString);
             return connection;
         }
-        protected override DbConnectionStringBuilder CreateConnectionStringBuilder(string connectionString)
+        protected override string CreateConnectionString(DbConnectionArguments arguments)
         {
-            return new NpgsqlConnectionStringBuilder(connectionString);
+            var sb = new NpgsqlConnectionStringBuilder();
+
+            foreach (var key in arguments.Keys)
+                if (sb.ContainsKey(key))
+                    sb[key] = arguments[key];
+
+            sb.Host = arguments.Host;
+
+            int port = arguments.Port;
+            if (port > 0)
+                sb.Port = port;
+
+            sb.Database = arguments.Database;
+            sb.Username = arguments.Username;
+            sb.Password = arguments.Password;
+
+            sb.Enlist = false;
+            sb.Pooling = false;
+            sb.Remove(nameof(NpgsqlConnectionStringBuilder.MinPoolSize));
+            sb.Remove(nameof(NpgsqlConnectionStringBuilder.MaxPoolSize));
+
+            return sb.ToString();
         }
 
-        protected override DbCommand CreateCommandInner(Query query)
+        protected override DbCommand CreateCommand(Query query)
         {
             var cmd = new NpgsqlCommand(query.Command);
             cmd.AllResultTypesAreUnknown = true;

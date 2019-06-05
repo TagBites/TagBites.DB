@@ -9,6 +9,7 @@ namespace TBS.Data.DB.SQLite
     public class SQLiteLinkAdapter : DbLinkAdapter
     {
         public override SqlQueryResolver QueryResolver { get; } = new SQLiteQueryResolver();
+        public override int DefaultPort => 0;
 
 
         protected override DbConnection CreateConnection(string connectionString)
@@ -16,12 +17,25 @@ namespace TBS.Data.DB.SQLite
             var connection = new SQLiteConnection(connectionString);
             return connection;
         }
-        protected override DbConnectionStringBuilder CreateConnectionStringBuilder(string connectionString)
+        protected override string CreateConnectionString(DbConnectionArguments arguments)
         {
-            return new SQLiteConnectionStringBuilder(connectionString);
+            var sb = new SQLiteConnectionStringBuilder
+            {
+                Pooling = false,
+                SyncMode = SynchronizationModes.Full,
+                BusyTimeout = 1000
+            };
+
+            foreach (var key in arguments.Keys)
+                sb[key] = arguments[key];
+
+            sb.DataSource = arguments.Database;
+            sb.Password = arguments.Password;
+
+            return sb.ToString();
         }
 
-        protected override DbCommand CreateCommandInner(Query query)
+        protected override DbCommand CreateCommand(Query query)
         {
             var cmd = new SQLiteCommand(query.Command);
 
