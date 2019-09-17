@@ -1,14 +1,13 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
+﻿using System;
 using System.Threading;
 using TBS.Data.DB;
+using Xunit;
 
 namespace TBS.Data.UnitTests.DB
 {
-    [TestClass]
     public class DbLinkConnectionLostTest : DbTestBase
     {
-        [TestMethod]
+        [Fact]
         public void ReconnectAfterBreakWithAttempsTest()
         {
             var onConnectionLost = (DbLinkConnectionLostEventHandler)((s, e) =>
@@ -26,11 +25,11 @@ namespace TBS.Data.UnitTests.DB
                 var result = link.ExecuteScalar<bool>(
                     "SELECT (CASE WHEN now() < {0} THEN pg_terminate_backend(pg_backend_pid()) ELSE FALSE END)",
                     DateTime.Now.AddSeconds(1));
-                Assert.AreEqual(false, result);
+                Assert.False(result);
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void ReconnectAfterBreakWithTryCatchTest()
         {
             var openCount = 0;
@@ -44,14 +43,14 @@ namespace TBS.Data.UnitTests.DB
                 link.ConnectionContext.ConnectionClose += (s, e) => ++closeCount;
                 link.ConnectionContext.Bag["a"] = 1;
 
-                Assert.AreEqual(1, link.ExecuteScalar<int>("SELECT 1"));
+                Assert.Equal(1, link.ExecuteScalar<int>("SELECT 1"));
 
                 using (var breakLink = NpgsqlProvider.CreateLink())
                     try
                     {
                         string q = @"SELECT pg_terminate_backend(pg_backend_pid())";
                         breakLink.Execute(q);
-                        Assert.Fail();
+                        Assert.True(false);
                     }
                     catch
                     {
@@ -59,17 +58,17 @@ namespace TBS.Data.UnitTests.DB
                     }
 
                 // Check is connection ok
-                Assert.AreEqual(1, link.ExecuteScalar<int>("SELECT 1"));
+                Assert.Equal(1, link.ExecuteScalar<int>("SELECT 1"));
                 // Check if bag has values after reconnect 
-                Assert.AreEqual(1, link.ConnectionContext.Bag["a"]);
+                Assert.Equal(1, link.ConnectionContext.Bag["a"]);
 
-                Assert.AreEqual(3, openCount);
-                Assert.AreEqual(2, lostCount);
-                Assert.AreEqual(0, closeCount);
+                Assert.Equal(3, openCount);
+                Assert.Equal(2, lostCount);
+                Assert.Equal(0, closeCount);
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void ReconnectAfterBreakOnDifferentConnectionTest()
         {
             int reconnectAttempts = 0;
@@ -82,18 +81,18 @@ namespace TBS.Data.UnitTests.DB
                 link.Force();
                 var linkProcessId = link.ConnectionContext.ProcessId;
 
-                Assert.AreEqual(true, link2.ExecuteScalar<bool>($"SELECT pg_terminate_backend({linkProcessId})"));
-                Assert.AreEqual(1, link.ExecuteScalar<int>("SELECT 1"));
-                Assert.AreEqual(1, reconnectAttempts);
+                Assert.True(link2.ExecuteScalar<bool>($"SELECT pg_terminate_backend({linkProcessId})"));
+                Assert.Equal(1, link.ExecuteScalar<int>("SELECT 1"));
+                Assert.Equal(1, reconnectAttempts);
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void ConnectionIsNotBreakTest()
         {
             using (var link = NpgsqlProvider.CreateExclusiveLink())
             {
-                link.ConnectionContext.ConnectionLost += (sender, args) => Assert.Fail();
+                link.ConnectionContext.ConnectionLost += (sender, args) => Assert.True(false);
 
                 try
                 {

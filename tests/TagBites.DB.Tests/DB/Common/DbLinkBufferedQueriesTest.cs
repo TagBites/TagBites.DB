@@ -1,12 +1,11 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using TBS.Data.DB;
+﻿using TBS.Data.DB;
+using Xunit;
 
 namespace TBS.Data.UnitTests.DB
 {
-    [TestClass]
     public class DbLinkBufferedQueriesTest : DbTestBase
     {
-        [TestMethod]
+        [Fact]
         public void CancelTest()
         {
             var q1 = new Query("Select 1");
@@ -21,12 +20,12 @@ namespace TBS.Data.UnitTests.DB
                 r1.Cancel();
                 link.Force();
 
-                Assert.IsFalse(r1.HasResult);
-                Assert.IsTrue(r2.HasResult);
+                Assert.False(r1.HasResult);
+                Assert.True(r2.HasResult);
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void BatchTest()
         {
             var q1 = new Query("Select 1");
@@ -40,13 +39,13 @@ namespace TBS.Data.UnitTests.DB
                 var r2 = link.DelayedBatchExecute(q2);
                 var r3 = link.DelayedBatchExecute(q3);
 
-                Assert.AreEqual(1, r1.Result.ToScalar<int>());
-                Assert.AreEqual(2, r2.Result.ToScalar<int>());
-                Assert.AreEqual(3, r3.Result.ToScalar<int>());
+                Assert.Equal(1, r1.Result.ToScalar<int>());
+                Assert.Equal(2, r2.Result.ToScalar<int>());
+                Assert.Equal(3, r3.Result.ToScalar<int>());
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void ShareLinkOverNestedCalls()
         {
             var q1 = new Query("Select 1");
@@ -56,20 +55,20 @@ namespace TBS.Data.UnitTests.DB
             using (var link = DefaultProvider.CreateLink())
             {
                 result = link.DelayedBatchExecute(q1);
-                Assert.IsFalse(result.HasResult);
+                Assert.False(result.HasResult);
             }
 
-            Assert.IsTrue(result.HasResult);
+            Assert.True(result.HasResult);
 
             // Execute before open transaction
             using (var link = DefaultProvider.CreateLink())
             {
                 result = link.DelayedBatchExecute(q1);
-                Assert.IsFalse(result.HasResult);
+                Assert.False(result.HasResult);
 
                 using (var transaction = link.Begin())
                 {
-                    Assert.IsTrue(result.HasResult);
+                    Assert.True(result.HasResult);
                     transaction.Commit();
                 }
             }
@@ -80,11 +79,11 @@ namespace TBS.Data.UnitTests.DB
                 using (var transaction = link.Begin())
                 {
                     result = link.DelayedBatchExecute(q1);
-                    Assert.IsFalse(result.HasResult);
+                    Assert.False(result.HasResult);
                     transaction.Commit();
                 }
 
-                Assert.IsTrue(result.HasResult);
+                Assert.True(result.HasResult);
             }
 
             // Cancel when rollback
@@ -93,22 +92,22 @@ namespace TBS.Data.UnitTests.DB
                 using (var transaction = link.Begin())
                 {
                     result = link.DelayedBatchExecute(q1);
-                    Assert.IsFalse(result.HasResult);
+                    Assert.False(result.HasResult);
                     transaction.Rollback();
                 }
 
-                Assert.IsFalse(result.HasResult);
-                Assert.IsTrue(result.IsCompleted);
-                Assert.IsTrue(result.IsCanceled);
+                Assert.False(result.HasResult);
+                Assert.True(result.IsCompleted);
+                Assert.True(result.IsCanceled);
             }
 
             // Execute before other query
             using (var link = DefaultProvider.CreateLink())
             {
                 result = link.DelayedBatchExecute(q1);
-                Assert.IsFalse(result.HasResult);
+                Assert.False(result.HasResult);
                 link.ExecuteScalar<int>("Select 'a'");
-                Assert.IsTrue(result.HasResult);
+                Assert.True(result.HasResult);
             }
         }
     }

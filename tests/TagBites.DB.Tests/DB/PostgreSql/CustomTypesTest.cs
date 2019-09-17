@@ -1,13 +1,11 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using TBS.Data.DB;
+﻿using TBS.Data.DB;
 using TBS.Data.DB.PostgreSql;
+using Xunit;
 
 namespace TBS.Data.UnitTests.DB
-{
-    [TestClass]
-    public class CustomTypesTest : DbTestBase
+{ public class CustomTypesTest : DbTestBase
     {
-        [TestMethod]
+        [Fact]
         public void SupportsArrayTypeTest()
         {
             using (var link = NpgsqlProvider.CreateLink())
@@ -28,21 +26,21 @@ namespace TBS.Data.UnitTests.DB
                 var intArrayTextOut = PgSqlArray<int>.TryParseDefault(arrays.GetValue<string>(0, 1));
                 var boolArrayTextOut = PgSqlArray<bool>.TryParseDefault(arrays.GetValue<string>(0, 2));
 
-                Assert.AreEqual(textArrayText, textArrayTextOut);
-                Assert.AreEqual(intArrayText, intArrayTextOut);
-                Assert.AreEqual(boolArrayText, boolArrayTextOut);
+                Assert.Equal(textArrayText, textArrayTextOut);
+                Assert.Equal(intArrayText, intArrayTextOut);
+                Assert.Equal(boolArrayText, boolArrayTextOut);
 
                 transaction.Rollback();
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void SupportsUnknownTypeTest()
         {
             using (var link = NpgsqlProvider.CreateLink())
             {
                 var mpq = link.ExecuteScalar<string>("SELECT '1/2'::mpq");
-                Assert.AreEqual("1/2", mpq);
+                Assert.Equal("1/2", mpq);
             }
         }
     }

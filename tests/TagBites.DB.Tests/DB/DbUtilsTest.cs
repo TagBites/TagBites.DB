@@ -1,14 +1,13 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using TBS.Data.DB;
+﻿using TBS.Data.DB;
 using TBS.Data.DB.PostgreSql;
 using TBS.Data.DB.Utils;
+using Xunit;
 
 namespace TBS.Data.UnitTests.DB
 {
-    [TestClass]
     public class DbUtilsTest : DbTestBase
     {
-        [TestMethod]
+        [Fact]
         public void DbTableChangerTest()
         {
             // Simple primary key
@@ -27,9 +26,9 @@ namespace TBS.Data.UnitTests.DB
                 r1["v2"] = 1;
                 var affectedRows = changer.Execute(link);
 
-                Assert.AreEqual(1, affectedRows);
-                Assert.AreEqual(DbTableChangerRecordStatus.Inserted, r1.Status);
-                Assert.AreEqual(1, DataHelper.TryChangeTypeDefault<int>(r1.Key));
+                Assert.Equal(1, affectedRows);
+                Assert.Equal(DbTableChangerRecordStatus.Inserted, r1.Status);
+                Assert.Equal(1, DataHelper.TryChangeTypeDefault<int>(r1.Key));
 
                 changer.Parameters.Add(new DbTableChangerParameter("v2", DbParameterDirection.Output));
                 r1["v1"] = "11";
@@ -39,13 +38,13 @@ namespace TBS.Data.UnitTests.DB
                 r2["v2"] = 2;
                 affectedRows = changer.Execute(link);
 
-                Assert.AreEqual(2, affectedRows);
-                Assert.AreEqual(DbTableChangerRecordStatus.Inserted, r2.Status);
-                Assert.AreEqual(DbTableChangerRecordStatus.Updated, r1.Status);
-                Assert.AreEqual(1, DataHelper.TryChangeTypeDefault<int>(r1.Key));
-                Assert.AreEqual(2, DataHelper.TryChangeTypeDefault<int>(r2.Key));
-                Assert.AreEqual(1, DataHelper.TryChangeTypeDefault<int>(r1["v2"])); // TODO dla postgresa przy update returning dodać dodatkowy from !
-                Assert.AreEqual(null, r2["v2"]);
+                Assert.Equal(2, affectedRows);
+                Assert.Equal(DbTableChangerRecordStatus.Inserted, r2.Status);
+                Assert.Equal(DbTableChangerRecordStatus.Updated, r1.Status);
+                Assert.Equal(1, DataHelper.TryChangeTypeDefault<int>(r1.Key));
+                Assert.Equal(2, DataHelper.TryChangeTypeDefault<int>(r2.Key));
+                Assert.Equal(1, DataHelper.TryChangeTypeDefault<int>(r1["v2"])); // TODO dla postgresa przy update returning dodać dodatkowy from !
+                Assert.Null(r2["v2"]);
 
                 transaction.Rollback();
             }
@@ -65,9 +64,9 @@ namespace TBS.Data.UnitTests.DB
                 r1["v2"] = 1;
                 var affectedRows = changer.Execute(link, DbTableChangerExecuteMode.InsertOrUpdateBasedOnExistence);
 
-                Assert.AreEqual(1, affectedRows);
-                Assert.AreEqual(DbTableChangerRecordStatus.Inserted, r1.Status);
-                //Assert.AreEqual(r1.Key, 1);
+                Assert.Equal(1, affectedRows);
+                Assert.Equal(DbTableChangerRecordStatus.Inserted, r1.Status);
+                //Assert.Equal(r1.Key, 1);
 
                 changer.Parameters.Add(new DbTableChangerParameter("v2", DbParameterDirection.Output));
                 r1["id1"] = 1;
@@ -81,13 +80,13 @@ namespace TBS.Data.UnitTests.DB
                 r2["v2"] = 2;
                 affectedRows = changer.Execute(link, DbTableChangerExecuteMode.InsertOrUpdateBasedOnExistence);
 
-                Assert.AreEqual(2, affectedRows);
-                Assert.AreEqual(DbTableChangerRecordStatus.Updated, r1.Status);
-                Assert.AreEqual(DbTableChangerRecordStatus.Inserted, r2.Status);
-                Assert.AreEqual(1, DataHelper.TryChangeTypeDefault<int>(r1.Keys[0]));
-                Assert.AreEqual(2, DataHelper.TryChangeTypeDefault<int>(r2.Keys[0]));
-                Assert.AreEqual(1, DataHelper.TryChangeTypeDefault<int>(r1["v2"]));
-                Assert.AreEqual(null, r2["v2"]);
+                Assert.Equal(2, affectedRows);
+                Assert.Equal(DbTableChangerRecordStatus.Updated, r1.Status);
+                Assert.Equal(DbTableChangerRecordStatus.Inserted, r2.Status);
+                Assert.Equal(1, DataHelper.TryChangeTypeDefault<int>(r1.Keys[0]));
+                Assert.Equal(2, DataHelper.TryChangeTypeDefault<int>(r2.Keys[0]));
+                Assert.Equal(1, DataHelper.TryChangeTypeDefault<int>(r1["v2"]));
+                Assert.Null(r2["v2"]);
 
                 transaction.Rollback();
             }

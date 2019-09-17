@@ -1,14 +1,13 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using TBS.Data.DB;
 using TBS.Data.DB.PostgreSql;
+using Xunit;
 
 namespace TBS.Data.UnitTests.DB
 {
-    [TestClass]
     public class DbLinkNotifyTest : DbTestBase
     {
-        [TestMethod]
+        [Fact]
         public void NotifyWithSingleLink()
         {
             using (var link = NpgsqlProvider.CreateExclusiveLink())
@@ -20,20 +19,20 @@ namespace TBS.Data.UnitTests.DB
 
                 link.Notify("x0", "1");
                 link.ExecuteNonQuery("SELECT 1");
-                Assert.AreEqual(hitCount, 1);
+                Assert.Equal(1, hitCount);
 
                 link.Notify("x0", "2");
                 link.ExecuteNonQuery("SELECT 1");
-                Assert.AreEqual(hitCount, 2);
+                Assert.Equal(2, hitCount);
 
                 link.Unlisten("x0");
                 link.Notify("x0", "4");
                 link.ExecuteNonQuery("SELECT 1");
-                Assert.AreEqual(hitCount, 2);
+                Assert.Equal(2, hitCount);
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void NotifyWithTwoLinks()
         {
             using (var sender = NpgsqlProvider.CreateExclusiveLink())
@@ -48,11 +47,11 @@ namespace TBS.Data.UnitTests.DB
                 sender.Notify("x1", "2");
 
                 receiver.ExecuteNonQuery("SELECT 1");
-                Assert.AreEqual(hitCount, 2);
+                Assert.Equal(2, hitCount);
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void NotifyAtTheEndOfTransaction()
         {
             var hitCount = 0;
@@ -70,10 +69,10 @@ namespace TBS.Data.UnitTests.DB
                 transaction.Commit();
             }
 
-            Assert.AreEqual(3, hitCount);
+            Assert.Equal(3, hitCount);
         }
 
-        [TestMethod]
+        [Fact]
         public void NotifyAtTheEndOfTransactionWithSeparateConnections()
         {
             NpgsqlProvider.Configuration.ImplicitCreateTransactionScopeIfNotExists = false;
@@ -89,23 +88,23 @@ namespace TBS.Data.UnitTests.DB
                 using (var transaction = sender.Begin())
                 {
                     sender.Notify("x3", "1");
-                    Assert.AreEqual(hitCount, 0);
+                    Assert.Equal(0, hitCount);
 
                     sender.Notify("x3", "2");
-                    Assert.AreEqual(hitCount, 0);
+                    Assert.Equal(0, hitCount);
 
                     receiver.ExecuteNonQuery("SELECT 1");
-                    Assert.AreEqual(hitCount, 0);
+                    Assert.Equal(0, hitCount);
 
                     transaction.Commit();
                 }
 
                 receiver.ExecuteNonQuery("SELECT 1");
-                Assert.AreEqual(hitCount, 2);
+                Assert.Equal(2, hitCount);
             }
         }
 
-        [TestMethod]
+        [Fact]
         public async Task NotifyManager()
         {
             using (var notifyManager = new PgSqlNotifyListener(NpgsqlProvider))
@@ -119,12 +118,12 @@ namespace TBS.Data.UnitTests.DB
                     {
                         case "a4":
                         case "x4":
-                            Assert.AreEqual(e.Message, "1");
+                            Assert.Equal("1", e.Message);
                             ++hitD1;
                             break;
                         case "b4":
                         case "y4":
-                            Assert.AreEqual(e.Message, "2");
+                            Assert.Equal("2", e.Message);
                             ++hitD2;
                             break;
                     }
@@ -132,8 +131,8 @@ namespace TBS.Data.UnitTests.DB
 
                 await notifyManager.ListenAsync("a4").ConfigureAwait(false);
                 await notifyManager.ListenAsync("b4").ConfigureAwait(false);
-                Assert.AreEqual(0, hitD1);
-                Assert.AreEqual(0, hitD2);
+                Assert.Equal(0, hitD1);
+                Assert.Equal(0, hitD2);
 
                 using (var link = NpgsqlProvider.CreateExclusiveLink())
                 {
@@ -144,8 +143,8 @@ namespace TBS.Data.UnitTests.DB
 
                     await notifyManager.ListenAsync("x4", "y4").ConfigureAwait(false);
                     await notifyManager.UnlistenAsync("a4", "b4").ConfigureAwait(false);
-                    Assert.AreEqual(2, hitD1);
-                    Assert.AreEqual(2, hitD2);
+                    Assert.Equal(2, hitD1);
+                    Assert.Equal(2, hitD2);
 
                     link.Notify("x4", "1");
                     link.Notify("y4", "2");
@@ -157,12 +156,12 @@ namespace TBS.Data.UnitTests.DB
                 while ((hitD1 < 4 || hitD2 < 4) && ++checks < 200)
                     await Task.Delay(10);
 
-                Assert.AreEqual(4, hitD1);
-                Assert.AreEqual(4, hitD2);
+                Assert.Equal(4, hitD1);
+                Assert.Equal(4, hitD2);
             }
         }
 
-        [TestMethod]
+        [Fact]
         public async Task NotifyManagerWithTransaction()
         {
             var hitD1 = 0;
@@ -202,8 +201,8 @@ namespace TBS.Data.UnitTests.DB
                 while ((hitD1 < 3 || hitD2 < 4) && ++checks < 200)
                     await Task.Delay(10);
 
-                Assert.AreEqual(3, hitD1);
-                Assert.AreEqual(4, hitD2);
+                Assert.Equal(3, hitD1);
+                Assert.Equal(4, hitD2);
             }
         }
     }

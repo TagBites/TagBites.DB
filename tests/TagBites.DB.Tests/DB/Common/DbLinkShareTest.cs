@@ -1,27 +1,26 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TBS.Data.DB;
+using Xunit;
 
 namespace TBS.Data.UnitTests.DB
 {
-    [TestClass]
     public class DbLinkShareTest : DbTestBase
     {
-        [TestMethod]
+        [Fact]
         public void ShareLinkOverNestedCalls()
         {
             using (var link = DefaultProvider.CreateLink())
             {
                 using (var link2 = DefaultProvider.CreateLink())
                 {
-                    Assert.AreEqual(link.ConnectionContext, link2.ConnectionContext);
+                    Assert.Equal(link.ConnectionContext, link2.ConnectionContext);
                 }
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void ShareLinkOverTaskCalls()
         {
             //using (var link = ConnectionProvider.CreateLink())
@@ -67,7 +66,7 @@ namespace TBS.Data.UnitTests.DB
             using (var link = DefaultProvider.CreateLink())
             {
                 Thread.Sleep(10);
-                Assert.AreEqual(1, link.ConnectionContext.Bag[nameof(ShareLinkOverTaskCalls)]);
+                Assert.Equal(1, link.ConnectionContext.Bag[nameof(ShareLinkOverTaskCalls)]);
             }
         }
         private void ShareLinkOverTaskCalls_Task2(object index)
@@ -76,7 +75,7 @@ namespace TBS.Data.UnitTests.DB
             using (var link = DefaultProvider.CreateLink())
             using (var transaction = link.Begin())
             {
-                Assert.AreEqual(index, link.ExecuteScalar<int>("SELECT {0}", index));
+                Assert.Equal(index, link.ExecuteScalar<int>("SELECT {0}", index));
                 transaction.Commit();
                 Thread.Sleep(1);
             }
