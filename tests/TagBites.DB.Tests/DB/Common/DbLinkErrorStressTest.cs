@@ -1,12 +1,11 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using TBS.Data.DB;
+﻿using TBS.Data.DB;
+using Xunit;
 
 namespace TBS.Data.UnitTests.DB
 {
-    [TestClass]
     public class DbLinkErrorStressTest : DbTestBase
     {
-        [TestMethod]
+        [Fact]
         public void ConnectionStaysOpenAfterQueryExceptionTest()
         {
             using (var link = CreateLink())
@@ -14,15 +13,15 @@ namespace TBS.Data.UnitTests.DB
                 try
                 {
                     link.ExecuteNonQuery("SELECT a");
-                    Assert.Fail("Connection was break.");
+                    Assert.True(false, "Connection was break.");
                 }
                 catch { }
 
-                Assert.AreEqual(link.ExecuteScalar<int>("SELECT 1"), 1);
+                Assert.Equal(1, link.ExecuteScalar<int>("SELECT 1"));
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void TransactionFailsAfterQueryExceptionTest()
         {
             using (var link = CreateLink())
@@ -31,55 +30,55 @@ namespace TBS.Data.UnitTests.DB
                 try
                 {
                     link.ExecuteNonQuery("SELECT a");
-                    Assert.Fail();
+                    Assert.True(false);
                 }
                 catch { }
 
-                Assert.AreEqual(link.TransactionStatus, DbLinkTransactionStatus.RollingBack);
+                Assert.Equal(DbLinkTransactionStatus.RollingBack, link.TransactionStatus);
 
                 try
                 {
                     link.ExecuteNonQuery("SELECT 1");
-                    Assert.Fail();
+                    Assert.True(false);
                 }
                 catch { }
 
                 try
                 {
                     transaction.Commit();
-                    Assert.Fail();
+                    Assert.True(false);
                 }
                 catch { }
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void TransactionFailsWhenConnectionBreaksTest()
         {
             using (var link = CreateLink())
             using (var transaction = link.Begin())
             {
-                Assert.AreEqual(link.ExecuteScalar<int>("SELECT 1"), 1);
+                Assert.Equal(1,link.ExecuteScalar<int>("SELECT 1"));
 
                 ((DbLinkContext)link.ConnectionContext).GetOpenConnection().Close();
 
                 try
                 {
                     link.ExecuteNonQuery("SELECT 1");
-                    Assert.Fail("Connection was break.");
+                    Assert.True(false, "Connection was break.");
                 }
                 catch { }
 
                 try
                 {
                     transaction.Commit();
-                    Assert.Fail("Connection was break.");
+                    Assert.True(false, "Connection was break.");
                 }
                 catch { }
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void ErrorInQueryNotBreaksTheConnection()
         {
             using (var link = CreateLink())
@@ -87,7 +86,7 @@ namespace TBS.Data.UnitTests.DB
                 try
                 {
                     link.ExecuteNonQuery("SELECT a");
-                    Assert.Fail();
+                    Assert.True(false);
                 }
                 catch { }
 
@@ -97,7 +96,7 @@ namespace TBS.Data.UnitTests.DB
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void AutoReopenConnection()
         {
             using (var link = CreateLink())

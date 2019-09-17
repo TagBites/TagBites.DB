@@ -1,5 +1,4 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -9,11 +8,11 @@ using TBS.Data.DB;
 using TBS.Data.UnitTests.DB.Core;
 using TBS.DB.Entity;
 using TBS.Sql;
+using Xunit;
 using static TBS.Sql.SqlExpression;
 
 namespace TBS.Data.UnitTests.DB
 {
-    [TestClass]
     public class EntityQueryTest : DbTestBase
     {
         #region Private members
@@ -31,22 +30,22 @@ namespace TBS.Data.UnitTests.DB
 
         #region IQueryable<T> source methods
 
-        [TestMethod]
+        [Fact]
         public void QueryableBaseTest()
         {
             CollectionTest(GetMainQuery().Item1, x => new EntityQuery<MainEnitity>(x));
         }
 
-        [TestMethod]
+        [Fact]
         public void QueryableGenerationTest()
         {
             (var q, var t) = GetMainQuery();
             var entity = new MainEnitity() { Id = 2 };
-            CollectionTest(q, x => new EntityQuery<MainEnitity>(x).DefaultIfEmpty(), x => Assert.AreEqual(x.Single(), null));
-            CollectionTest(q, x => new EntityQuery<MainEnitity>(x).DefaultIfEmpty(entity), x => Assert.AreEqual(x.Single(), entity));
+            CollectionTest(q, x => new EntityQuery<MainEnitity>(x).DefaultIfEmpty(), x => Assert.Null(x.Single()));
+            CollectionTest(q, x => new EntityQuery<MainEnitity>(x).DefaultIfEmpty(entity), x => Assert.Equal(x.Single(), entity));
         }
 
-        [TestMethod]
+        [Fact]
         public void QueryableFilteringTest()
         {
             // Where
@@ -64,7 +63,7 @@ namespace TBS.Data.UnitTests.DB
             // TODO: BJ: OfType  
         }
 
-        [TestMethod]
+        [Fact]
         public void QueryableMappingTest()
         {
             var select1Query = new SqlQuerySelect();
@@ -97,7 +96,7 @@ namespace TBS.Data.UnitTests.DB
             CollectionTestException(x => new EntityQuery<MainEnitity>(x).Select((y, i) => y.ColumnString != "test"));
         }
 
-        [TestMethod]
+        [Fact]
         public void QueryableJoinTest()
         {
             // TODO: BJ: Join
@@ -105,7 +104,7 @@ namespace TBS.Data.UnitTests.DB
             // TODO: BJ: SelectMany
         }
 
-        [TestMethod]
+        [Fact]
         public void QueryableConcatenationTest()
         {
             (var q2, var t2) = GetMainQuery();
@@ -125,7 +124,7 @@ namespace TBS.Data.UnitTests.DB
             });
         }
 
-        [TestMethod]
+        [Fact]
         public void QueryableSetTest()
         {
             //// Distinct
@@ -160,14 +159,14 @@ namespace TBS.Data.UnitTests.DB
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void QueryableConvolutionTest()
         {
             var collection = new List<int>();
             CollectionTestException(x => new EntityQuery<MainEnitity>(x).Zip(collection, (y, z) => new MainEnitity()));
         }
 
-        [TestMethod]
+        [Fact]
         public void QueryablePartitioningTest()
         {
             (var q, var t) = GetMainQuery();
@@ -176,7 +175,7 @@ namespace TBS.Data.UnitTests.DB
             CollectionTest(q, x => new EntityQuery<MainEnitity>(x).Skip(5).Take(10));
         }
 
-        [TestMethod]
+        [Fact]
         public void QueryableOrderingByTest()
         {
             // OrderBy
@@ -219,21 +218,21 @@ namespace TBS.Data.UnitTests.DB
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void QueryableConversionTest()
         {
             // TODO: BJ: Cast
             // TODO: BJ: AsQueryable
 
             //var cast = "SELECT tf_1.id, tf_1.column_int, tf_1.column_string, tf_1.column_datetime, tf_1.column_bool, tf_1.firstid FROM public.tb_entity AS tf_1";
-            //CollectionTest<MainEnitity, object>(cast, x => x.AsQueryable<object>(), null, x => Assert.AreEqual(typeof(IEnumerable<object>), x.GetType()));
+            //CollectionTest<MainEnitity, object>(cast, x => x.AsQueryable<object>(), null, x => Assert.Equal(typeof(IEnumerable<object>), x.GetType()));
         }
 
         #endregion
 
         #region Single value methods
 
-        [TestMethod]
+        [Fact]
         public void QuearyableElementTest()
         {
             var entity = new MainEnitity() { ColumnInt = 12 };
@@ -248,16 +247,16 @@ namespace TBS.Data.UnitTests.DB
 
                 // First
                 {
-                    SingleWithInitializationTest(firstQuery, x => new EntityQuery<MainEnitity>(x).First(), x => Assert.AreEqual(entity, x), new MainEnitity[] { entity });
+                    SingleWithInitializationTest(firstQuery, x => new EntityQuery<MainEnitity>(x).First(), x => Assert.Equal(entity, x), new MainEnitity[] { entity });
                     SingleTestExceptionResult(firstQuery, x => new EntityQuery<MainEnitity>(x).First(), new MainEnitity[0]);
-                    SingleWithInitializationTest(firstExpressionQuery, x => new EntityQuery<MainEnitity>(x).First(y => y.ColumnInt > 10), x => Assert.AreEqual(entity, x), new MainEnitity[] { entity });
+                    SingleWithInitializationTest(firstExpressionQuery, x => new EntityQuery<MainEnitity>(x).First(y => y.ColumnInt > 10), x => Assert.Equal(entity, x), new MainEnitity[] { entity });
                 }
                 // FirstOrDefault
                 {
-                    SingleTest(firstQuery, x => new EntityQuery<MainEnitity>(x).FirstOrDefault(), x => Assert.AreEqual(null, x));
-                    SingleWithInitializationTest(firstQuery, x => new EntityQuery<MainEnitity>(x).FirstOrDefault(), x => Assert.AreEqual(entity, x), new MainEnitity[] { entity });
-                    SingleTest(firstExpressionQuery, x => new EntityQuery<MainEnitity>(x).FirstOrDefault(y => y.ColumnInt > 10), x => Assert.AreEqual(null, x));
-                    SingleWithInitializationTest(firstExpressionQuery, x => new EntityQuery<MainEnitity>(x).FirstOrDefault(y => y.ColumnInt > 10), x => Assert.AreEqual(entity, x), new MainEnitity[] { entity });
+                    SingleTest(firstQuery, x => new EntityQuery<MainEnitity>(x).FirstOrDefault(), Assert.Null);
+                    SingleWithInitializationTest(firstQuery, x => new EntityQuery<MainEnitity>(x).FirstOrDefault(), x => Assert.Equal(entity, x), new MainEnitity[] { entity });
+                    SingleTest(firstExpressionQuery, x => new EntityQuery<MainEnitity>(x).FirstOrDefault(y => y.ColumnInt > 10), Assert.Null);
+                    SingleWithInitializationTest(firstExpressionQuery, x => new EntityQuery<MainEnitity>(x).FirstOrDefault(y => y.ColumnInt > 10), x => Assert.Equal(entity, x), new MainEnitity[] { entity });
                 }
             }
             {
@@ -271,10 +270,10 @@ namespace TBS.Data.UnitTests.DB
 
                 // Single
                 {
-                    SingleWithInitializationTest(singleQuery, x => new EntityQuery<MainEnitity>(x).Single(), x => Assert.AreEqual(entity, x), new MainEnitity[] { entity });
+                    SingleWithInitializationTest(singleQuery, x => new EntityQuery<MainEnitity>(x).Single(), x => Assert.Equal(entity, x), new MainEnitity[] { entity });
                     SingleTestExceptionResult(singleQuery, x => new EntityQuery<MainEnitity>(x).Single(), new MainEnitity[0]);
                     SingleTestExceptionResult(singleQuery, x => new EntityQuery<MainEnitity>(x).Single(), new MainEnitity[] { entity, entity });
-                    SingleWithInitializationTest(singleExpressionQuery, x => new EntityQuery<MainEnitity>(x).Single(y => y.ColumnInt > 10), x => Assert.AreEqual(entity, x), new MainEnitity[] { entity });
+                    SingleWithInitializationTest(singleExpressionQuery, x => new EntityQuery<MainEnitity>(x).Single(y => y.ColumnInt > 10), x => Assert.Equal(entity, x), new MainEnitity[] { entity });
                 }
                 // SingleOrDefault
                 {
@@ -296,7 +295,7 @@ namespace TBS.Data.UnitTests.DB
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void QueryableAggregationTest()
         {
             {
@@ -351,7 +350,7 @@ namespace TBS.Data.UnitTests.DB
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void QueryableQualifierTest()
         {
             // Any
@@ -362,10 +361,10 @@ namespace TBS.Data.UnitTests.DB
                 var query = new SqlQuerySelect();
                 query.Select.Add(Exists((SqlExpression)subquery));
 
-                SingleWithInitializationTest(query, x => new EntityQuery<MainEnitity>(x).Any(), x => Assert.AreEqual(false, x), new MainEnitity[] { });
+                SingleWithInitializationTest(query, x => new EntityQuery<MainEnitity>(x).Any(), Assert.False, new MainEnitity[] { });
 
                 subquery.Where.Add(IsGreater(qt.ColumnInt, Argument(2)));
-                SingleWithInitializationTest(query, x => new EntityQuery<MainEnitity>(x).Any(y => y.ColumnInt > 2), x => Assert.AreEqual(false, x), new MainEnitity[] { });
+                SingleWithInitializationTest(query, x => new EntityQuery<MainEnitity>(x).Any(y => y.ColumnInt > 2), Assert.False, new MainEnitity[] { });
 
             }
             //All
@@ -377,7 +376,7 @@ namespace TBS.Data.UnitTests.DB
                 var query = new SqlQuerySelect();
                 query.Select.Add(NotExists((SqlExpression)subquery));
 
-                SingleWithInitializationTest(query, x => new EntityQuery<MainEnitity>(x).All(y => y.ColumnInt > 2), x => Assert.AreEqual(true, x), new MainEnitity[] { });
+                SingleWithInitializationTest(query, x => new EntityQuery<MainEnitity>(x).All(y => y.ColumnInt > 2), Assert.True, new MainEnitity[] { });
 
             }
             // Contains
@@ -391,16 +390,16 @@ namespace TBS.Data.UnitTests.DB
                 var query = new SqlQuerySelect();
                 query.Select.Add(Exists((SqlExpression)subquery));
 
-                SingleWithInitializationTest(query, x => new EntityQuery<MainEnitity>(x).Select(y => y.ColumnInt).Contains(2), x => Assert.AreEqual(false, x), new MainEnitity[] { });
-                SingleWithInitializationTest(query, x => new EntityQuery<MainEnitity>(x).Select(y => y.ColumnInt).Contains(2), x => Assert.AreEqual(true, x), new MainEnitity[] { new MainEnitity() { ColumnInt = 2 } });
-                SingleWithInitializationTest(GetMainQuery().Item1, x => new EntityQuery<MainEnitity>(x).Contains(entity), x => Assert.AreEqual(true, x), new MainEnitity[] { entity });
-                SingleWithInitializationTest(GetMainQuery().Item1, x => new EntityQuery<MainEnitity>(x).Contains(entity), x => Assert.AreEqual(false, x), new MainEnitity[] { });
+                SingleWithInitializationTest(query, x => new EntityQuery<MainEnitity>(x).Select(y => y.ColumnInt).Contains(2), Assert.False, new MainEnitity[] { });
+                SingleWithInitializationTest(query, x => new EntityQuery<MainEnitity>(x).Select(y => y.ColumnInt).Contains(2), Assert.True, new MainEnitity[] { new MainEnitity() { ColumnInt = 2 } });
+                SingleWithInitializationTest(GetMainQuery().Item1, x => new EntityQuery<MainEnitity>(x).Contains(entity), Assert.True, new MainEnitity[] { entity });
+                SingleWithInitializationTest(GetMainQuery().Item1, x => new EntityQuery<MainEnitity>(x).Contains(entity), Assert.False, new MainEnitity[] { });
                 SingleTestExceptionMethod(x => new EntityQuery<MainEnitity>(x).Contains(entity, m_mainEntityEqualityComparer));
 
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void QueryableEqualityTest()
         {
             var source = new List<MainEnitity>();
@@ -484,7 +483,7 @@ namespace TBS.Data.UnitTests.DB
             where TException : Exception
             where TEntity : class
         {
-            TestCore(querySelect, x => AssertException.Throws<TException>(() => action(x)), values);
+            TestCore(querySelect, x => Assert.Throws<TException>(() => action(x)), values);
         }
         private void TestCore<TEntity>(SqlQuerySelect querySelect, Action<DbLinkQueryProvider> action, IEnumerable<TEntity> values = null)
             where TEntity : class
@@ -501,7 +500,7 @@ namespace TBS.Data.UnitTests.DB
 
                 var provider = new DbLinkQueryProvider(link);
                 if (querySelect != null)
-                    provider.SqlQueryGenerated = s => Assert.AreEqual(querySelectString, s.ToString());
+                    provider.SqlQueryGenerated = s => Assert.Equal(querySelectString, s.ToString());
 
                 action(provider);
                 transaction.Rollback();

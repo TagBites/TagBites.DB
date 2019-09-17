@@ -1,9 +1,8 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using TBS.Data.DB;
+﻿using TBS.Data.DB;
+using Xunit;
 
 namespace TBS.Data.UnitTests.DB.SQLite
 {
-    [TestClass]
     public class DbQueryCursorTests : DbTestBase
     {
         private class Model
@@ -12,7 +11,7 @@ namespace TBS.Data.UnitTests.DB.SQLite
             public string Text { get; set; }
         }
 
-        [TestMethod]
+        [Fact]
         public void CursorTest()
         {
             if (!SQLiteProvider.IsCursorSupported)
@@ -31,28 +30,28 @@ namespace TBS.Data.UnitTests.DB.SQLite
 
             using (var cursorManager = SQLiteProvider.CreateCursorManager())
             {
-                Assert.AreEqual(cursorManager.CursorCount, 0);
+                Assert.Equal(0, cursorManager.CursorCount);
 
                 for (var i = 0; i < 2; i++)
                     using (var cursor = cursorManager.CreateCursor(q))
                     {
-                        Assert.AreEqual(1, cursorManager.CursorCount);
-                        Assert.AreEqual(2, cursor.RecordCount);
+                        Assert.Equal(1, cursorManager.CursorCount);
+                        Assert.Equal(2, cursor.RecordCount);
 
                         var result = cursor.Execute(0, 1);
-                        Assert.AreEqual(1, result.RowCount);
-                        Assert.AreEqual((long)1, result.GetValue<long>(0, 0));
+                        Assert.Equal(1, result.RowCount);
+                        Assert.Equal((long)1, result.GetValue<long>(0, 0));
 
                         result = cursor.Execute(1, 1);
-                        Assert.AreEqual(1, result.RowCount);
-                        Assert.AreEqual((long)2, result.GetValue<long>(0, 0));
+                        Assert.Equal(1, result.RowCount);
+                        Assert.Equal((long)2, result.GetValue<long>(0, 0));
                     }
             }
 
-            Assert.AreEqual(SQLiteProvider.UsePooling ? 1 : 2, openCount);
+            Assert.Equal(SQLiteProvider.UsePooling ? 1 : 2, openCount);
         }
 
-        [TestMethod]
+        [Fact]
         public void IteratorTest()
         {
             if (!SQLiteProvider.IsCursorSupported)
@@ -63,13 +62,13 @@ namespace TBS.Data.UnitTests.DB.SQLite
             using (var cursorManager = SQLiteProvider.CreateCursorManager())
             using (var cursor = cursorManager.CreateCursor(q))
             {
-                Assert.AreEqual(cursor.RecordCount, 100);
+                Assert.Equal(100, cursor.RecordCount);
 
                 int i = 0;
                 foreach (var item in cursor.Iterate<Model>())
                 {
-                    Assert.AreEqual(item.Number, ++i);
-                    Assert.AreEqual(item.Text, "This is text.");
+                    Assert.Equal(item.Number, ++i);
+                    Assert.Equal("This is text.", item.Text);
                 }
             }
         }

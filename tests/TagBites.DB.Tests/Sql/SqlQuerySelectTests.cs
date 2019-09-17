@@ -2,18 +2,17 @@
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TBS.Data.DB;
 using TBS.Data.UnitTests.DB;
 using TBS.Sql;
+using Xunit;
 using static TBS.Sql.SqlExpression;
 
 namespace TBS.Data.UnitTests.Sql
 {
-    [TestClass]
     public class SqlQuerySelectTests : DbTestBase
     {
-        [TestMethod]
+        [Fact]
         public void GeneralTest()
         {
             var t1 = new SqlQueryValues();
@@ -48,13 +47,13 @@ namespace TBS.Data.UnitTests.Sql
             using (var link = CreateLink())
             {
                 var r = link.Execute(q);
-                Assert.AreEqual(1, r.RowCount);
-                Assert.AreEqual(4, r.ColumnCount);
-                Assert.AreEqual(4, r.GetValue<int>(0, "c"));
+                Assert.Equal(1, r.RowCount);
+                Assert.Equal(4, r.ColumnCount);
+                Assert.Equal(4, r.GetValue<int>(0, "c"));
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void WithRecursiveTest()
         {
             const int count = 10;
@@ -76,11 +75,11 @@ namespace TBS.Data.UnitTests.Sql
             using (var link = CreateLink())
             {
                 var sum = link.ExecuteColumnScalars<int>(q).Sum();
-                Assert.AreEqual((1 + count) * count / 2, sum);
+                Assert.Equal((1 + count) * count / 2, sum);
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void DistinctTest()
         {
             var qv = new SqlQueryValues();
@@ -112,46 +111,46 @@ namespace TBS.Data.UnitTests.Sql
             using (var link = CreateLink())
             {
                 var result0 = link.Execute(q0);
-                Assert.AreEqual(3, result0.RowCount);
+                Assert.Equal(3, result0.RowCount);
 
                 var result1 = link.Execute(q1);
-                Assert.AreEqual(2, result1.RowCount);
+                Assert.Equal(2, result1.RowCount);
 
                 //var result2 = link.Execute(q2);
-                //Assert.AreEqual(1, result2.RowCount);
+                //Assert.Equal(1, result2.RowCount);
 
                 //var result3 = link.Execute(q3);
-                //Assert.AreEqual(2, result3.RowCount);
+                //Assert.Equal(2, result3.RowCount);
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void InTest()
         {
-            Assert.AreEqual(true, ExecuteScalar<bool>(In(Argument(1), new[] { 1, 2 })));
-            Assert.AreEqual(false, ExecuteScalar<bool>(In(Argument(3), new[] { 1, 2 })));
-            Assert.AreEqual(false, ExecuteScalar<bool>(In(Argument(3), new int[0])));
+            Assert.True(ExecuteScalar<bool>(In(Argument(1), new[] { 1, 2 })));
+            Assert.False(ExecuteScalar<bool>(In(Argument(3), new[] { 1, 2 })));
+            Assert.False(ExecuteScalar<bool>(In(Argument(3), new int[0])));
 
-            Assert.AreEqual(true, ExecuteScalar<bool>(In(Argument(DateTime.Today), new[] { Argument(DateTime.Now), Argument(DateTime.Today) })));
-            Assert.AreEqual(false, ExecuteScalar<bool>(In(Argument(DateTime.Today.AddDays(2)), new[] { Argument(DateTime.Now), Argument(DateTime.Today) })));
+            Assert.True(ExecuteScalar<bool>(In(Argument(DateTime.Today), new[] { Argument(DateTime.Now), Argument(DateTime.Today) })));
+            Assert.False(ExecuteScalar<bool>(In(Argument(DateTime.Today.AddDays(2)), new[] { Argument(DateTime.Now), Argument(DateTime.Today) })));
         }
 
-        [TestMethod]
+        [Fact]
         public void DistinctFromTest()
         {
-            Assert.AreEqual(true, ExecuteScalar<bool>(AreDistinct(Argument(1), Null)));
-            Assert.AreEqual(true, ExecuteScalar<bool>(AreDistinct(Argument(1), Argument(2))));
-            Assert.AreEqual(false, ExecuteScalar<bool>(AreDistinct(Argument(1), Argument(1))));
-            Assert.AreEqual(false, ExecuteScalar<bool>(AreNotDistinct(Argument(1), Null)));
-            Assert.AreEqual(false, ExecuteScalar<bool>(AreNotDistinct(Argument(1), Argument(2))));
-            Assert.AreEqual(true, ExecuteScalar<bool>(AreNotDistinct(Argument(1), Argument(1))));
+            Assert.True(ExecuteScalar<bool>(AreDistinct(Argument(1), Null)));
+            Assert.True(ExecuteScalar<bool>(AreDistinct(Argument(1), Argument(2))));
+            Assert.False(ExecuteScalar<bool>(AreDistinct(Argument(1), Argument(1))));
+            Assert.False(ExecuteScalar<bool>(AreNotDistinct(Argument(1), Null)));
+            Assert.False(ExecuteScalar<bool>(AreNotDistinct(Argument(1), Argument(2))));
+            Assert.True(ExecuteScalar<bool>(AreNotDistinct(Argument(1), Argument(1))));
         }
 
-        [TestMethod]
+        [Fact]
         public void CastTest()
         {
-            Assert.AreEqual(null, ExecuteScalar<string>(Cast(Null, typeof(string))));
-            Assert.AreEqual("1", ExecuteScalar<string>(Cast(One, typeof(string))));
+            Assert.Null(ExecuteScalar<string>(Cast(Null, typeof(string))));
+            Assert.Equal("1", ExecuteScalar<string>(Cast(One, typeof(string))));
         }
     }
 }

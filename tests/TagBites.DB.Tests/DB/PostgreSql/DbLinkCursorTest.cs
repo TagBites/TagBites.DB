@@ -1,12 +1,11 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
+﻿using System;
 using System.Threading;
 using TBS.Data.DB;
 using TBS.Data.DB.PostgreSql;
+using Xunit;
 
 namespace TBS.Data.UnitTests.DB
 {
-    [TestClass]
     public class DbLinkCursorTest : DbTestBase
     {
         private class Model
@@ -15,7 +14,7 @@ namespace TBS.Data.UnitTests.DB
             public string Text { get; set; }
         }
 
-        [TestMethod]
+        [Fact]
         public void CursorSwitchTest()
         {
             if (!NpgsqlProvider.IsCursorSupported)
@@ -36,19 +35,19 @@ namespace TBS.Data.UnitTests.DB
                     var c2 = cursorManager.CreateCursor(q);
                     cursorManager.CreateCursor(q);
 
-                    Assert.AreNotEqual(c1.Owner, c2.Owner);
-                    Assert.AreEqual(2, cursorManager.ConnectionCount);
+                    Assert.NotEqual(c1.Owner, c2.Owner);
+                    Assert.Equal(2, cursorManager.ConnectionCount);
 
                     Thread.Sleep(1500);
-                    Assert.AreEqual(1, cursorManager.ConnectionCount);
+                    Assert.Equal(1, cursorManager.ConnectionCount);
 
                     Thread.Sleep(1000);
-                    Assert.AreEqual(0, cursorManager.ConnectionCount);
+                    Assert.Equal(0, cursorManager.ConnectionCount);
                 }
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void CursorTest()
         {
             if (!NpgsqlProvider.IsCursorSupported)
@@ -67,28 +66,28 @@ namespace TBS.Data.UnitTests.DB
 
             using (var cursorManager = NpgsqlProvider.CreateCursorManager())
             {
-                Assert.AreEqual(cursorManager.CursorCount, 0);
+                Assert.Equal(0, cursorManager.CursorCount);
 
                 for (var i = 0; i < 2; i++)
                     using (var cursor = cursorManager.CreateCursor(q))
                     {
-                        Assert.AreEqual(1, cursorManager.CursorCount);
-                        Assert.AreEqual(2, cursor.RecordCount);
+                        Assert.Equal(1, cursorManager.CursorCount);
+                        Assert.Equal(2, cursor.RecordCount);
 
                         var result = cursor.Execute(0, 1);
-                        Assert.AreEqual(1, result.RowCount);
-                        Assert.AreEqual(1, result.GetValue<int>(0, 0));
+                        Assert.Equal(1, result.RowCount);
+                        Assert.Equal(1, result.GetValue<int>(0, 0));
 
                         result = cursor.Execute(1, 1);
-                        Assert.AreEqual(1, result.RowCount);
-                        Assert.AreEqual(2, result.GetValue<int>(0, 0));
+                        Assert.Equal(1, result.RowCount);
+                        Assert.Equal(2, result.GetValue<int>(0, 0));
                     }
             }
 
-            Assert.AreEqual(1, openCount);
+            Assert.Equal(1, openCount);
         }
 
-        [TestMethod]
+        [Fact]
         public void CursorSearchTest()
         {
             if (!NpgsqlProvider.IsCursorSupported)
@@ -98,7 +97,7 @@ namespace TBS.Data.UnitTests.DB
 
             using (var cursorManager = NpgsqlProvider.CreateCursorManager())
             {
-                Assert.AreEqual(cursorManager.CursorCount, 0);
+                Assert.Equal(0, cursorManager.CursorCount);
 
                 using (var cursor = cursorManager.CreateCursor(q, "id", 3))
                 {
@@ -108,13 +107,13 @@ namespace TBS.Data.UnitTests.DB
                     var data = cursor.Execute(0, recordCount);
                     var ids = data.ToColumnScalars<int>();
 
-                    Assert.AreEqual(ids.Count, recordCount);
-                    Assert.AreEqual(ids.IndexOf(3), searchIndex);
+                    Assert.Equal(ids.Count, recordCount);
+                    Assert.Equal(ids.IndexOf(3), searchIndex);
                 }
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void IteratorTest()
         {
             if (!NpgsqlProvider.IsCursorSupported)
@@ -125,18 +124,18 @@ namespace TBS.Data.UnitTests.DB
             using (var cursorManager = NpgsqlProvider.CreateCursorManager())
             using (var cursor = cursorManager.CreateCursor(q))
             {
-                Assert.AreEqual(cursor.RecordCount, 100);
+                Assert.Equal(100, cursor.RecordCount);
 
                 int i = 0;
                 foreach (var item in cursor.Iterate<Model>())
                 {
-                    Assert.AreEqual(item.Number, ++i);
-                    Assert.AreEqual(item.Text, "This is text.");
+                    Assert.Equal(item.Number, ++i);
+                    Assert.Equal("This is text.", item.Text);
                 }
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void CursorActionTest()
         {
             if (!NpgsqlProvider.IsCursorSupported)
@@ -156,23 +155,23 @@ namespace TBS.Data.UnitTests.DB
             {
                 ++afterHitCount;
                 link.ExecuteNonQuery("Select 1");
-                Assert.AreEqual(pid, ((PgSqlLinkContext)link.ConnectionContext).ProcessId);
+                Assert.Equal(pid, ((PgSqlLinkContext)link.ConnectionContext).ProcessId);
             };
 
             using (var cursorManager = NpgsqlProvider.CreateCursorManager())
             {
-                Assert.AreEqual(cursorManager.CursorCount, 0);
+                Assert.Equal(0, cursorManager.CursorCount);
 
                 for (int i = 0; i < 2; i++)
                     using (var cursor = cursorManager.CreateCursor(q, null, "id", 3, before, after))
                     {
-                        Assert.AreEqual(4, cursor.RecordCount);
-                        Assert.AreEqual(2, cursor.SearchResultPosition);
+                        Assert.Equal(4, cursor.RecordCount);
+                        Assert.Equal(2, cursor.SearchResultPosition);
                     }
             }
 
-            Assert.AreEqual(2, beforeHitCount);
-            Assert.AreEqual(2, afterHitCount);
+            Assert.Equal(2, beforeHitCount);
+            Assert.Equal(2, afterHitCount);
         }
     }
 }

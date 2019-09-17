@@ -1,15 +1,14 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TBS.Data.DB;
+using Xunit;
 
 namespace TBS.Data.UnitTests.DB
 {
-    [TestClass]
     public class DbLinkPoolingTest : DbTestBase
     {
-        [TestMethod]
+        [Fact]
         public void PoolUsedTest()
         {
             if (DefaultProvider.UsePooling && DefaultProvider.MinPoolSize >= 1)
@@ -18,11 +17,11 @@ namespace TBS.Data.UnitTests.DB
                     link.ConnectionContext.Bag["a"] = 2;
 
                 using (var link = CreateLink())
-                    Assert.AreEqual(2, link.ConnectionContext.Bag["a"]);
+                    Assert.Equal(2, link.ConnectionContext.Bag["a"]);
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void NoDeadlockTest()
         {
             var tasks = Enumerable.Range(1, 30).Select(x => Task.Run(() =>

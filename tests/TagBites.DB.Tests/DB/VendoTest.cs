@@ -1,5 +1,4 @@
 ﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading.Tasks;
 using TBS.Data.DB;
 using System.Threading;
@@ -7,10 +6,10 @@ using System.Linq;
 using System.Transactions;
 using TBS.Data.DB.Configuration;
 using TBS.Data.DB.PostgreSql;
+using Xunit;
 
 namespace TBS.Data.UnitTests.DB
 {
-    [TestClass]
     public class VendoTest : DbTestBase
     {
         protected override void InitializeConnectionProvider(PgSqlLinkProvider connectionProvider)
@@ -47,7 +46,7 @@ namespace TBS.Data.UnitTests.DB
             };
         }
 
-        [TestMethod]
+        [Fact]
         public void OneTransactionAtTheTimeTest()
         {
             Func<bool> isNewTransactionBlocked = () =>
@@ -79,7 +78,7 @@ namespace TBS.Data.UnitTests.DB
                         using (var link = NpgsqlProvider.CreateLink())
                         using (var t = link.Begin())
                         {
-                            Assert.IsTrue(isNewTransactionBlocked());
+                            Assert.True(isNewTransactionBlocked());
                             t.Commit();
                         }
                         sc.Complete();
@@ -89,7 +88,7 @@ namespace TBS.Data.UnitTests.DB
             )).ToArray());
         }
 
-        [TestMethod]
+        [Fact]
         public void VendoNotifyTest()
         {
             int notifyCounter = 0;
@@ -105,7 +104,7 @@ namespace TBS.Data.UnitTests.DB
                 }
             }
 
-            Assert.AreEqual(1, notifyCounter);
+            Assert.Equal(1, notifyCounter);
         }
     }
 }

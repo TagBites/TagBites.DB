@@ -1,14 +1,13 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Linq;
+﻿using System.Linq;
 using System.Reflection;
 using TBS.Data.DB;
+using Xunit;
 
 namespace TBS.Data.UnitTests.DB
 {
-    [TestClass]
     public class QueryObjectResultTest : DbTestBase
     {
-        [TestMethod]
+        [Fact]
         public void QueryObjectResultPropertyResolverTest()
         {
             using (var link = NpgsqlProvider.CreateLink())
@@ -22,12 +21,12 @@ namespace TBS.Data.UnitTests.DB
                 var itemResultList = link.Execute<Item>(new Query("SELECT item1 AS Item1, item2 AS Item2, item3 AS Item3, item4 AS Item4 FROM tmp_item_test"), new QueryObjectResultPropertyResolver(ResolverMethod));
                 var itemResult = itemResultList.FirstOrDefault();
 
-                Assert.AreEqual(item.Item1, itemResult.Item1);
-                Assert.AreEqual(item.Item2, itemResult.Item2);
-                Assert.AreEqual(item.Item3, itemResult.Item3);
-                Assert.AreEqual(item.Item4, itemResult.Item4);
-                Assert.IsNotNull(itemResult.ItemInner);
-                Assert.AreEqual(1, itemResult.Item1);
+                Assert.Equal(item.Item1, itemResult.Item1);
+                Assert.Equal(item.Item2, itemResult.Item2);
+                Assert.Equal(item.Item3, itemResult.Item3);
+                Assert.Equal(item.Item4, itemResult.Item4);
+                Assert.NotNull(itemResult.ItemInner);
+                Assert.Equal(1, itemResult.Item1);
 
                 transaction.Rollback();
             }

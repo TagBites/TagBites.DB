@@ -1,17 +1,16 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
+﻿using System;
 using System.Data.Common;
 using System.Threading.Tasks;
 using System.Transactions;
 using TBS.Data.DB;
 using TBS.Data.DB.Configuration;
+using Xunit;
 
 namespace TBS.Data.UnitTests.DB
 {
-    [TestClass]
     public class DbLinkWithTransactionScope : DbTestBase
     {
-        [TestMethod]
+        [Fact]
         public void UncommitedTransactionScopeTest()
         {
             using (var ts = new TransactionScope())
@@ -24,14 +23,14 @@ namespace TBS.Data.UnitTests.DB
                     try
                     {
                         link.ExecuteNonQuery("SELECT 1");
-                        Assert.Fail();
+                        Assert.True(false);
                     }
                     catch { }
                 }
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void UncommitedTransactionScopeTest2()
         {
             using (var link2 = DefaultProvider.CreateLink())
@@ -44,7 +43,7 @@ namespace TBS.Data.UnitTests.DB
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void SuppressTransactionScopeTest()
         {
             using (new TransactionScope())
@@ -52,11 +51,11 @@ namespace TBS.Data.UnitTests.DB
                 using (new TransactionScope(TransactionScopeOption.Suppress))
                 {
                     using (var link = DefaultProvider.CreateLink())
-                        Assert.AreEqual(DbLinkTransactionStatus.None, link.TransactionStatus);
+                        Assert.Equal(DbLinkTransactionStatus.None, link.TransactionStatus);
                 }
 
                 using (var link = DefaultProvider.CreateLink())
-                    Assert.AreEqual(DbLinkTransactionStatus.Pending, link.TransactionStatus);
+                    Assert.Equal(DbLinkTransactionStatus.Pending, link.TransactionStatus);
             }
 
             // Two Links
@@ -70,12 +69,12 @@ namespace TBS.Data.UnitTests.DB
                 using (new TransactionScope(TransactionScopeOption.Suppress))
                 using (var link2 = DefaultProvider.CreateLink())
                 {
-                    Assert.AreNotEqual(link.ConnectionContext, link2.ConnectionContext);
+                    Assert.NotEqual(link.ConnectionContext, link2.ConnectionContext);
 
                     using (new TransactionScope(tr.DependentClone(DependentCloneOption.BlockCommitUntilComplete)))
                     using (var link3 = DefaultProvider.CreateLink())
                     {
-                        Assert.AreEqual(link.ConnectionContext, link3.ConnectionContext);
+                        Assert.Equal(link.ConnectionContext, link3.ConnectionContext);
                     }
                 }
             }
@@ -90,8 +89,8 @@ namespace TBS.Data.UnitTests.DB
                 {
                     using (var link2 = DefaultProvider.CreateLink())
                     {
-                        Assert.AreEqual(link.ConnectionContext, link2.ConnectionContext);
-                        Assert.IsNotNull(Transaction.Current);
+                        Assert.Equal(link.ConnectionContext, link2.ConnectionContext);
+                        Assert.NotNull(Transaction.Current);
                     }
                 }
             }
@@ -106,13 +105,13 @@ namespace TBS.Data.UnitTests.DB
                     try
                     {
                         using (var link2 = DefaultProvider.CreateLink())
-                            Assert.Fail("Should Throw Exception");
+                            Assert.True(false, "Should Throw Exception");
                     }
                     catch { }
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void TransactionScopeTest()
         {
             using (var scope = new TransactionScope())
@@ -120,19 +119,19 @@ namespace TBS.Data.UnitTests.DB
                 using (var link = DefaultProvider.CreateLink())
                 using (var transaction = link.Begin())
                 {
-                    Assert.AreEqual(DefaultProvider.Configuration.ForceOnLinkCreate || DefaultProvider.Configuration.ForceOnTransactionBegin ? DbLinkTransactionStatus.Open : DbLinkTransactionStatus.Pending, link.TransactionStatus);
+                    Assert.Equal(DefaultProvider.Configuration.ForceOnLinkCreate || DefaultProvider.Configuration.ForceOnTransactionBegin ? DbLinkTransactionStatus.Open : DbLinkTransactionStatus.Pending, link.TransactionStatus);
                     link.ExecuteNonQuery("Select 1");
                     transaction.Commit();
-                    Assert.AreEqual(DbLinkTransactionStatus.Open, link.TransactionStatus);
+                    Assert.Equal(DbLinkTransactionStatus.Open, link.TransactionStatus);
                 }
 
                 using (var link = DefaultProvider.CreateLink())
                 using (var transaction = link.Begin())
                 {
-                    Assert.AreEqual(DbLinkTransactionStatus.Open, link.TransactionStatus);
+                    Assert.Equal(DbLinkTransactionStatus.Open, link.TransactionStatus);
                     link.ExecuteNonQuery("Select 1");
                     transaction.Commit();
-                    Assert.AreEqual(DbLinkTransactionStatus.Open, link.TransactionStatus);
+                    Assert.Equal(DbLinkTransactionStatus.Open, link.TransactionStatus);
                 }
 
                 scope.Complete();
@@ -142,23 +141,23 @@ namespace TBS.Data.UnitTests.DB
             {
                 using (var link = DefaultProvider.CreateLink())
                 {
-                    Assert.AreEqual(DbLinkTransactionStatus.Pending, link.TransactionStatus);
+                    Assert.Equal(DbLinkTransactionStatus.Pending, link.TransactionStatus);
                     link.ExecuteNonQuery("Select 1");
-                    Assert.AreEqual(DbLinkTransactionStatus.Open, link.TransactionStatus);
+                    Assert.Equal(DbLinkTransactionStatus.Open, link.TransactionStatus);
                 }
 
                 using (var link = DefaultProvider.CreateLink())
                 {
-                    Assert.AreEqual(DbLinkTransactionStatus.Open, link.TransactionStatus);
+                    Assert.Equal(DbLinkTransactionStatus.Open, link.TransactionStatus);
                     link.ExecuteNonQuery("Select 1");
-                    Assert.AreEqual(DbLinkTransactionStatus.Open, link.TransactionStatus);
+                    Assert.Equal(DbLinkTransactionStatus.Open, link.TransactionStatus);
                 }
 
                 scope.Complete();
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void DifferentTransactionScopeTest()
         {
             using (var scope = new TransactionScope())
@@ -186,7 +185,7 @@ namespace TBS.Data.UnitTests.DB
                 {
                     using (var scope2 = new TransactionScope(TransactionScopeOption.Suppress))
                     using (var link2 = DefaultProvider.CreateLink())
-                        Assert.Fail();
+                        Assert.True(false);
                 }
                 catch {/* Ignored */}
             }
@@ -198,13 +197,13 @@ namespace TBS.Data.UnitTests.DB
                 {
                     using (var scope2 = new TransactionScope(TransactionScopeOption.RequiresNew))
                     using (var link2 = DefaultProvider.CreateLink())
-                        Assert.Fail();
+                        Assert.True(false);
                 }
                 catch {/* Ignored */}
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void TransactionScopeWithTasksTest()
         {
             using (var scope = new TransactionScope())
@@ -225,17 +224,17 @@ namespace TBS.Data.UnitTests.DB
                     task.Wait();
 
                     if (DefaultProvider.Configuration.LinkCreateOnDifferentSystemTransaction == DbLinkCreateOnDifferentSystemTransaction.ThrowException)
-                        Assert.Fail();
+                        Assert.True(false);
                 }
                 catch (Exception)
                 {
                     if (DefaultProvider.Configuration.LinkCreateOnDifferentSystemTransaction != DbLinkCreateOnDifferentSystemTransaction.ThrowException)
-                        Assert.Fail();
+                        Assert.True(false);
                 }
             }
         }
 
-        [TestMethod]
+        [Fact]
         public void ExceptionOnCommit()
         {
             using (var link = DefaultProvider.CreateLink())
@@ -250,7 +249,7 @@ namespace TBS.Data.UnitTests.DB
                 }
                 catch (Exception e)
                 {
-                    Assert.IsTrue(e is DbException);
+                    Assert.True(e is DbException);
                 }
 
                 using (var scope = new TransactionScope())

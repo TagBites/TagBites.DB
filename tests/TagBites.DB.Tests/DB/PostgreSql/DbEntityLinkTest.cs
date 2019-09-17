@@ -20,7 +20,7 @@
 //    //            using (var context = new EventContext(link))
 //    //            {
 //    //                var e = context.Events.FirstOrDefault();
-//    //                Assert.IsNotNull(e);
+//    //                Assert.NotNull(e);
 //    //            }
 //    //        }
 
@@ -47,16 +47,16 @@
 //    //            using (var context = new EventContext(link))
 //    //            {
 //    //                e = context.Events.FirstOrDefault(x => x.ID == 50);
-//    //                Assert.IsNotNull(e);
+//    //                Assert.NotNull(e);
 
 //    //                e.Subject = (e.Subject ?? String.Empty) + " " + (e.Subject ?? String.Empty).Length.ToString();
 
 //    //                var updated = context.SaveChanges();
-//    //                Assert.AreEqual(1, updated);
+//    //                Assert.Equal(1, updated);
 //    //            }
 
 //    //            var s = link.ExecuteScalar("SELECT zd_temat FROM tb_zdarzenia WHERE zd_idzdarzenia={0}", e.ID);
-//    //            Assert.AreEqual(e.Subject, s);
+//    //            Assert.Equal(e.Subject, s);
 
 //    //            transaction.Commit();
 //    //        }
