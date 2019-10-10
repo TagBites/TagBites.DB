@@ -8,20 +8,19 @@ namespace TBS.Data.DB
     public abstract class QueryResult : IEnumerable<QueryResultRow>
     {
         public static readonly QueryResult Empty = new EmptyProvider();
-        internal static readonly QueryResult[] EmptySet = new QueryResult[0];
 
         public abstract int RowCount { get; }
         public abstract int ColumnCount { get; }
 
-        internal abstract object this[int row, string columnName] { get; }
-        internal abstract object this[int row, int column] { get; }
+        public abstract object this[int row, string columnName] { get; }
+        public abstract object this[int row, int column] { get; }
 
 
         public abstract bool ContainsColumn(string columnName);
         public abstract int GetColumnIndex(string columnName);
         public abstract string GetColumnName(int column);
 
-        internal object GetValue(int rowIndex, string columnName)
+        public object GetValue(int rowIndex, string columnName)
         {
             return this[rowIndex, columnName];
         }
@@ -34,7 +33,7 @@ namespace TBS.Data.DB
             return DataHelper.TryChangeTypeDefault<T>(this[rowIndex, columnName], defaultValue);
         }
 
-        internal object GetValue(int rowIndex, int columnIndex)
+        public object GetValue(int rowIndex, int columnIndex)
         {
             return this[rowIndex, columnIndex];
         }
@@ -119,8 +118,8 @@ namespace TBS.Data.DB
             public override int RowCount => 0;
             public override int ColumnCount => 0;
 
-            internal override object this[int row, string columnName] => null;
-            internal override object this[int row, int column] => null;
+            public override object this[int row, string columnName] => null;
+            public override object this[int row, int column] => null;
 
 
             public override bool ContainsColumn(string columnName) { return false; }
@@ -134,7 +133,7 @@ namespace TBS.Data.DB
             public override int RowCount => m_data.Rows.Count;
             public override int ColumnCount => m_data.Columns.Count;
 
-            internal override object this[int row, string columnName]
+            public override object this[int row, string columnName]
             {
                 get
                 {
@@ -142,7 +141,7 @@ namespace TBS.Data.DB
                     return v is DBNull ? null : v;
                 }
             }
-            internal override object this[int row, int column]
+            public override object this[int row, int column]
             {
                 get
                 {
