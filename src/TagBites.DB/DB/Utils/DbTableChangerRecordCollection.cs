@@ -1,29 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using TBS.Utils;
 
 namespace TBS.Data.DB.Utils
 {
-    public class DbTableChangerRecordCollection : Collections.ObjectModel.ListCollection<DbTableChangerRecord>
+    public class DbTableChangerRecordCollection : Collection<DbTableChangerRecord>
     {
-        private readonly DbTableChanger m_owner;
+        private readonly DbTableChanger _owner;
 
         internal DbTableChangerRecordCollection(DbTableChanger owner)
         {
-            m_owner = owner;
+            _owner = owner;
         }
 
 
         public DbTableChangerRecord Add()
         {
-            var record = new DbTableChangerRecord(m_owner);
+            var record = new DbTableChangerRecord(_owner);
             base.Add(record);
             return record;
         }
         public DbTableChangerRecord Add(IDictionary<string, object> recordValues)
         {
             Guard.ArgumentNotNull(recordValues, "recordValues");
-            var record = new DbTableChangerRecord(m_owner, recordValues);
+            var record = new DbTableChangerRecord(_owner, recordValues);
             base.Add(record);
             return record;
         }
@@ -33,10 +34,10 @@ namespace TBS.Data.DB.Utils
 
             if (recordValues.Id != null)
             {
-                if (recordValues.Id is Array != m_owner.IsMultiColumnKey)
+                if (recordValues.Id is Array != _owner.IsMultiColumnKey)
                     throw new ArgumentException("");
 
-                if (m_owner.IsMultiColumnKey)
+                if (_owner.IsMultiColumnKey)
                 {
                     var array = (Array)recordValues.Id;
                     if (array.Length != record.Keys.Count)
@@ -54,7 +55,7 @@ namespace TBS.Data.DB.Utils
 
         public DbTableChangerRecord GetByKey(object key)
         {
-            if (m_owner.IsMultiColumnKey)
+            if (_owner.IsMultiColumnKey)
                 throw new InvalidOperationException("For multi-column key please use 'GetByKey[object[])' method.");
 
             for (int i = 0; i < Count; i++)
@@ -67,14 +68,14 @@ namespace TBS.Data.DB.Utils
         }
         public DbTableChangerRecord GetByKey(object[] key)
         {
-            if (m_owner.KeyColumnNamesCore.Length != key.Length)
+            if (_owner.KeyColumnNamesCore.Length != key.Length)
                 throw new ArgumentException();
 
             return GetByKeyInternal(key);
         }
         internal DbTableChangerRecord GetByKeyInternal(IList<object> key)
         {
-            var count = m_owner.KeyColumnNamesCore.Length;
+            var count = _owner.KeyColumnNamesCore.Length;
             for (int i = 0; i < Count; i++)
             {
                 var equals = true;
@@ -93,10 +94,19 @@ namespace TBS.Data.DB.Utils
             return null;
         }
 
-        protected override void OnItemInserting(int index, DbTableChangerRecord item)
+        protected override void SetItem(int index, DbTableChangerRecord item)
         {
-            if (item.Owner != m_owner)
-                throw new ArgumentException();
+            if (item == null)
+                throw new ArgumentNullException(nameof(item));
+
+            base.SetItem(index, item);
+        }
+        protected override void InsertItem(int index, DbTableChangerRecord item)
+        {
+            if (item == null)
+                throw new ArgumentNullException(nameof(item));
+
+            base.InsertItem(index, item);
         }
     }
 }
