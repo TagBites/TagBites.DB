@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
-using System.Text;
 using TBS.Data.DB;
 using TBS.Utils;
 
@@ -961,8 +960,9 @@ namespace TBS.Sql
 
         internal static bool NeedQuoteIdentifier(string name)
         {
+            // TODO verify
             return (name.Length > 0 && char.IsNumber(name[0]))
-                   || name.Cast<char>().Any(x => char.IsUpper(x) || (!char.IsLetterOrDigit(x) && x != '_'))
+                   || name.Cast<char>().Any(x => char.IsUpper(x) || (!char.IsLetterOrDigit(x) && !(x == '_' || x == '[' || x == ']')))
                    || (name.StartsWith("\"") && name.EndsWith("\""));
         }
         internal static string QuoteIdentifierIfNeeded(string name)
