@@ -374,7 +374,17 @@ namespace TBS.Data.DB.PostgreSql
         internal static T? FromString(string value)
         {
             if (string.IsNullOrEmpty(value))
-                return (T?)null;
+                return null;
+
+            if (typeof(T) == typeof(bool) && value?.Length == 1)
+            {
+                var c = char.ToLower(value[0]);
+                if (c == 't')
+                    return (T)(object)true;
+
+                if (c == 'f')
+                    return (T)(object)false;
+            }
 
             return (T)Convert.ChangeType(value, typeof(T), CultureInfo.InvariantCulture);
         }
@@ -382,6 +392,22 @@ namespace TBS.Data.DB.PostgreSql
         {
             try
             {
+                if (typeof(T) == typeof(bool) && value?.Length == 1)
+                {
+                    var c = char.ToLower(value[0]);
+                    if (c == 't')
+                    {
+                        result = (T)(object)true;
+                        return true;
+                    }
+
+                    if (c == 'f')
+                    {
+                        result = (T)(object)false;
+                        return true;
+                    }
+                }
+
                 result = FromString(value);
                 return true;
             }
