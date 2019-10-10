@@ -181,6 +181,10 @@ namespace TBS.Data.DB.PostgreSql
         }
         private void Dispose(bool disposing)
         {
+            try { _manager?.OnConnectionContextDisposed(this); }
+            catch { /* ignored */ }
+            finally { _manager = null; }
+
             lock (SynchRoot)
             {
                 _cursors.Clear();
@@ -194,12 +198,6 @@ namespace TBS.Data.DB.PostgreSql
                     try { _link.Dispose(); }
                     catch { /* ignored */ }
                     finally { _link = null; }
-
-                if (_manager != null)
-                {
-                    _manager.OnConnectionContextDisposed(this);
-                    _manager = null;
-                }
             }
         }
         private void ThrowIfNotActive()

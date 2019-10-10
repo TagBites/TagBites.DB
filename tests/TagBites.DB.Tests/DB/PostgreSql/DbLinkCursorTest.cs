@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Threading;
+using System.Threading.Tasks;
 using TBS.Data.DB;
 using TBS.Data.DB.PostgreSql;
 using Xunit;
@@ -15,35 +15,30 @@ namespace TBS.Data.UnitTests.DB
         }
 
         [Fact]
-        public void CursorSwitchTest()
+        public async Task CursorSwitchTest()
         {
             if (!NpgsqlProvider.IsCursorSupported)
                 return;
 
-            var q = new Query("SELECT 1 UNION SELECT 2");
+            using var cursorManager = NpgsqlProvider.CreateCursorManager();
+            cursorManager.TransactionTimeout = 200;
 
-            using (var cursorManager = NpgsqlProvider.CreateCursorManager())
+            for (var i = 0; i < 2; i++)
             {
-                cursorManager.TransactionTimeout = 2000; // 2s
+                var q = new Query("SELECT 1 UNION SELECT 2");
 
-                for (var i = 0; i < 2; i++)
-                {
-                    var c1 = cursorManager.CreateCursor(q);
-                    cursorManager.CreateCursor(q);
+                var c1 = cursorManager.CreateCursor(q);
+                await Task.Delay(150);
+                var c2 = cursorManager.CreateCursor(q);
 
-                    Thread.Sleep(1000);
-                    var c2 = cursorManager.CreateCursor(q);
-                    cursorManager.CreateCursor(q);
+                Assert.NotEqual(c1.Owner, c2.Owner);
+                Assert.Equal(2, cursorManager.ConnectionCount);
 
-                    Assert.NotEqual(c1.Owner, c2.Owner);
-                    Assert.Equal(2, cursorManager.ConnectionCount);
+                for (var j = 0; j < 60; j++)
+                    if (cursorManager.ConnectionCount > 0)
+                        await Task.Delay(200);
 
-                    Thread.Sleep(1500);
-                    Assert.Equal(1, cursorManager.ConnectionCount);
-
-                    Thread.Sleep(1000);
-                    Assert.Equal(0, cursorManager.ConnectionCount);
-                }
+                Assert.Equal(0, cursorManager.ConnectionCount);
             }
         }
 

@@ -115,7 +115,7 @@ namespace TBS.Data.DB.PostgreSql
             {
                 Task.Run(async () =>
                 {
-                    await Task.Delay(timeout);
+                    await Task.Delay(timeout).ConfigureAwait(false);
                     context.Dispose();
                 });
             }
@@ -129,8 +129,10 @@ namespace TBS.Data.DB.PostgreSql
             {
                 for (var i = _connections.Count - 1; i >= 0; i--)
                 {
-                    _connections[i].Dispose();
+                    var connection = _connections[i];
                     _connections.RemoveAt(i);
+
+                    connection.Dispose();
                 }
             }
         }
