@@ -1,7 +1,7 @@
-﻿using Npgsql;
-using NpgsqlTypes;
-using System;
+﻿using System;
 using System.Data.Common;
+using Npgsql;
+using NpgsqlTypes;
 
 namespace TBS.Data.DB.PostgreSql
 {
@@ -43,7 +43,7 @@ namespace TBS.Data.DB.PostgreSql
         protected override DbCommand CreateCommand(Query query)
         {
             var cmd = new NpgsqlCommand(query.Command);
-            cmd.AllResultTypesAreUnknown = true;
+            //cmd.AllResultTypesAreUnknown = true;
 
             foreach (var item in query.Parameters)
             {
