@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TBS.Utils;
+﻿using System.Collections.Generic;
+using TagBites.Utils;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public class SqlClauseValuesEntry : SqlClauseEntry
     {
-        public IList<object> Values { get; private set; }
+        public IList<object> Values { get; }
 
         public SqlClauseValuesEntry(IList<object> values)
         {

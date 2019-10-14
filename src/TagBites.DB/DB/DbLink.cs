@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data.Common;
 using System.Diagnostics;
-using TBS.Resources;
+using System.Linq;
+using System.Text;
+using TagBites.Utils;
 
-namespace TBS.Data.DB
+namespace TagBites.DB
 {
     /// <summary>
     /// Thread safe.

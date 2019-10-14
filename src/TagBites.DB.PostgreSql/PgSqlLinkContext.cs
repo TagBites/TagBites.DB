@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace TBS.Data.DB.PostgreSql
+namespace TagBites.DB.Postgres
 {
     public class PgSqlNotificationEventArgs : EventArgs
     {
@@ -56,7 +59,7 @@ namespace TBS.Data.DB.PostgreSql
             if (channelsNames.Length == 0)
                 return;
 
-            ExecuteNonQuery(new Query("LISTEN " + String.Join("; LISTEN ", channelsNames)));
+            ExecuteNonQuery(new Query("LISTEN " + string.Join("; LISTEN ", channelsNames)));
         }
         public void Unlisten(params string[] channelsNames)
         {
@@ -65,7 +68,7 @@ namespace TBS.Data.DB.PostgreSql
             if (channelsNames.Length == 0)
                 return;
 
-            ExecuteNonQuery(new Query("UNLISTEN " + String.Join("; UNLISTEN ", channelsNames)));
+            ExecuteNonQuery(new Query("UNLISTEN " + string.Join("; UNLISTEN ", channelsNames)));
         }
         public void UnlistenAll()
         {

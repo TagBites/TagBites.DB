@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
-using TBS.Sql;
+using TagBites.Sql;
 
-namespace TBS.DB.Entity
+namespace TagBites.DB.Entity
 {
     public interface IDbLinkEntityQueryProvider
     {

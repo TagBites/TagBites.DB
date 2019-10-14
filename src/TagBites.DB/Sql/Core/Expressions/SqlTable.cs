@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TBS.Utils;
+using TagBites.Utils;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public class SqlTable : SqlExpression
     {
@@ -78,7 +75,7 @@ namespace TBS.Sql
         }
         public override int GetHashCode()
         {
-            unchecked { return (Table.GetHashCode() * 397) ^ (Alias != null ? Alias.GetHashCode() : 0); }
+            unchecked { return Table.GetHashCode() * 397; }
         }
 
         [Obsolete("Please use Column(string columnName).", false)]

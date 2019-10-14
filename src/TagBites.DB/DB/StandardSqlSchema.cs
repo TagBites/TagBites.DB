@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TBS.Data.DB.Schema;
 
-namespace TBS.Data.DB
+namespace TagBites.DB
 {
     internal class StandardSqlSchema
     {
@@ -142,7 +141,7 @@ ORDER BY kcu.ordinal_position";
         }
         private static string GetTableKey(object catalog, object schema, object table)
         {
-            return String.Format("{0}.{1}.{2}", catalog, schema, table);
+            return string.Format("{0}.{1}.{2}", catalog, schema, table);
         }
 
         private static Dictionary<string, Type> GetTypeConverter()

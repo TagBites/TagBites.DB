@@ -1,7 +1,11 @@
-﻿using TBS.Data.DB;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TBS.Data.UnitTests.DB
+namespace TagBites.DB.Tests.DB.Common
 {
     public class DbLinkErrorStressTest : DbTestBase
     {
@@ -58,7 +62,7 @@ namespace TBS.Data.UnitTests.DB
             using (var link = CreateLink())
             using (var transaction = link.Begin())
             {
-                Assert.Equal(1,link.ExecuteScalar<int>("SELECT 1"));
+                Assert.Equal(1, link.ExecuteScalar<int>("SELECT 1"));
 
                 ((DbLinkContext)link.ConnectionContext).GetOpenConnection().Close();
 
@@ -105,7 +109,7 @@ namespace TBS.Data.UnitTests.DB
                 ((DbLinkContext)link.ConnectionContext).GetOpenConnection().Close();
 
                 using (var link2 = NpgsqlProvider.CreateLink())
-                    link2.ExecuteNonQuery("SELECT 1");
+                    DbLinkExtensions.ExecuteNonQuery(link2, "SELECT 1");
             }
         }
     }

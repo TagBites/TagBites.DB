@@ -4,14 +4,14 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
-using TBS.Data.DB;
-using TBS.Data.UnitTests.DB.Core;
-using TBS.DB.Entity;
-using TBS.Sql;
+using System.Text;
+using TagBites.DB.Entity;
+using TagBites.DB.Tests.DB.Core;
+using TagBites.Sql;
 using Xunit;
-using static TBS.Sql.SqlExpression;
+using static TagBites.Sql.SqlExpression;
 
-namespace TBS.Data.UnitTests.DB
+namespace TagBites.DB.Tests.DB
 {
     public class EntityQueryTest : DbTestBase
     {
@@ -493,10 +493,10 @@ namespace TBS.Data.UnitTests.DB
             using (var link = NpgsqlProvider.CreateLink())
             using (var transaction = link.Begin())
             {
-                link.ExecuteNonQuery(DbStructureSql);
+                DbLinkExtensions.ExecuteNonQuery(link, DbStructureSql);
                 if (values != null)
                     foreach (var item in values)
-                        link.Insert(item);
+                        DbLinkExtensions.Insert(link, item);
 
                 var provider = new DbLinkQueryProvider(link);
                 if (querySelect != null)

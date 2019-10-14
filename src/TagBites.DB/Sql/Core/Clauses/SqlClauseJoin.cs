@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public class SqlClauseJoin : SqlClauseCollectionBase<SqlClauseJoinEntry>
     {
@@ -32,7 +29,7 @@ namespace TBS.Sql
         public Func<SqlTable> LazyAddOnExpression(SqlClauseJoinEntryType joinType, string joinTableName, string joinTableAlias, SqlCondition expression)
         {
             SqlTable joinTable = null;
-            return () => joinTable ?? (joinTable = AddOnExpression(joinType, joinTableName, joinTableAlias, expression));
+            return () => joinTable ??= AddOnExpression(joinType, joinTableName, joinTableAlias, expression);
         }
 
         public SqlTable AddOn(SqlClauseJoinEntryType joinType, SqlColumn joinTableColumn, SqlColumn otherTableColumn)
@@ -69,22 +66,22 @@ namespace TBS.Sql
         public Func<SqlTable> LazyAddOn(SqlClauseJoinEntryType joinType, string joinTableName, string joinTableColumnName, SqlColumn otherTableColumn)
         {
             SqlTable joinTable = null;
-            return () => joinTable ?? (joinTable = AddOn(joinType, joinTableName, joinTableColumnName, otherTableColumn));
+            return () => joinTable ??= AddOn(joinType, joinTableName, joinTableColumnName, otherTableColumn);
         }
         public Func<SqlTable> LazyAddOn(SqlClauseJoinEntryType joinType, string joinTableName, string joinTableColumnName, SqlTable otherTable, string otherTableColumnName)
         {
             SqlTable joinTable = null;
-            return () => joinTable ?? (joinTable = AddOn(joinType, joinTableName, joinTableColumnName, otherTable, otherTableColumnName));
+            return () => joinTable ??= AddOn(joinType, joinTableName, joinTableColumnName, otherTable, otherTableColumnName);
         }
         public Func<SqlTable> LazyAddOn(SqlClauseJoinEntryType joinType, string joinTableName, string joinTableAlias, string joinTableColumnName, SqlColumn otherTableColumn)
         {
             SqlTable joinTable = null;
-            return () => joinTable ?? (joinTable = AddOn(joinType, joinTableName, joinTableAlias, joinTableColumnName, otherTableColumn));
+            return () => joinTable ??= AddOn(joinType, joinTableName, joinTableAlias, joinTableColumnName, otherTableColumn);
         }
         public Func<SqlTable> LazyAddOn(SqlClauseJoinEntryType joinType, string joinTableName, string joinTableAlias, string joinTableColumnName, SqlTable otherTable, string otherTableColumnName)
         {
             SqlTable joinTable = null;
-            return () => joinTable ?? (joinTable = AddOn(joinType, joinTableName, joinTableAlias, joinTableColumnName, otherTable, otherTableColumnName));
+            return () => joinTable ??= AddOn(joinType, joinTableName, joinTableAlias, joinTableColumnName, otherTable, otherTableColumnName);
         }
 
         public TSqlTable AddOn<TSqlTable>(SqlClauseJoinEntryType joinType, Func<TSqlTable, SqlColumn> joinTableColumnSelector, SqlColumn otherTableColumn) where TSqlTable : SqlTable, new()
@@ -94,7 +91,7 @@ namespace TBS.Sql
         public Func<TSqlTable> LazyAddOn<TSqlTable>(SqlClauseJoinEntryType joinType, Func<TSqlTable, SqlColumn> joinTableColumnSelector, SqlColumn otherTableColumn) where TSqlTable : SqlTable, new()
         {
             TSqlTable joinTable = null;
-            return () => joinTable ?? (joinTable = (TSqlTable)AddOn(joinType, joinTableColumnSelector(new TSqlTable() { Alias = GetNextAlias() }), otherTableColumn));
+            return () => joinTable ??= (TSqlTable)AddOn(joinType, joinTableColumnSelector(new TSqlTable() { Alias = GetNextAlias() }), otherTableColumn);
         }
 
         private string GetNextAlias()

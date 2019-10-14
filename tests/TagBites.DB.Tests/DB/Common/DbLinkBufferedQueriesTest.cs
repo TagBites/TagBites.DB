@@ -1,7 +1,11 @@
-﻿using TBS.Data.DB;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TBS.Data.UnitTests.DB
+namespace TagBites.DB.Tests.DB.Common
 {
     public class DbLinkBufferedQueriesTest : DbTestBase
     {

@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TBS.Utils;
+﻿using TagBites.Utils;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public class SqlClauseUnionEntry : SqlClauseEntry
     {
-        public SqlQuerySelect Select { get; private set; }
-        public SqlClauseUnionEntryType Type { get; private set; }
+        public SqlQuerySelect Select { get; }
+        public SqlClauseUnionEntryType Type { get; }
 
         public SqlClauseUnionEntry(SqlQuerySelect select, SqlClauseUnionEntryType type)
         {

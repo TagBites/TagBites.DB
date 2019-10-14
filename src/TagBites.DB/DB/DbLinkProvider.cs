@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Text;
 using System.Threading;
-using TBS.Data.DB.Configuration;
-using TBS.Sql;
+using TagBites.DB.Configuration;
+using TagBites.Sql;
 
-namespace TBS.Data.DB
+namespace TagBites.DB
 {
     /// <summary>
     /// Thread safe.

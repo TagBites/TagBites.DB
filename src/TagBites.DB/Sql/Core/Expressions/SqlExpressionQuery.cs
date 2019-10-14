@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TBS.Data.DB;
-using TBS.Utils;
+using TagBites.DB;
+using TagBites.Utils;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public class SqlExpressionQuery : SqlExpression
     {

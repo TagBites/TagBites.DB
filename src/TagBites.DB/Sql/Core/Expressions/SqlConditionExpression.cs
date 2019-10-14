@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TBS.Utils;
+﻿using TagBites.Utils;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public sealed class SqlConditionExpression : SqlCondition
     {
@@ -36,7 +32,7 @@ namespace TBS.Sql
                 return false;
             if (ReferenceEquals(this, obj))
                 return true;
-            return obj is SqlConditionExpression && Equals((SqlConditionExpression)obj);
+            return obj is SqlConditionExpression expression && Equals(expression);
         }
         public override int GetHashCode()
         {

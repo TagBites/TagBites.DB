@@ -1,7 +1,11 @@
-﻿using TBS.Data.DB.Configuration;
-using TBS.Sql;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using TagBites.DB.Configuration;
+using TagBites.Sql;
 
-namespace TBS.Data.DB
+namespace TagBites.DB
 {
     public interface IDbLinkProvider
     {

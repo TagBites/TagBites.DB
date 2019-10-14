@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using TBS.Utils;
+using TagBites.Utils;
 
-namespace TBS.Data.DB
+namespace TagBites.DB
 {
     public delegate void QueryObjectResultItemFiller<T>(T item, QueryResultRow rowData);
 

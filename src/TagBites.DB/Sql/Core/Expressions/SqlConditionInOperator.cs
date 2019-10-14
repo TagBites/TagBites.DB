@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using TBS.Utils;
+using TagBites.Utils;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public class SqlConditionInOperator : SqlCondition
     {
@@ -48,16 +46,13 @@ namespace TBS.Sql
                 return false;
             if (ReferenceEquals(this, obj))
                 return true;
-            if (obj.GetType() != this.GetType())
+            if (obj.GetType() != GetType())
                 return false;
             return Equals((SqlConditionInOperator)obj);
         }
         public override int GetHashCode()
         {
-            unchecked
-            {
-                return Operand.GetHashCode() ^ Values.GetHashCode();
-            }
+            return Operand.GetHashCode() ^ Values.GetHashCode();
         }
     }
 }

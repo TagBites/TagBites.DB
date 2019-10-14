@@ -4,9 +4,10 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
-using TBS.Utils;
+using System.Text;
+using TagBites.Utils;
 
-namespace TBS.Data.DB.Entity
+namespace TagBites.DB.Entity
 {
     public class EntityTableInfo
     {

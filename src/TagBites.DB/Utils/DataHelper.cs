@@ -5,9 +5,8 @@ using System.ComponentModel;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
-using TBS.Utils;
 
-namespace TBS
+namespace TagBites.Utils
 {
     internal static class DataHelper
     {
@@ -351,14 +350,14 @@ namespace TBS
 
                                     switch (destinationCode)
                                     {
-                                        case TypeCode.SByte: { SByte r; if (SByte.TryParse(text, out r)) { result = r; return true; } } break;
-                                        case TypeCode.Byte: { Byte r; if (Byte.TryParse(text, out r)) { result = r; return true; } } break;
-                                        case TypeCode.Int16: { Int16 r; if (Int16.TryParse(text, out r)) { result = r; return true; } } break;
-                                        case TypeCode.UInt16: { UInt16 r; if (UInt16.TryParse(text, out r)) { result = r; return true; } } break;
-                                        case TypeCode.Int32: { Int32 r; if (Int32.TryParse(text, out r)) { result = r; return true; } } break;
-                                        case TypeCode.UInt32: { UInt32 r; if (UInt32.TryParse(text, out r)) { result = r; return true; } } break;
-                                        case TypeCode.Int64: { Int64 r; if (Int64.TryParse(text, out r)) { result = r; return true; } } break;
-                                        case TypeCode.UInt64: { UInt64 r; if (UInt64.TryParse(text, out r)) { result = r; return true; } } break;
+                                        case TypeCode.SByte: { SByte r; if (sbyte.TryParse(text, out r)) { result = r; return true; } } break;
+                                        case TypeCode.Byte: { Byte r; if (byte.TryParse(text, out r)) { result = r; return true; } } break;
+                                        case TypeCode.Int16: { Int16 r; if (short.TryParse(text, out r)) { result = r; return true; } } break;
+                                        case TypeCode.UInt16: { UInt16 r; if (ushort.TryParse(text, out r)) { result = r; return true; } } break;
+                                        case TypeCode.Int32: { Int32 r; if (int.TryParse(text, out r)) { result = r; return true; } } break;
+                                        case TypeCode.UInt32: { UInt32 r; if (uint.TryParse(text, out r)) { result = r; return true; } } break;
+                                        case TypeCode.Int64: { Int64 r; if (long.TryParse(text, out r)) { result = r; return true; } } break;
+                                        case TypeCode.UInt64: { UInt64 r; if (ulong.TryParse(text, out r)) { result = r; return true; } } break;
                                     }
                                 }
                             }
@@ -403,7 +402,7 @@ namespace TBS
 
                                 var text = CorrectNumber(value.ToString());
                                 Single r;
-                                if (Single.TryParse(text, out r))
+                                if (float.TryParse(text, out r))
                                 {
                                     result = r;
                                     return true;
@@ -420,7 +419,7 @@ namespace TBS
 
                                 var text = CorrectNumber(value.ToString());
                                 Double r;
-                                if (Double.TryParse(text, out r))
+                                if (double.TryParse(text, out r))
                                 {
                                     result = r;
                                     return true;
@@ -437,7 +436,7 @@ namespace TBS
 
                                 var text = CorrectNumber(value.ToString());
                                 Decimal r;
-                                if (Decimal.TryParse(text, out r))
+                                if (decimal.TryParse(text, out r))
                                 {
                                     result = r;
                                     return true;
@@ -1081,7 +1080,7 @@ namespace TBS
 
         private static void ThrowInvalidCastException(Type sourceType, Type destinationType, Exception innerException)
         {
-            throw new InvalidCastException(String.Format("Invalid cast from {0} to {1}.", sourceType, destinationType), innerException);
+            throw new InvalidCastException(string.Format("Invalid cast from {0} to {1}.", sourceType, destinationType), innerException);
         }
 
         #endregion

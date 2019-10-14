@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TBS.Sql;
-using TBS.Utils;
+using TagBites.Sql;
+using TagBites.Utils;
 
-namespace TBS.Data.DB.Utils
+namespace TagBites.DB.Utils
 {
     public class DbTableChanger
     {

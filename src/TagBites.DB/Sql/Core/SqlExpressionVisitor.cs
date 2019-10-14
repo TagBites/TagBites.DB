@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public abstract class SqlExpressionVisitor : ISqlExpressionVisitor
     {
@@ -17,14 +18,14 @@ namespace TBS.Sql
         public virtual void VisitExpression(SqlColumn expression) => expression.Table.Accept(this);
         public virtual void VisitExpression(SqlExpressionFunctionCall expression)
         {
-            foreach (var item in expression.Operants)
+            foreach (var item in expression.Operands)
                 item.Accept(this);
         }
         public virtual void VisitExpression(SqlExpressionWithAlias expression) => expression.Expression.Accept(this);
         public virtual void VisitExpression(SqlConditionExpression expression) => expression.Value.Accept(this);
         public virtual void VisitExpression(SqlConditionGroupOperator expression)
         {
-            foreach (var item in expression.Operants)
+            foreach (var item in expression.Operands)
                 item.Accept(this);
         }
         public virtual void VisitExpression(SqlConditionBinaryOperator expression)

@@ -1,9 +1,12 @@
-﻿using System.Linq;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
-using TBS.Data.DB;
+using System.Text;
+using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TBS.Data.UnitTests.DB
+namespace TagBites.DB.Tests.DB
 {
     public class QueryObjectResultTest : DbTestBase
     {
@@ -15,10 +18,10 @@ namespace TBS.Data.UnitTests.DB
             {
                 var item = new Item() { Item1 = 1 };
 
-                link.ExecuteNonQuery("CREATE TABLE tmp_item_test ( item1 int, item2 numeric, item3 bool, item4 text)");
-                link.ExecuteNonQuery("INSERT INTO tmp_item_test VALUES ({0}, {1}, {2}, {3})", item.Item1, item.Item2, item.Item3, item.Item4);
+                DbLinkExtensions.ExecuteNonQuery(link, "CREATE TABLE tmp_item_test ( item1 int, item2 numeric, item3 bool, item4 text)");
+                DbLinkExtensions.ExecuteNonQuery(link, "INSERT INTO tmp_item_test VALUES ({0}, {1}, {2}, {3})", item.Item1, item.Item2, item.Item3, item.Item4);
 
-                var itemResultList = link.Execute<Item>(new Query("SELECT item1 AS Item1, item2 AS Item2, item3 AS Item3, item4 AS Item4 FROM tmp_item_test"), new QueryObjectResultPropertyResolver(ResolverMethod));
+                var itemResultList = DbLinkExtensions.Execute<Item>((IDbLink)link, new Query("SELECT item1 AS Item1, item2 AS Item2, item3 AS Item3, item4 AS Item4 FROM tmp_item_test"), new QueryObjectResultPropertyResolver(ResolverMethod));
                 var itemResult = itemResultList.FirstOrDefault();
 
                 Assert.Equal(item.Item1, itemResult.Item1);

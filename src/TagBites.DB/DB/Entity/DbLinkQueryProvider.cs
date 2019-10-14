@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using TBS.Data.DB;
-using TBS.Sql;
+using System.Text;
+using TagBites.Sql;
 
-namespace TBS.DB.Entity
+namespace TagBites.DB.Entity
 {
     public class DbLinkQueryProvider : QueryProvider, IDbLinkEntityQueryProvider
     {

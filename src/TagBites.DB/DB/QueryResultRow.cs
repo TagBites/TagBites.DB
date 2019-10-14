@@ -3,9 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TBS.Utils;
+using TagBites.Utils;
 
-namespace TBS.Data.DB
+namespace TagBites.DB
 {
     public sealed class QueryResultRow : IList<object>
     {
@@ -15,7 +15,9 @@ namespace TBS.Data.DB
         bool ICollection<object>.IsReadOnly => true;
         int ICollection<object>.Count => m_queryDataProvider.ColumnCount;
         public int ColumnCount => m_queryDataProvider.ColumnCount;
-        public int RowIndex { get => m_row;
+        public int RowIndex
+        {
+            get => m_row;
             internal set => m_row = value;
         }
 

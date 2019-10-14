@@ -1,15 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using TBS.Sql;
-using TBS.Utils;
+using TagBites.Utils;
 
-namespace TBS.Sql.SQLite
+namespace TagBites.Sql.Sqlite
 {
-    // ReSharper disable once InconsistentNaming
-    public class SQLiteQueryResolver : SqlQueryResolver
+    public class SqliteQueryResolver : SqlQueryResolver
     {
         public override bool SupportReturningClause => false;
 
@@ -135,9 +129,9 @@ namespace TBS.Sql.SQLite
         {
             if (functionName == nameof(SqlFunction.Substring))
                 return "SUBSTR";
-            else if (String.Equals(functionName, nameof(SqlFunction.TrimStart), StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(functionName, nameof(SqlFunction.TrimStart), StringComparison.OrdinalIgnoreCase))
                 return "LTRIM";
-            else if (String.Equals(functionName, nameof(SqlFunction.TrimEnd), StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(functionName, nameof(SqlFunction.TrimEnd), StringComparison.OrdinalIgnoreCase))
                 return "RTRIM";
 
             return base.GetBuildInFunctionName(functionName);

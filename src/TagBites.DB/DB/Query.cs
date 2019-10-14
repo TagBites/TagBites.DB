@@ -2,15 +2,12 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Globalization;
 using System.Linq;
-using System.Reflection;
 using System.Text;
-using TBS.Collections.ObjectModel;
-using TBS.Sql;
-using TBS.Utils;
+using TagBites.Sql;
+using TagBites.Utils;
 
-namespace TBS.Data.DB
+namespace TagBites.DB
 {
     public class Query : IQuerySource, IEquatable<Query>
     {
@@ -55,12 +52,12 @@ namespace TBS.Data.DB
         public Query(string command, IEnumerable<QueryParameter> parameters)
         {
             Guard.ArgumentNotNullOrWhiteSpace(command, "command");
-            
+
             Command = command;
 
             Parameters = parameters.ToArray();
             if (Parameters.Count > 0)
-                Parameters =  new ReadOnlyCollection<QueryParameter>(Parameters);
+                Parameters = new ReadOnlyCollection<QueryParameter>(Parameters);
         }
 
 
@@ -71,7 +68,7 @@ namespace TBS.Data.DB
             {
                 var arg = Parameters.FirstOrDefault(x => x.Name == name);
                 if (arg == null)
-                    throw new Exception(String.Format("Argument \"{0}\" not found!", name));
+                    throw new Exception(string.Format("Argument \"{0}\" not found!", name));
 
                 return resolver.ToParameterString(arg.Value, true);
             });
@@ -366,7 +363,7 @@ namespace TBS.Data.DB
         }
         public override string ToString()
         {
-            return String.Format("{0} = {1}",
+            return string.Format("{0} = {1}",
                 Name,
                 Value != null ? Value : "null");
         }

@@ -1,12 +1,15 @@
 ﻿using System;
-using TBS.Utils;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using TagBites.Utils;
 
-namespace TBS.Data.DB
+namespace TagBites.DB
 {
     public class DbLinkConnectionLostEventArgs : EventArgs
     {
         public bool Reconnect { get; set; }
-        public int ReconnectAttempts { get; private set; }
+        public int ReconnectAttempts { get; }
 
         internal DbLinkConnectionLostEventArgs(int reconnectAttempts)
         {
@@ -60,7 +63,7 @@ namespace TBS.Data.DB
 
     public class DbLinkContextEventArgs
     {
-        public IDbLinkContext LinkContext { get; private set; }
+        public IDbLinkContext LinkContext { get; }
 
         internal DbLinkContextEventArgs(IDbLinkContext linkContext)
         {

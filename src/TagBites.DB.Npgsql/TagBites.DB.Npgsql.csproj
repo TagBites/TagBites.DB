@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TagBites.DB.PostgreSql\TagBites.DB.PostgreSql.csproj" />
+    <ProjectReference Include="..\TagBites.DB.PostgreSql\TagBites.DB.Postgres.csproj" />
     <ProjectReference Include="..\TagBites.DB\TagBites.DB.csproj" />
   </ItemGroup>
 

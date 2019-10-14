@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TBS.Data.DB.Configuration
+namespace TagBites.DB.Configuration
 {
     public class DbLinkConfiguration
     {

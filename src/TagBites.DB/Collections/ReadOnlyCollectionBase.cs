@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TBS.Collections
+namespace TagBites.Collections
 {
     internal abstract class ReadOnlyCollectionBase<T> : IList<T>
     {

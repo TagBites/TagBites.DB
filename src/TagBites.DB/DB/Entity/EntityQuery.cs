@@ -3,9 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using TBS.Utils;
+using System.Text;
+using TagBites.Utils;
 
-namespace TBS.DB.Entity
+namespace TagBites.DB.Entity
 {
     public class EntityQuery<TSource> : IOrderedQueryable<TSource>
     {

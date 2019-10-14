@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Text;
 using System.Collections.Generic;
 using System.Linq;
-using TBS.Data.DB;
-using TBS.Data.UnitTests.DB;
-using TBS.Sql;
+using System.Text;
+using TagBites.DB.Tests.DB.Core;
+using TagBites.Sql;
 using Xunit;
-using static TBS.Sql.SqlExpression;
+using static TagBites.Sql.SqlExpression;
 
-namespace TBS.Data.UnitTests.Sql
+namespace TagBites.DB.Tests.Sql
 {
     public class SqlQuerySelectTests : DbTestBase
     {

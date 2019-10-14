@@ -1,11 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Transactions;
-using TBS.Data.DB;
-using TBS.Data.DB.Configuration;
+using TagBites.DB.Configuration;
+using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TBS.Data.UnitTests.DB
+namespace TagBites.DB.Tests.DB
 {
     public class DbLinkTest : DbTestBase
     {
@@ -20,17 +22,17 @@ namespace TBS.Data.UnitTests.DB
         {
             using (var link = NpgsqlProvider.CreateLink())
             {
-                var result = link.Execute("SELECT 1 AS a, 2 AS b UNION ALL SELECT 2 AS a, 1 AS b");
+                var result = DbLinkExtensions.Execute(link, "SELECT 1 AS a, 2 AS b UNION ALL SELECT 2 AS a, 1 AS b");
 
                 Assert.Null(link.ExecuteScalar<int?>("SELECT null"));
                 Assert.Equal(0, link.ExecuteScalar<int>("SELECT null"));
                 Assert.Equal(1, link.ExecuteScalar<int>("SELECT 1"));
-                Assert.Equal(1, link.ExecuteScalar<int>("SELECT {0}", 1));
+                Assert.Equal(1, DbLinkExtensions.ExecuteScalar<int>((IDbLink)link, "SELECT {0}", 1));
             }
 
             using (var link = NpgsqlProvider.CreateLink())
             {
-                var result = link.Execute("SELECT 1 AS a, 2 AS b UNION ALL SELECT 2 AS a, 1 AS b");
+                var result = DbLinkExtensions.Execute(link, "SELECT 1 AS a, 2 AS b UNION ALL SELECT 2 AS a, 1 AS b");
                 Assert.Equal(2, result.ColumnCount);
                 Assert.Equal(2, result.RowCount);
                 Assert.Equal(result.GetValue<int>(0, 0), result.GetValue<int>(1, "b"));
@@ -50,7 +52,7 @@ namespace TBS.Data.UnitTests.DB
         {
             using (var link = NpgsqlProvider.CreateLink())
             {
-                var result = link.BatchExecute("SELECT 1; SELECT 2, 3");
+                var result = DbLinkExtensions.BatchExecute(link, "SELECT 1; SELECT 2, 3");
                 Assert.Equal(2, result.Length);
                 Assert.Equal(1, result[0].GetValue<int>(0, 0));
                 Assert.Equal(2, result[1].GetValue<int>(0, 0));
@@ -120,7 +122,7 @@ namespace TBS.Data.UnitTests.DB
                 Assert.Equal(DbLinkTransactionStatus.None, link.TransactionStatus);
                 using (var transaction = link.Begin())
                 {
-                    link.ExecuteNonQuery("SELECT 1");
+                    DbLinkExtensions.ExecuteNonQuery(link, "SELECT 1");
                     Assert.Equal(DbLinkTransactionStatus.Open, link.TransactionStatus);
                 }
 
@@ -129,7 +131,7 @@ namespace TBS.Data.UnitTests.DB
                 {
                     try
                     {
-                        link.ExecuteNonQuery("SELECT a");
+                        DbLinkExtensions.ExecuteNonQuery(link, "SELECT a");
                         Assert.True(false);
                     }
                     catch { }
@@ -146,14 +148,14 @@ namespace TBS.Data.UnitTests.DB
             using (var link = NpgsqlProvider.CreateLink())
             using (var transaction = link.Begin())
             {
-                link.ExecuteNonQuery("SELECT 1");
+                DbLinkExtensions.ExecuteNonQuery(link, "SELECT 1");
 
                 try
                 {
                     using (var link2 = NpgsqlProvider.CreateLink())
                     using (var transaction2 = link2.Begin())
                     {
-                        link.ExecuteNonQuery("SELECT 2");
+                        DbLinkExtensions.ExecuteNonQuery(link, "SELECT 2");
                     }
                 }
                 catch (OperationCanceledException)
@@ -161,7 +163,7 @@ namespace TBS.Data.UnitTests.DB
 
                 try
                 {
-                    link.ExecuteNonQuery("SELECT 3");
+                    DbLinkExtensions.ExecuteNonQuery(link, "SELECT 3");
                     Assert.True(false, "Can not execute command while transaction is in process of rollback!");
                 }
                 catch { }
@@ -191,7 +193,7 @@ namespace TBS.Data.UnitTests.DB
 
                 using (var transaction = link.Begin())
                 {
-                    link.ExecuteNonQuery("SELECT 1");
+                    DbLinkExtensions.ExecuteNonQuery(link, "SELECT 1");
                 }
             }
         }
@@ -218,12 +220,12 @@ namespace TBS.Data.UnitTests.DB
                             using (var ti = linki.Begin())
                             {
                                 if (i == 1)
-                                    linki.ExecuteNonQuery("a");
+                                    DbLinkExtensions.ExecuteNonQuery(linki, "a");
 
                                 if (i >= 1)
                                     Assert.True(false);
 
-                                link.BatchExecute("SELECT 1");
+                                DbLinkExtensions.BatchExecute(link, "SELECT 1");
                                 ti.Commit();
                             }
                         }

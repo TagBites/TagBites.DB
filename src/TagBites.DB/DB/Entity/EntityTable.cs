@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
-using TBS.Sql;
-using TBS.Utils;
+using System.Text;
+using TagBites.Sql;
+using TagBites.Utils;
 
-namespace TBS.Data.DB.Entity
+namespace TagBites.DB.Entity
 {
     public class EntityTable
     {
@@ -38,7 +40,7 @@ namespace TBS.Data.DB.Entity
         {
             var info = EntityTableInfo<T>.Instance;
             if (info == null)
-                throw new NotSupportedException(String.Format("{0} is not entity type.", typeof(T).Name));
+                throw new NotSupportedException(string.Format("{0} is not entity type.", typeof(T).Name));
 
             return info;
         }

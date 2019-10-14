@@ -1,7 +1,9 @@
 ﻿using System;
-using Xunit;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
-namespace TBS.Data.UnitTests.DB.Core
+namespace TagBites.DB.Tests.DB.Core
 {
     /// <summary>
     /// Contains assertion types that are not provided with the standard MSTest assertions.

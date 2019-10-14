@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TBS.Utils;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public class SqlQueryInsertValues : SqlQueryInsertBase
     {

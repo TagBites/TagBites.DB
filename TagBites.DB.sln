@@ -22,9 +22,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TagBites.DB.Tests", "tests\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TagBites.DB.Npgsql", "src\TagBites.DB.Npgsql\TagBites.DB.Npgsql.csproj", "{F5CD7029-EDD9-4D57-9792-6DDE6CF2D3E2}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TagBites.DB.SqLite", "src\TagBites.DB.SqLite\TagBites.DB.SqLite.csproj", "{2EF0AC4C-F108-4CDB-83AE-488E09238126}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TagBites.DB.Sqlite", "src\TagBites.DB.SqLite\TagBites.DB.Sqlite.csproj", "{2EF0AC4C-F108-4CDB-83AE-488E09238126}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TagBites.DB.PostgreSql", "src\TagBites.DB.PostgreSql\TagBites.DB.PostgreSql.csproj", "{8710A285-F269-4F09-B435-D2612DF7522A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TagBites.DB.Postgres", "src\TagBites.DB.PostgreSql\TagBites.DB.Postgres.csproj", "{8710A285-F269-4F09-B435-D2612DF7522A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

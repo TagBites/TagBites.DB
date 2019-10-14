@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Text;
 using System.Transactions;
-using TBS.Resources;
-using TBS.Utils;
+using TagBites.Utils;
 
-namespace TBS.Data.DB
+namespace TagBites.DB
 {
     internal class DbLinkTransactionWithScope : IDbLinkTransaction
     {

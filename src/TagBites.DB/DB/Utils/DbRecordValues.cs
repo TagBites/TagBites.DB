@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TBS.Data.DB.Utils
+namespace TagBites.DB.Utils
 {
     public class DbRecordValues : Dictionary<string, object>
     {
-        internal object Id { get; private set; }
+        internal object Id { get; }
 
         public DbRecordValues()
         { }

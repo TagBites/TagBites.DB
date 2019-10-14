@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using TBS.Utils;
+using System.Linq;
+using System.Text;
+using TagBites.Utils;
 
-namespace TBS.Collections.ObjectModel
+namespace TagBites.Collections
 {
     internal abstract class LazyList<T> : IList<T>, IList
     {
@@ -75,7 +77,7 @@ namespace TBS.Collections.ObjectModel
                 return;
 
             if (!loadInParts)
-                LoadRange(0, IsPrepared ? Count : Int32.MaxValue, true);
+                LoadRange(0, IsPrepared ? Count : int.MaxValue, true);
             else
             {
                 if (!IsPrepared)

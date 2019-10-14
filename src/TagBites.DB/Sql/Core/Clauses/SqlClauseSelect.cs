@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Text;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public class SqlClauseSelect : SqlClauseCollectionBase<SqlExpressionWithAlias>
     {

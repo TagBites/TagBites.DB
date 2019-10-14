@@ -1,5 +1,4 @@
-﻿// ReSharper disable once CheckNamespace
-namespace TBS.Resources
+﻿namespace TagBites.Utils
 {
     internal static class ErrorMessages
     {

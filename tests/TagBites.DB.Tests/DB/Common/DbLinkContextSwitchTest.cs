@@ -1,8 +1,8 @@
 ﻿using System.Threading.Tasks;
-using TBS.Data.DB;
+using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TBS.Data.UnitTests.DB
+namespace TagBites.DB.Tests.DB.Common
 {
     public class DbLinkContextSwitchTest : DbTestBase
     {

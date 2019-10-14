@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TBS.Sql;
+using TagBites.Sql;
 
-namespace TBS.Data.DB
+namespace TagBites.DB
 {
     public interface IQuerySource
     {
