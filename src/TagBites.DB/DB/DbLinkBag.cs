@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 using TBS.Utils;
 
 namespace TBS.Data.DB
 {
     public class DbLinkBag
     {
-        private readonly object m_locker;
-        private IDictionary<string, object> m_cache;
+        private readonly object _locker;
+        private IDictionary<string, object> _cache;
 
         public object this[string name]
         {
@@ -17,34 +14,34 @@ namespace TBS.Data.DB
             {
                 Guard.ArgumentNotNull(name, "name");
 
-                lock (m_locker)
+                lock (_locker)
                 {
-                    if (m_cache == null)
+                    if (_cache == null)
                         return null;
 
-                    return m_cache.TryGetValue(name, out var v) ? v : null;
+                    return _cache.TryGetValue(name, out var v) ? v : null;
                 }
             }
             set
             {
                 Guard.ArgumentNotNull(name, "name");
 
-                lock (m_locker)
+                lock (_locker)
                 {
-                    if (m_cache == null)
-                        m_cache = new Dictionary<string, object>();
+                    if (_cache == null)
+                        _cache = new Dictionary<string, object>();
 
                     if (value == null)
-                        m_cache.Remove(name);
+                        _cache.Remove(name);
                     else
-                        m_cache[name] = value;
+                        _cache[name] = value;
                 }
             }
         }
 
         internal DbLinkBag(object locker)
         {
-            m_locker = locker;
+            _locker = locker;
         }
     }
 }

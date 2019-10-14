@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace TBS.Data.DB.PostgreSql
 {
@@ -62,35 +61,6 @@ namespace TBS.Data.DB.PostgreSql
 
             LastExecuteDateTime = DateTime.Now;
             return _context.FetchCursor(this, index, count);
-        }
-
-        public QueryObjectResult<T> Execute<T>(int index, int count)
-        {
-            return new QueryObjectResult<T>(Execute(index, count));
-        }
-        public QueryObjectResult<T> Execute<T>(int index, int count, QueryObjectResultPropertyResolver customPropertyResolver)
-        {
-            return new QueryObjectResult<T>(Execute(index, count), customPropertyResolver);
-        }
-
-        public IEnumerable<T> Iterate<T>()
-        {
-            return Iterate<T>(500, null);
-        }
-        public IEnumerable<T> Iterate<T>(int pageSize)
-        {
-            return Iterate<T>(pageSize, null);
-        }
-        public IEnumerable<T> Iterate<T>(int pageSize, QueryObjectResultPropertyResolver customPropertyResolver)
-        {
-            for (var i = 0; i < RecordCount; i += pageSize)
-            {
-                var result = Execute(i, pageSize);
-                var objectResult = new QueryObjectResult<T>(result, customPropertyResolver);
-
-                foreach (var item in objectResult)
-                    yield return item;
-            }
         }
 
         private void CheckDispose()
