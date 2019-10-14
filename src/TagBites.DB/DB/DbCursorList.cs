@@ -1,17 +1,13 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using TBS.Collections.ObjectModel;
 using TBS.Utils;
 
 namespace TBS.Data.DB
 {
-    public class DbCursorList<T> : LazyList<T>, IDisposable
+    internal class DbCursorList<T> : LazyList<T>, IDisposable
         where T : class
     {
-        private readonly bool m_ownCursor;
+        private readonly bool _ownCursor;
 
         public IDbCursor Cursor { get; private set; }
 
@@ -20,13 +16,9 @@ namespace TBS.Data.DB
         {
             Guard.ArgumentNotNull(cursor, nameof(cursor));
             Cursor = cursor;
-            m_ownCursor = ownCursor;
+            _ownCursor = ownCursor;
 
             LoadWindowSize = cursor.Owner.LinkProvider.Configuration.DefaultWindowSize;
-        }
-        ~DbCursorList()
-        {
-            Dispose();
         }
 
 
@@ -53,7 +45,7 @@ namespace TBS.Data.DB
             {
                 try
                 {
-                    if (m_ownCursor)
+                    if (_ownCursor)
                         Cursor.Dispose();
                 }
                 finally { Cursor = null; }

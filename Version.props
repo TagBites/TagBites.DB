@@ -3,6 +3,6 @@
     <AssemblyVersion>1.0.0</AssemblyVersion>
     <VersionPrefix>1.0.0</VersionPrefix>
     <VersionSuffix>beta1</VersionSuffix>
-    <InformationalVersion>1.0.0-beta1 2018-09-03</InformationalVersion>
+    <InformationalVersion>1.0.0-beta1 2019-10-15</InformationalVersion>
   </PropertyGroup>
 </Project>

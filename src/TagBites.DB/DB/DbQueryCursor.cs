@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
 using TBS.Utils;
 
 namespace TBS.Data.DB
@@ -62,35 +58,6 @@ namespace TBS.Data.DB
 
             LastExecuteDateTime = DateTime.Now;
             return m_cursorManager.ExecuteInternal(this, index, count);
-        }
-
-        public QueryObjectResult<T> Execute<T>(int index, int count)
-        {
-            return new QueryObjectResult<T>(Execute(index, count));
-        }
-        public QueryObjectResult<T> Execute<T>(int index, int count, QueryObjectResultPropertyResolver customPropertyResolver)
-        {
-            return new QueryObjectResult<T>(Execute(index, count), customPropertyResolver);
-        }
-
-        public IEnumerable<T> Iterate<T>()
-        {
-            return Iterate<T>(50, null);
-        }
-        public IEnumerable<T> Iterate<T>(int pageSize)
-        {
-            return Iterate<T>(pageSize, null);
-        }
-        public IEnumerable<T> Iterate<T>(int pageSize, QueryObjectResultPropertyResolver customPropertyResolver)
-        {
-            for (int i = 0; i < RecordCount; i += pageSize)
-            {
-                var result = Execute(i, pageSize);
-                var objectResult = new QueryObjectResult<T>(result, customPropertyResolver);
-
-                foreach (var item in objectResult)
-                    yield return item;
-            }
         }
 
         private void CheckDispose()

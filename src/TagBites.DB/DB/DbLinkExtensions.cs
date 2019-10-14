@@ -237,7 +237,7 @@ namespace TBS.Data.DB
 
         public static int Insert<T>(this IDbLink link, T entity) where T : class
         {
-            return Insert(link, (IEnumerable<T>)new[] { entity },  null);
+            return Insert(link, (IEnumerable<T>)new[] { entity }, null);
         }
         public static int Insert<T>(this IDbLink link, T entity, IList<string> properties, bool excludeProperties = false) where T : class
         {
@@ -245,7 +245,7 @@ namespace TBS.Data.DB
         }
         public static int Insert<T>(this IDbLink link, IEnumerable<T> entities) where T : class
         {
-            return Insert(link, entities,  null);
+            return Insert(link, entities, null);
         }
         public static int Insert<T>(this IDbLink link, IEnumerable<T> entities, IList<string> properties, bool excludeProperties = false) where T : class
         {
@@ -261,15 +261,15 @@ namespace TBS.Data.DB
 
         public static T InsertReturning<T>(this IDbLink link, T entity) where T : class
         {
-            return InsertReturning(link, (IEnumerable<T>)new[] { entity },  null).FirstOrDefault();
+            return InsertReturning(link, (IEnumerable<T>)new[] { entity }, null).FirstOrDefault();
         }
         public static T InsertReturning<T>(this IDbLink link, T entity, IList<string> properties, bool excludeProperties = false) where T : class
         {
-            return InsertReturning(link, (IEnumerable<T>)new[] { entity },  properties, excludeProperties).FirstOrDefault();
+            return InsertReturning(link, (IEnumerable<T>)new[] { entity }, properties, excludeProperties).FirstOrDefault();
         }
         public static IList<T> InsertReturning<T>(this IDbLink link, IEnumerable<T> entities) where T : class
         {
-            return InsertReturning(link, entities,  null);
+            return InsertReturning(link, entities, null);
         }
         public static IList<T> InsertReturning<T>(this IDbLink link, IEnumerable<T> entities, IList<string> properties, bool excludeProperties = false) where T : class
         {
@@ -285,7 +285,7 @@ namespace TBS.Data.DB
 
         public static int Update<T>(this IDbLink link, T entity) where T : class
         {
-            return Update(link, (IEnumerable<T>)new[] { entity },  null);
+            return Update(link, (IEnumerable<T>)new[] { entity }, null);
         }
         public static int Update<T>(this IDbLink link, T entity, IList<string> properties, bool excludeProperties = false) where T : class
         {
@@ -293,7 +293,7 @@ namespace TBS.Data.DB
         }
         public static int Update<T>(this IDbLink link, IEnumerable<T> entities) where T : class
         {
-            return Update(link, entities,  null);
+            return Update(link, entities, null);
         }
         public static int Update<T>(this IDbLink link, IEnumerable<T> entities, IList<string> properties, bool excludeProperties = false) where T : class
         {
@@ -420,7 +420,7 @@ namespace TBS.Data.DB
             var q = EntityQueryBuilder.CreateDeleteByKeyQuery<T>(recordsKeys);
             var result = link.ExecuteNonQuery(q);
 
-           return result;
+            return result;
         }
 
         private static IList<T> GetItems<T>(IEnumerable<T> entities) => entities as IList<T> ?? entities.ToArray();

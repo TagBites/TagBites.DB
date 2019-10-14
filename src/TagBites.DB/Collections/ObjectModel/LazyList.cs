@@ -1,43 +1,35 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TBS.Utils;
 
 namespace TBS.Collections.ObjectModel
 {
-    public interface ILazyList : IList
+    internal abstract class LazyList<T> : IList<T>, IList
     {
-        void LoadAll(bool loadInParts);
-    }
-
-    public abstract class LazyList<T> : IList<T>, ILazyList
-    {
-        private T[] m_list;
-        private int m_loadedCount;
-        private int m_windowSize = 1;
+        private T[] _list;
+        private int _loadedCount;
+        private int _windowSize = 1;
 
         public int Count
         {
             get
             {
                 Prepare();
-                return m_list.Length;
+                return _list.Length;
             }
         }
         public int LoadWindowSize
         {
-            get => m_windowSize;
+            get => _windowSize;
             set
             {
                 Guard.ArgumentPositive(value, nameof(value));
-                m_windowSize = value;
+                _windowSize = value;
             }
         }
-        public bool IsLoaded => m_list != null && m_loadedCount == m_list.Length;
-        public bool IsPrepared => m_list != null;
+        public bool IsLoaded => _list != null && _loadedCount == _list.Length;
+        public bool IsPrepared => _list != null;
 
         public T this[int index]
         {
@@ -46,16 +38,16 @@ namespace TBS.Collections.ObjectModel
                 if (index < 0)
                     throw new IndexOutOfRangeException();
 
-                if (m_list == null)
-                    LoadRange(Math.Max(0, index - m_windowSize / 2), m_windowSize, false);
+                if (_list == null)
+                    LoadRange(Math.Max(0, index - _windowSize / 2), _windowSize, false);
 
                 if (index >= Count)
                     throw new IndexOutOfRangeException();
 
-                if (m_list[index] == null)
-                    LoadRange(Math.Max(0, index - m_windowSize / 2), Math.Min(m_windowSize, m_list.Length - Math.Max(0, index - m_windowSize / 2)));
+                if (_list[index] == null)
+                    LoadRange(Math.Max(0, index - _windowSize / 2), Math.Min(_windowSize, _list.Length - Math.Max(0, index - _windowSize / 2)));
 
-                return m_list[index];
+                return _list[index];
             }
         }
 
@@ -63,17 +55,17 @@ namespace TBS.Collections.ObjectModel
         { }
         protected LazyList(int count)
         {
-            m_list = new T[count];
+            _list = new T[count];
         }
 
 
         public void Prepare()
         {
-            if (m_list == null)
+            if (_list == null)
             {
-                LoadCore(ref m_list);
+                LoadCore(ref _list);
 
-                if (m_list == null)
+                if (_list == null)
                     throw new Exception("LoadCore return with null collection.");
             }
         }
@@ -87,11 +79,11 @@ namespace TBS.Collections.ObjectModel
             else
             {
                 if (!IsPrepared)
-                    LoadRange(0, m_windowSize, false);
+                    LoadRange(0, _windowSize, false);
 
                 var count = Count;
-                for (var i = m_windowSize; i < count; i += m_windowSize)
-                    LoadRange(i, Math.Min(m_windowSize, count - i));
+                for (var i = _windowSize; i < count; i += _windowSize)
+                    LoadRange(i, Math.Min(_windowSize, count - i));
             }
         }
         public void LoadRange(int index, int count) => LoadRange(index, count, false);
@@ -102,15 +94,15 @@ namespace TBS.Collections.ObjectModel
                 Guard.ArgumentNonNegative(index, nameof(index));
                 Guard.ArgumentPositive(count, nameof(count));
 
-                m_loadedCount = LoadCore(ref m_list, index, count);
+                _loadedCount = LoadCore(ref _list, index, count);
 
-                if (m_list == null)
+                if (_list == null)
                     throw new Exception("LoadCore return with null collection.");
 
-                if (m_loadedCount == m_list.Length)
+                if (_loadedCount == _list.Length)
                     OnLoaded();
 
-                if (index + count > m_list.Length && !ignoreIndexOutOfRange)
+                if (index + count > _list.Length && !ignoreIndexOutOfRange)
                     throw new IndexOutOfRangeException();
             }
             else
@@ -141,13 +133,13 @@ namespace TBS.Collections.ObjectModel
                 var to = index + count - 1;
 
                 while (from <= to)
-                    if (m_list[from] == null)
+                    if (_list[from] == null)
                         break;
                     else
                         ++from;
 
                 while (to > from)
-                    if (m_list[to] == null)
+                    if (_list[to] == null)
                         break;
                     else
                         --to;
@@ -156,26 +148,26 @@ namespace TBS.Collections.ObjectModel
                     return;
 
                 // Load range
-                var old = m_list;
-                var loaded = LoadCore(ref m_list, from, to - from + 1);
+                var old = _list;
+                var loaded = LoadCore(ref _list, from, to - from + 1);
 
-                if (old != m_list)
-                    m_loadedCount = loaded;
+                if (old != _list)
+                    _loadedCount = loaded;
                 else
-                    m_loadedCount += loaded;
+                    _loadedCount += loaded;
 
-                if (m_loadedCount == m_list.Length)
+                if (_loadedCount == _list.Length)
                     OnLoaded();
             }
         }
 
-        protected virtual int LoadCore(ref T[] collection) => LoadCore(ref collection, 0, m_windowSize);
+        protected virtual int LoadCore(ref T[] collection) => LoadCore(ref collection, 0, _windowSize);
         protected abstract int LoadCore(ref T[] collection, int index, int count);
         protected virtual void OnLoaded() { }
         protected void Reset()
         {
-            m_list = null;
-            m_loadedCount = 0;
+            _list = null;
+            _loadedCount = 0;
         }
 
         public bool Contains(T item)
