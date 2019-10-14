@@ -213,7 +213,7 @@ namespace TagBites.Utils
 
         public static bool SequenceEqual<T>(IEnumerable<T> first, IEnumerable<T> second)
         {
-            if (first == second)
+            if (ReferenceEquals(first, second))
                 return true;
             if (first == null)
                 return !second.Any();
@@ -228,7 +228,7 @@ namespace TagBites.Utils
         }
         public static bool SequenceStartsWith<T>(IEnumerable<T> first, IEnumerable<T> second, IEqualityComparer<T> comparer)
         {
-            if (first == second)
+            if (ReferenceEquals(first, second))
                 return true;
             if (first == null)
                 return !second.Any();

@@ -14,8 +14,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\TagBites.DB.Npgsql\TagBites.DB.Npgsql.csproj" />
-    <ProjectReference Include="..\..\src\TagBites.DB.PostgreSql\TagBites.DB.Postgres.csproj" />
-    <ProjectReference Include="..\..\src\TagBites.DB.SqLite\TagBites.DB.Sqlite.csproj" />
+    <ProjectReference Include="..\..\src\TagBites.DB.Postgres\TagBites.DB.Postgres.csproj" />
+    <ProjectReference Include="..\..\src\TagBites.DB.Sqlite\TagBites.DB.Sqlite.csproj" />
     <ProjectReference Include="..\..\src\TagBites.DB\TagBites.DB.csproj" />
   </ItemGroup>
 
