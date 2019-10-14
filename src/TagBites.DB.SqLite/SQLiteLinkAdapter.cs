@@ -1,14 +1,17 @@
-﻿using System.Data.Common;
+﻿using System;
+using System.Collections.Generic;
+using System.Data.Common;
 using System.Data.SQLite;
-using TBS.Sql;
-using TBS.Sql.SQLite;
+using System.Linq;
+using System.Text;
+using TagBites.Sql;
+using TagBites.Sql.Sqlite;
 
-namespace TBS.Data.DB.SQLite
+namespace TagBites.DB.SqLite
 {
-    // ReSharper disable once InconsistentNaming
-    public class SQLiteLinkAdapter : DbLinkAdapter
+    public class SqliteLinkAdapter : DbLinkAdapter
     {
-        public override SqlQueryResolver QueryResolver { get; } = new SQLiteQueryResolver();
+        public override SqlQueryResolver QueryResolver { get; } = new SqliteQueryResolver();
         public override int DefaultPort => 0;
 
 

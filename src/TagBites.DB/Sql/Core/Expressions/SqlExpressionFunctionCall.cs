@@ -1,22 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TBS.Utils;
+﻿using System.Collections.Generic;
+using TagBites.Utils;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public class SqlExpressionFunctionCall : SqlExpression
     {
         public string FunctionName { get; }
-        public IList<SqlExpression> Operants { get; }
+        public IList<SqlExpression> Operands { get; }
 
         public SqlExpressionFunctionCall(string functionName)
         {
             Guard.ArgumentNotNullOrEmpty(functionName, nameof(functionName));
 
             FunctionName = functionName;
-            Operants = EmptyExpressionArray;
+            Operands = EmptyExpressionArray;
         }
         public SqlExpressionFunctionCall(string functionName, IList<SqlExpression> operands)
         {
@@ -24,7 +21,7 @@ namespace TBS.Sql
             Guard.ArgumentNotNullWithNotNullItems(operands, nameof(operands));
 
             FunctionName = functionName;
-            Operants = operands;
+            Operands = operands;
         }
 
 

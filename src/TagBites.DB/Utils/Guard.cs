@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
 
-namespace TBS.Utils
+namespace TagBites.Utils
 {
     [DebuggerStepThrough]
     internal static class Guard
@@ -21,32 +21,32 @@ namespace TBS.Utils
         public static void ArgumentIsEnumValue<T>(T value, string name) where T : struct
         {
             if (!Enum.IsDefined(typeof(T), value))
-                throw new ArgumentOutOfRangeException(name, String.Format("Argument {0} is out of enum {1} range.", name, typeof(T).Name));
+                throw new ArgumentOutOfRangeException(name, string.Format("Argument {0} is out of enum {1} range.", name, typeof(T).Name));
         }
 
         public static void ArgumentIsType(object value, string name, Type type)
         {
             if (value == null || !type.GetTypeInfo().IsAssignableFrom(value.GetType().GetTypeInfo()))
-                throw new ArgumentException(String.Format("Argument is not type of {0}.", type.Name), name);
+                throw new ArgumentException(string.Format("Argument is not type of {0}.", type.Name), name);
         }
         public static void ArgumentIsType<T>(object value, string name)
         {
             if (!(value is T))
-                throw new ArgumentException(String.Format("Argument is not type of {0}.", typeof(T).Name), name);
+                throw new ArgumentException(string.Format("Argument is not type of {0}.", typeof(T).Name), name);
         }
         public static void ArgumentIsEnumType(object value, string name)
         {
             if (value == null)
                 throw new ArgumentNullException(name);
             if (!value.GetType().GetTypeInfo().IsEnum)
-                throw new ArgumentException(String.Format("Argument {0} is not enum type.", value.GetType().Name));
+                throw new ArgumentException(string.Format("Argument {0} is not enum type.", value.GetType().Name));
         }
         public static void ArgumentIsEnumType(Type value, string name)
         {
             if (value == null)
                 throw new ArgumentNullException(name);
             if (!value.GetTypeInfo().IsEnum)
-                throw new ArgumentException(String.Format("Argument {0} is not enum type.", value.Name));
+                throw new ArgumentException(string.Format("Argument {0} is not enum type.", value.Name));
         }
 
         public static void ArgumentNonNegative(int value, string name)
@@ -109,27 +109,27 @@ namespace TBS.Utils
         public static void ArgumentInRange(int value, string name, int from, int to)
         {
             if (value < from || value > to)
-                throw new ArgumentOutOfRangeException(name, String.Format("Argument {0} is out of range [{1} ... {2}].", value, from, to));
+                throw new ArgumentOutOfRangeException(name, string.Format("Argument {0} is out of range [{1} ... {2}].", value, from, to));
         }
         public static void ArgumentInRange(long value, string name, long from, long to)
         {
             if (value < from || value > to)
-                throw new ArgumentOutOfRangeException(name, String.Format("Argument {0} is out of range [{1} ... {2}].", value, from, to));
+                throw new ArgumentOutOfRangeException(name, string.Format("Argument {0} is out of range [{1} ... {2}].", value, from, to));
         }
         public static void ArgumentInRange(float value, string name, float from, float to)
         {
             if (value < from || value > to)
-                throw new ArgumentOutOfRangeException(name, String.Format("Argument {0} is out of range [{1} ... {2}].", value, from, to));
+                throw new ArgumentOutOfRangeException(name, string.Format("Argument {0} is out of range [{1} ... {2}].", value, from, to));
         }
         public static void ArgumentInRange(double value, string name, double from, double to)
         {
             if (value < from || value > to)
-                throw new ArgumentOutOfRangeException(name, String.Format("Argument {0} is out of range [{1} ... {2}].", value, from, to));
+                throw new ArgumentOutOfRangeException(name, string.Format("Argument {0} is out of range [{1} ... {2}].", value, from, to));
         }
         public static void ArgumentInRange(decimal value, string name, decimal from, decimal to)
         {
             if (value < from || value > to)
-                throw new ArgumentOutOfRangeException(name, String.Format("Argument {0} is out of range [{1} ... {2}].", value, from, to));
+                throw new ArgumentOutOfRangeException(name, string.Format("Argument {0} is out of range [{1} ... {2}].", value, from, to));
         }
 
         public static void ArgumentIndexInRange(int value, string name, int rangeLength, int startIndex = 0)
@@ -140,7 +140,7 @@ namespace TBS.Utils
                 if (rangeLength == 0)
                     throw new ArgumentOutOfRangeException(name, "Range length is 0.");
                 else
-                    throw new ArgumentOutOfRangeException(name, String.Format("Index={0} is out of range [{1} ... {2}].", value, startIndex, startIndex + rangeLength));
+                    throw new ArgumentOutOfRangeException(name, string.Format("Index={0} is out of range [{1} ... {2}].", value, startIndex, startIndex + rangeLength));
         }
         public static void ArgumentIndexInRange(long value, string name, long rangeLength, long startIndex = 0)
         {
@@ -150,7 +150,7 @@ namespace TBS.Utils
                 if (rangeLength == 0)
                     throw new ArgumentOutOfRangeException(name, "Range length is 0.");
                 else
-                    throw new ArgumentOutOfRangeException(name, String.Format("Index={0} is out of range [{1} ... {2}].", value, startIndex, startIndex + rangeLength));
+                    throw new ArgumentOutOfRangeException(name, string.Format("Index={0} is out of range [{1} ... {2}].", value, startIndex, startIndex + rangeLength));
         }
 
         public static void ArgumentNotNull<T>(T value, string name)
@@ -212,7 +212,7 @@ namespace TBS.Utils
             var any = false;
 
             foreach (var item in value)
-                if (String.IsNullOrEmpty(item))
+                if (string.IsNullOrEmpty(item))
                     ThrowArgumentException(name, value);
                 else
                     any = true;
@@ -235,7 +235,7 @@ namespace TBS.Utils
             ArgumentNotNull(value, name);
 
             foreach (var item in value)
-                if (String.IsNullOrEmpty(item))
+                if (string.IsNullOrEmpty(item))
                     ThrowArgumentException(name, value);
         }
 
@@ -254,7 +254,7 @@ namespace TBS.Utils
 
         public static void ThrowNotSupportedArgumentValue(object value, string name)
         {
-            throw new ArgumentException(String.Format("'{0}' is not supported value for argument '{1}'.", value ?? String.Empty, name));
+            throw new ArgumentException(string.Format("'{0}' is not supported value for argument '{1}'.", value ?? string.Empty, name));
         }
 
         private static class Helpers<T>

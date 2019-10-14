@@ -3,12 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using TBS.Data.DB.Schema;
-using TBS.DB.Entity;
-using TBS.Sql;
-using TBS.Utils;
+using System.Text;
+using TagBites.DB.Entity;
+using TagBites.Sql;
+using TagBites.Utils;
 
-namespace TBS.Data.DB
+namespace TagBites.DB
 {
     public static class DbLinkExtensions
     {

@@ -1,12 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.Common;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
-using TBS.Data.DB;
-using TBS.Data.DB.Configuration;
+using TagBites.DB.Configuration;
+using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TBS.Data.UnitTests.DB
+namespace TagBites.DB.Tests.DB.Common
 {
     public class DbLinkWithTransactionScope : DbTestBase
     {

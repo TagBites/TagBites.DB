@@ -1,7 +1,11 @@
-﻿using TBS.Data.DB;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TBS.Data.UnitTests.DB.SQLite
+namespace TagBites.DB.Tests.DB.SQLite
 {
     public class DbQueryCursorTests : DbTestBase
     {
@@ -14,11 +18,11 @@ namespace TBS.Data.UnitTests.DB.SQLite
         [Fact]
         public void CursorTest()
         {
-            if (!SQLiteProvider.IsCursorSupported)
+            if (!SqliteProvider.IsCursorSupported)
                 return;
 
             int openCount = 0;
-            SQLiteProvider.ContextCreated += (sender, args) =>
+            SqliteProvider.ContextCreated += (sender, args) =>
             {
                 args.LinkContext.ConnectionOpen += (s2, e2) =>
                 {
@@ -28,7 +32,7 @@ namespace TBS.Data.UnitTests.DB.SQLite
 
             var q = new Query("SELECT 1 UNION SELECT 2");
 
-            using (var cursorManager = SQLiteProvider.CreateCursorManager())
+            using (var cursorManager = SqliteProvider.CreateCursorManager())
             {
                 Assert.Equal(0, cursorManager.CursorCount);
 
@@ -48,24 +52,24 @@ namespace TBS.Data.UnitTests.DB.SQLite
                     }
             }
 
-            Assert.Equal(SQLiteProvider.UsePooling ? 1 : 2, openCount);
+            Assert.Equal(SqliteProvider.UsePooling ? 1 : 2, openCount);
         }
 
         [Fact]
         public void IteratorTest()
         {
-            if (!SQLiteProvider.IsCursorSupported)
+            if (!SqliteProvider.IsCursorSupported)
                 return;
 
             var q = new Query("WITH RECURSIVE t(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM t) SELECT n AS Number, 'This is text.' AS Text FROM t LIMIT 100");
 
-            using (var cursorManager = SQLiteProvider.CreateCursorManager())
+            using (var cursorManager = SqliteProvider.CreateCursorManager())
             using (var cursor = cursorManager.CreateCursor(q))
             {
                 Assert.Equal(100, cursor.RecordCount);
 
-                int i = 0;
-                foreach (var item in cursor.Iterate<Model>())
+                var i = 0;
+                foreach (var item in cursor.AsList<Model>())
                 {
                     Assert.Equal(item.Number, ++i);
                     Assert.Equal("This is text.", item.Text);

@@ -3,12 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using TBS.Data.DB;
-using TBS.Data.DB.Entity;
-using TBS.Sql;
-using TBS.Utils;
+using System.Text;
+using TagBites.Sql;
+using TagBites.Utils;
 
-namespace TBS.DB.Entity
+namespace TagBites.DB.Entity
 {
     internal class QueryTranslatorLocalExecutionInfo
     {

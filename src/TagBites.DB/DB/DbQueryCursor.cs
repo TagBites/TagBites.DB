@@ -1,16 +1,19 @@
 ﻿using System;
-using TBS.Utils;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using TagBites.Utils;
 
-namespace TBS.Data.DB
+namespace TagBites.DB
 {
     public class DbQueryCursor : IDbCursor
     {
         private DbQueryCursorManager m_cursorManager;
 
         public IDbCursorOwner Owner => m_cursorManager;
-        public DateTime CreateDateTime { get; private set; }
+        public DateTime CreateDateTime { get; }
         public DateTime LastExecuteDateTime { get; private set; }
-        public Query Query { get; private set; }
+        public Query Query { get; }
         public string Name { get; }
         public int RecordCount { get; }
         public int Position { get; internal set; }

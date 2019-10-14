@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TBS.Data.DB;
+using TagBites.DB;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public class SqlQueryBuilder
     {
@@ -51,7 +51,7 @@ namespace TBS.Sql
                     return;
                 }
 
-            var name = TBS.Data.DB.Query.ParameterPrefix + (m_parameters.Count + 1);
+            var name = DB.Query.ParameterPrefix + (m_parameters.Count + 1);
             m_parameters.Add(new QueryParameter(name, value));
             m_buffor.Append(name);
         }

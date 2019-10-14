@@ -1,16 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TBS.Utils;
+using TagBites.Utils;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public class SqlClauseWithEntry : SqlClauseEntry
     {
-        public string Name { get; private set; }
-        public string[] Columns { get; private set; }
-        public object Query { get; private set; }
+        public string Name { get; }
+        public string[] Columns { get; }
+        public object Query { get; }
 
         public SqlClauseUnionEntryType RecursiveUnionType { get; private set; }
         public object RecursiveQuery { get; private set; }

@@ -1,8 +1,12 @@
-﻿using System.ComponentModel;
-using TBS.Sql;
-using TBS.Sql.PostgreSql;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Text;
+using TagBites.Sql;
+using TagBites.Sql.Postgres;
 
-namespace TBS.Data.DB.PostgreSql
+namespace TagBites.DB.Postgres
 {
     [EditorBrowsable(EditorBrowsableState.Advanced)]
     public abstract class PgSqlLinkAdapter : DbLinkAdapter
@@ -11,6 +15,6 @@ namespace TBS.Data.DB.PostgreSql
         public override int DefaultPort => 5432;
 
 
-        protected internal override DbLink CreateDbLink() => new PgSqlLink();
+        protected override DbLink CreateDbLink() => new PgSqlLink();
     }
 }

@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
-namespace TBS.Data.DB.PostgreSql
+namespace TagBites.DB.Postgres
 {
     public sealed class PgSqlCursorManager : IDbCursorManager
     {

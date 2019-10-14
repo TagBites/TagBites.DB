@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TBS.Collections;
-using TBS.Utils;
+﻿using System.Collections.Generic;
+using TagBites.Utils;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public abstract class SqlClauseCollectionBase<T> : IList<T>, ISqlElement
         where T : class
@@ -25,32 +21,32 @@ namespace TBS.Sql
 
         #region IList<T>
 
-        private readonly List<T> m_list = new List<T>();
+        private readonly List<T> _list = new List<T>();
 
-        public int Count => m_list.Count;
+        public int Count => _list.Count;
 
         public T this[int index]
         {
-            get => m_list[index];
+            get => _list[index];
             set
             {
                 Guard.ArgumentNotNull(value, nameof(value));
-                m_list[index] = value;
+                _list[index] = value;
             }
         }
 
 
         public int IndexOf(T item)
         {
-            return m_list.IndexOf(item);
+            return _list.IndexOf(item);
         }
         public bool Contains(T item)
         {
-            return m_list.Contains(item);
+            return _list.Contains(item);
         }
         public void CopyTo(T[] array, int arrayIndex)
         {
-            m_list.CopyTo(array, arrayIndex);
+            _list.CopyTo(array, arrayIndex);
         }
 
         public void AddRange(params T[] range)
@@ -68,30 +64,30 @@ namespace TBS.Sql
         public T Add(T item)
         {
             Guard.ArgumentNotNull(item, nameof(item));
-            m_list.Add(item);
+            _list.Add(item);
             return item;
         }
         public void Insert(int index, T item)
         {
             Guard.ArgumentNotNull(item, nameof(item));
-            m_list.Insert(index, item);
+            _list.Insert(index, item);
         }
         public bool Remove(T item)
         {
-            return m_list.Remove(item);
+            return _list.Remove(item);
         }
         public void RemoveAt(int index)
         {
-            m_list.RemoveAt(index);
+            _list.RemoveAt(index);
         }
         public void Clear()
         {
-            m_list.Clear();
+            _list.Clear();
         }
 
         public IEnumerator<T> GetEnumerator()
         {
-            return m_list.GetEnumerator();
+            return _list.GetEnumerator();
         }
 
         bool ICollection<T>.IsReadOnly => false;
@@ -99,7 +95,7 @@ namespace TBS.Sql
         void ICollection<T>.Add(T item)
         {
             Guard.ArgumentNotNull(item, nameof(item));
-            m_list.Add(item);
+            _list.Add(item);
         }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
         {

@@ -1,6 +1,7 @@
 ﻿using Npgsql;
+using TagBites.DB.Postgres;
 
-namespace TBS.Data.DB.PostgreSql
+namespace TagBites.DB.Npgsql
 {
     public class NpgsqlLinkProvider : PgSqlLinkProvider
     {

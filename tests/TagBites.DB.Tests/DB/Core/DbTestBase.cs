@@ -1,15 +1,18 @@
-﻿using TBS.Data.DB;
-using TBS.Data.DB.PostgreSql;
-using TBS.Data.DB.SQLite;
-using TBS.Sql;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using TagBites.DB.Postgres;
+using TagBites.DB.SqLite;
+using TagBites.Sql;
 
-namespace TBS.Data.UnitTests.DB
+namespace TagBites.DB.Tests.DB.Core
 {
     public class DbTestBase
     {
         private readonly object m_locker = new object();
         private PgSqlLinkProvider m_npgsqlProvider;
-        private SQLiteLinkProvider m_sqLiteProvider;
+        private SqliteLinkProvider _mSqliteProvider;
 
         public PgSqlLinkProvider NpgsqlProvider
         {
@@ -28,17 +31,17 @@ namespace TBS.Data.UnitTests.DB
                 }
             }
         }
-        public SQLiteLinkProvider SQLiteProvider
+        public SqliteLinkProvider SqliteProvider
         {
             get
             {
                 lock (m_locker)
                 {
-                    if (m_sqLiteProvider == null)
-                        m_sqLiteProvider = DbManager.CreateSQLiteProvider();
+                    if (_mSqliteProvider == null)
+                        _mSqliteProvider = DbManager.CreateSQLiteProvider();
 
-                    SqlQueryResolver.DefaultToStringResolver = m_sqLiteProvider.QueryResolver;
-                    return m_sqLiteProvider;
+                    SqlQueryResolver.DefaultToStringResolver = _mSqliteProvider.QueryResolver;
+                    return _mSqliteProvider;
                 }
             }
         }

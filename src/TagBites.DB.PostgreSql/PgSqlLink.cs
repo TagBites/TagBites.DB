@@ -1,4 +1,9 @@
-﻿namespace TBS.Data.DB.PostgreSql
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+
+namespace TagBites.DB.Postgres
 {
     public class PgSqlLink : DbLink
     {

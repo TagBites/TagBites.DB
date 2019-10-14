@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
-using TBS.Data.DB;
-using TBS.Data.DB.PostgreSql;
+using TagBites.DB.Postgres;
+using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TBS.Data.UnitTests.DB
+namespace TagBites.DB.Tests.DB.PostgreSql
 {
     public class DbLinkCursorTest : DbTestBase
     {
@@ -121,8 +124,8 @@ namespace TBS.Data.UnitTests.DB
             {
                 Assert.Equal(100, cursor.RecordCount);
 
-                int i = 0;
-                foreach (var item in cursor.Iterate<Model>())
+                var i = 0;
+                foreach (var item in cursor.AsList<Model>())
                 {
                     Assert.Equal(item.Number, ++i);
                     Assert.Equal("This is text.", item.Text);

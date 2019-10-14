@@ -1,8 +1,11 @@
 ﻿using System;
-using TBS.Collections.ObjectModel;
-using TBS.Utils;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using TagBites.Collections;
+using TagBites.Utils;
 
-namespace TBS.Data.DB
+namespace TagBites.DB
 {
     internal class DbCursorList<T> : LazyList<T>, IDisposable
         where T : class

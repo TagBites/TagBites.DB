@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TBS.Data.DB;
+using TagBites.DB;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public class SqlClauseFrom : SqlClauseCollectionBase<SqlClauseFromEntry>
     {
@@ -76,27 +73,29 @@ namespace TBS.Sql
         }
         public SqlTable Add(SqlExpression queryExpression, string alias, string[] columnNames)
         {
-            if (queryExpression is SqlLiteral)
+            switch (queryExpression)
             {
-                var table = new SqlTable((SqlLiteral)queryExpression, alias);
-                Add(new SqlClauseFromEntry(table, columnNames));
-                return table;
+                case SqlLiteral literal:
+                    {
+                        var table = new SqlTable(literal, alias);
+                        Add(new SqlClauseFromEntry(table, columnNames));
+                        return table;
+                    }
+                case SqlLiteralExpression expression:
+                    {
+                        var table = new SqlTable(expression, alias);
+                        Add(new SqlClauseFromEntry(table, columnNames));
+                        return table;
+                    }
+                case SqlExpressionQuery query:
+                    {
+                        var table = new SqlTable(query, alias);
+                        Add(new SqlClauseFromEntry(table, columnNames));
+                        return table;
+                    }
+                default:
+                    throw new ArgumentException("Invalid expression, query is required.", nameof(queryExpression));
             }
-
-            if (queryExpression is SqlLiteralExpression)
-            {
-                var table = new SqlTable((SqlLiteralExpression)queryExpression, alias);
-                Add(new SqlClauseFromEntry(table, columnNames));
-                return table;
-            }
-            if (queryExpression is SqlExpressionQuery)
-            {
-                var table = new SqlTable((SqlExpressionQuery)queryExpression, alias);
-                Add(new SqlClauseFromEntry(table, columnNames));
-                return table;
-            }
-
-            throw new ArgumentException("Invalid expression, query is required.", nameof(queryExpression));
         }
 
         private string GetNextAlias()

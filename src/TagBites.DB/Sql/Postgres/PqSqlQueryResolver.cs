@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using TagBites.Sql.Postgres.Clauses;
+using TagBites.Sql.Postgres.Queries;
 
-namespace TBS.Sql.PostgreSql
+namespace TagBites.Sql.Postgres
 {
     public class PqSqlQueryResolver : SqlQueryResolver
     {
@@ -65,9 +64,9 @@ namespace TBS.Sql.PostgreSql
 
         protected override string GetBuildInFunctionName(string functionName)
         {
-            if (String.Equals(functionName, nameof(SqlFunction.TrimStart), StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(functionName, nameof(SqlFunction.TrimStart), StringComparison.OrdinalIgnoreCase))
                 return "LTRIM";
-            else if (String.Equals(functionName, nameof(SqlFunction.TrimEnd), StringComparison.OrdinalIgnoreCase))
+            else if (string.Equals(functionName, nameof(SqlFunction.TrimEnd), StringComparison.OrdinalIgnoreCase))
                 return "RTRIM";
 
             return base.GetBuildInFunctionName(functionName);

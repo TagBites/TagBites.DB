@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Threading;
 
-namespace TBS.Data.DB.PostgreSql
+namespace TagBites.DB.Postgres
 {
     internal class PgSqlCursorConnectionContext : IDbCursorOwner
     {
@@ -70,7 +72,7 @@ namespace TBS.Data.DB.PostgreSql
                     var query = queryResolver.GetQuery(querySource);
                     var queryString = query.GetUnsafeEscapeString(queryResolver);
 
-                    var cursorName = String.Format("cs_cursor_{0}", Interlocked.Increment(ref s_nextCursorIndex));
+                    var cursorName = string.Format("cs_cursor_{0}", Interlocked.Increment(ref s_nextCursorIndex));
                     var cursorQuery = new Query("SELECT CreateCursorC({0}, {1}, {2}, {3})", cursorName, queryString, searchColumn ?? string.Empty, (searchId ?? string.Empty).ToString());
                     var result = _link.ExecuteScalar<string>(cursorQuery);
 

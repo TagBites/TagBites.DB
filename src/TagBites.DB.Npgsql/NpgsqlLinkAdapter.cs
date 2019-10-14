@@ -2,8 +2,9 @@
 using System.Data.Common;
 using Npgsql;
 using NpgsqlTypes;
+using TagBites.DB.Postgres;
 
-namespace TBS.Data.DB.PostgreSql
+namespace TagBites.DB.Npgsql
 {
     public class NpgsqlLinkAdapter : PgSqlLinkAdapter
     {

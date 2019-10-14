@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TBS.Data.DB;
+using TagBites.DB;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public class SqlClauseWith : SqlClauseCollectionBase<SqlClauseWithEntry>
     {
@@ -50,13 +47,15 @@ namespace TBS.Sql
         }
         public SqlClauseWithEntry Add(string withName, string[] columnNames, SqlExpression select)
         {
-            if (select is SqlLiteral)
-                return Add(new SqlClauseWithEntry(withName, columnNames, (SqlLiteral)select));
-
-            if (select is SqlLiteralExpression)
-                return Add(new SqlClauseWithEntry(withName, columnNames, (SqlLiteralExpression)select));
-
-            throw new ArgumentException("Invalid expression, query is required.", nameof(select));
+            switch (select)
+            {
+                case SqlLiteral literal:
+                    return Add(new SqlClauseWithEntry(withName, columnNames, literal));
+                case SqlLiteralExpression expression:
+                    return Add(new SqlClauseWithEntry(withName, columnNames, expression));
+                default:
+                    throw new ArgumentException("Invalid expression, query is required.", nameof(select));
+            }
         }
 
         public SqlClauseWithEntry Add(string withName, Query query)

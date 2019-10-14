@@ -2,9 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TBS.Utils;
 
-namespace TBS.Data.DB
+namespace TagBites.DB
 {
     public interface IDbLinkTransaction : IDisposable
     {

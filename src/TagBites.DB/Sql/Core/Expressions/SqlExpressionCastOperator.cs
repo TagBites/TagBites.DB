@@ -1,7 +1,10 @@
 ﻿using System;
-using TBS.Utils;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using TagBites.Utils;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public class SqlExpressionCastOperator : SqlExpression
     {

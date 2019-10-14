@@ -1,9 +1,13 @@
-﻿using System.Threading.Tasks;
-using TBS.Data.DB;
-using TBS.Data.DB.PostgreSql;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using TagBites.DB.Postgres;
+using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TBS.Data.UnitTests.DB
+namespace TagBites.DB.Tests.DB.PostgreSql
 {
     public class DbLinkNotifyTest : DbTestBase
     {
@@ -18,16 +22,16 @@ namespace TBS.Data.UnitTests.DB
                 link.Listen("x0");
 
                 link.Notify("x0", "1");
-                link.ExecuteNonQuery("SELECT 1");
+                DbLinkExtensions.ExecuteNonQuery(link, "SELECT 1");
                 Assert.Equal(1, hitCount);
 
                 link.Notify("x0", "2");
-                link.ExecuteNonQuery("SELECT 1");
+                DbLinkExtensions.ExecuteNonQuery(link, "SELECT 1");
                 Assert.Equal(2, hitCount);
 
                 link.Unlisten("x0");
                 link.Notify("x0", "4");
-                link.ExecuteNonQuery("SELECT 1");
+                DbLinkExtensions.ExecuteNonQuery(link, "SELECT 1");
                 Assert.Equal(2, hitCount);
             }
         }
@@ -46,7 +50,7 @@ namespace TBS.Data.UnitTests.DB
                 sender.Notify("x1", "1");
                 sender.Notify("x1", "2");
 
-                receiver.ExecuteNonQuery("SELECT 1");
+                DbLinkExtensions.ExecuteNonQuery(receiver, "SELECT 1");
                 Assert.Equal(2, hitCount);
             }
         }
@@ -93,13 +97,13 @@ namespace TBS.Data.UnitTests.DB
                     sender.Notify("x3", "2");
                     Assert.Equal(0, hitCount);
 
-                    receiver.ExecuteNonQuery("SELECT 1");
+                    DbLinkExtensions.ExecuteNonQuery(receiver, "SELECT 1");
                     Assert.Equal(0, hitCount);
 
                     transaction.Commit();
                 }
 
-                receiver.ExecuteNonQuery("SELECT 1");
+                DbLinkExtensions.ExecuteNonQuery(receiver, "SELECT 1");
                 Assert.Equal(2, hitCount);
             }
         }

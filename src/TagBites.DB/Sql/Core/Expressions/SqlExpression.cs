@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using TBS.Utils;
+using TagBites.Utils;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public abstract class SqlExpression
     {
@@ -14,7 +13,7 @@ namespace TBS.Sql
         public static readonly SqlExpression Null = new SqlLiteral("null");
         public static readonly SqlExpression One = Argument(1);
         public static readonly SqlExpression Zero = Argument(0);
-        public static readonly SqlExpression EmptyString = Argument(String.Empty);
+        public static readonly SqlExpression EmptyString = Argument(string.Empty);
         public static readonly SqlCondition True = ToCondition(Argument(true));
         public static readonly SqlCondition False = ToCondition(Argument(false));
 
@@ -67,7 +66,7 @@ namespace TBS.Sql
             return new SqlLiteralExpression(sqlLiteralExpressionFormat, args);
         }
 
-        public static SqlExpression Nagate(SqlExpression operand)
+        public static SqlExpression Negate(SqlExpression operand)
         {
             return new SqlExpressionUnaryOperator(SqlExpressionUnaryOperatorType.Nagate, operand);
         }
@@ -415,20 +414,26 @@ namespace TBS.Sql
             if (groupRight != null && groupRight.OperatorType != operatorType)
                 groupRight = null;
 
-            var operands = new SqlCondition[(groupLeft == null ? 1 : groupLeft.Operants.Count) + (groupRight == null ? 1 : groupRight.Operants.Count)];
+            var operands = new SqlCondition[(groupLeft == null ? 1 : groupLeft.Operands.Count) + (groupRight == null ? 1 : groupRight.Operands.Count)];
             var operandsIndex = 0;
 
             if (groupLeft == null)
                 operands[operandsIndex++] = left;
             else
-                for (int i = 0; i < groupLeft.Operants.Count; i++)
-                    operands[operandsIndex++] = groupLeft.Operants[i];
+            {
+                // ReSharper disable once ForCanBeConvertedToForeach
+                for (var i = 0; i < groupLeft.Operands.Count; i++)
+                    operands[operandsIndex++] = groupLeft.Operands[i];
+            }
 
             if (groupRight == null)
                 operands[operandsIndex] = right;
             else
-                for (int i = 0; i < groupRight.Operants.Count; i++)
-                    operands[operandsIndex++] = groupRight.Operants[i];
+            {
+                // ReSharper disable once ForCanBeConvertedToForeach
+                for (var i = 0; i < groupRight.Operands.Count; i++)
+                    operands[operandsIndex++] = groupRight.Operands[i];
+            }
 
             return new SqlConditionGroupOperator(operatorType, operands);
         }
@@ -439,7 +444,7 @@ namespace TBS.Sql
         }
         internal static SqlExpression ToExpression(object value)
         {
-            return value is SqlExpression ? (SqlExpression)value : Argument(value);
+            return value is SqlExpression expression ? expression : Argument(value);
         }
         internal static SqlExpression Function(string name, params object[] args)
         {
@@ -447,7 +452,7 @@ namespace TBS.Sql
         }
         public static SqlCondition ToCondition(object value)
         {
-            return value is SqlConditionExpression ? (SqlConditionExpression)value : new SqlConditionExpression(ToExpression(value));
+            return value is SqlConditionExpression expression ? expression : new SqlConditionExpression(ToExpression(value));
         }
         internal static SqlCondition IsNull(object column)
         {
@@ -493,7 +498,7 @@ namespace TBS.Sql
             return LiteralConditionExpression(sqlLiteralExpressionFormat, args.Select(ToExpression).ToArray());
         }
 
-        public static SqlExpression operator -(SqlExpression expression) { return Nagate(expression); }
+        public static SqlExpression operator -(SqlExpression expression) { return Negate(expression); }
         public static SqlExpression operator ~(SqlExpression expression) { return BitwiseComplement(expression); }
         public static SqlExpression operator -(SqlExpression left, SqlExpression right) { return Minus(left, right); }
         public static SqlExpression operator +(SqlExpression left, SqlExpression right) { return Plus(left, right); }

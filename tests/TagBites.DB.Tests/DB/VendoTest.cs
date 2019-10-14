@@ -1,14 +1,16 @@
 ﻿using System;
-using System.Threading.Tasks;
-using TBS.Data.DB;
-using System.Threading;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Transactions;
-using TBS.Data.DB.Configuration;
-using TBS.Data.DB.PostgreSql;
+using TagBites.DB.Configuration;
+using TagBites.DB.Postgres;
+using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TBS.Data.UnitTests.DB
+namespace TagBites.DB.Tests.DB
 {
     public class VendoTest : DbTestBase
     {

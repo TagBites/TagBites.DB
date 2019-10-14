@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data.Common;
 using System.Linq;
-using TBS.Data.DB.Schema;
-using TBS.DB.Entity;
-using TBS.Sql;
+using System.Text;
 
-namespace TBS.Data.DB
+namespace TagBites.DB
 {
     public interface IDbLink : IDisposable
     {

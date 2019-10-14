@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
-using TBS.Collections;
+using TagBites.Collections;
 
-namespace TBS.Data.DB
+namespace TagBites.DB
 {
     internal class DelayedBatchQueryQueue
     {

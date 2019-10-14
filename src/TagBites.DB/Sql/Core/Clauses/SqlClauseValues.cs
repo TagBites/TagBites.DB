@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Collections.Generic;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public class SqlClauseValues : SqlClauseCollectionBase<SqlClauseValuesEntry>
     {
         public SqlClauseValuesEntry Add(params object[] values)
         {
-            return base.Add(new SqlClauseValuesEntry((IList<object>)values));
+            return base.Add(new SqlClauseValuesEntry(values));
         }
         public SqlClauseValuesEntry Add(IList<object> values)
         {

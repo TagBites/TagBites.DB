@@ -1,9 +1,14 @@
-﻿using TBS.Data.DB;
-using TBS.Data.DB.PostgreSql;
-using TBS.Data.DB.Utils;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using TagBites.DB.Postgres;
+using TagBites.DB.Tests.DB.Core;
+using TagBites.DB.Utils;
+using TagBites.Utils;
 using Xunit;
 
-namespace TBS.Data.UnitTests.DB
+namespace TagBites.DB.Tests.DB
 {
     public class DbUtilsTest : DbTestBase
     {
@@ -53,7 +58,7 @@ namespace TBS.Data.UnitTests.DB
             using (var link = NpgsqlProvider.CreateLink())
             using (var transaction = link.Begin())
             {
-                link.ExecuteNonQuery("CREATE TABLE tmp_t1 (id1 INTEGER NOT NULL, id2 INTEGER NOT NULL, v1 TEXT, v2 INT, PRIMARY KEY (id1, id2))");
+                DbLinkExtensions.ExecuteNonQuery(link, "CREATE TABLE tmp_t1 (id1 INTEGER NOT NULL, id2 INTEGER NOT NULL, v1 TEXT, v2 INT, PRIMARY KEY (id1, id2))");
 
                 var changer = new DbTableChanger("tmp_t1", new string[] { "id1", "id2" }, false);
 

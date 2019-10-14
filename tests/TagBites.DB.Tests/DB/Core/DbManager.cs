@@ -1,8 +1,12 @@
-﻿using TBS.Data.DB;
-using TBS.Data.DB.PostgreSql;
-using TBS.Data.DB.SQLite;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using TagBites.DB.Npgsql;
+using TagBites.DB.Postgres;
+using TagBites.DB.SqLite;
 
-namespace TBS.Data.UnitTests
+namespace TagBites.DB.Tests.DB.Core
 {
     public static class DbManager
     {
@@ -28,7 +32,7 @@ namespace TBS.Data.UnitTests
         }
 
         // ReSharper disable once InconsistentNaming
-        public static SQLiteLinkProvider CreateSQLiteProvider()
+        public static SqliteLinkProvider CreateSQLiteProvider()
         {
             var arguments = new DbConnectionArguments()
             {
@@ -39,7 +43,7 @@ namespace TBS.Data.UnitTests
                 MaxPoolSize = 3
             };
 
-            return new SQLiteLinkProvider(arguments);
+            return new SqliteLinkProvider(arguments);
         }
     }
 }

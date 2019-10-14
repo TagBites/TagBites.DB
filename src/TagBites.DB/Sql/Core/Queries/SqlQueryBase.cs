@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Text;
-using TBS.Data.DB;
+using TagBites.DB;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public abstract class SqlQueryBase : IQuerySource
     {

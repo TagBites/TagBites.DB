@@ -3,27 +3,27 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
-using TBS.Data.DB;
-using TBS.Utils;
+using TagBites.DB;
+using TagBites.Utils;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public class SqlQueryResolver
     {
-        private static SqlQueryResolver _defaultToStringResolver = new SqlQueryResolver();
+        private static SqlQueryResolver s_defaultToStringResolver = new SqlQueryResolver();
 
         [EditorBrowsable(EditorBrowsableState.Never)]
         public static SqlQueryResolver DefaultToStringResolver
         {
-            get => _defaultToStringResolver;
+            get => s_defaultToStringResolver;
             set
             {
                 Guard.ArgumentNotNull(value, nameof(value));
-                _defaultToStringResolver = value;
+                s_defaultToStringResolver = value;
             }
         }
 
-        private readonly Dictionary<Type, Func<object, object>> m_customparameterResolvers = new Dictionary<Type, Func<object, object>>();
+        private readonly Dictionary<Type, Func<object, object>> _customParameterResolvers = new Dictionary<Type, Func<object, object>>();
 
         public virtual bool SupportReturningClause => true;
 
@@ -35,12 +35,12 @@ namespace TBS.Sql
         public void RegisterParameterResolver<T>(Func<T, string> parameterResolver)
         {
             Guard.ArgumentNotNull(parameterResolver, nameof(parameterResolver));
-            m_customparameterResolvers[typeof(T)] = x => parameterResolver((T)x);
+            _customParameterResolvers[typeof(T)] = x => parameterResolver((T)x);
         }
         public void RegisterParameterResolver<T>(Func<T, SqlExpression> parameterResolver)
         {
             Guard.ArgumentNotNull(parameterResolver, nameof(parameterResolver));
-            m_customparameterResolvers[typeof(T)] = x => parameterResolver((T)x);
+            _customParameterResolvers[typeof(T)] = x => parameterResolver((T)x);
         }
 
         public virtual Query GetQuery(IQuerySource querySource)
@@ -50,26 +50,31 @@ namespace TBS.Sql
 
         public virtual void Visit(object expression, SqlQueryBuilder builder)
         {
-            if (expression == null)
-                builder.Append(NullLiteral);
-            else if (expression is SqlExpression)
-                ((SqlExpression)expression).Accept(this, builder);
-            else if (expression is ISqlElement)
-                ((ISqlElement)expression).Accept(this, builder);
-            else if (expression is SqlQueryBase)
+            switch (expression)
             {
-                builder.Append('(');
-                ((SqlQueryBase)expression).Accept(this, builder);
-                builder.Append(')');
+                case null:
+                    builder.Append(NullLiteral);
+                    break;
+                case SqlExpression sql:
+                    sql.Accept(this, builder);
+                    break;
+                case ISqlElement element:
+                    element.Accept(this, builder);
+                    break;
+                case SqlQueryBase queryBase:
+                    builder.Append('(');
+                    queryBase.Accept(this, builder);
+                    builder.Append(')');
+                    break;
+                case Query query:
+                    builder.Append('(');
+                    builder.Append(query.GetUnsafeEscapeString(this));
+                    builder.Append(')');
+                    break;
+                default:
+                    VisitParameter(expression, builder);
+                    break;
             }
-            else if (expression is Query)
-            {
-                builder.Append('(');
-                builder.Append(((Query)expression).GetUnsafeEscapeString(this));
-                builder.Append(')');
-            }
-            else
-                VisitParameter(expression, builder);
         }
         protected virtual void VisitParameter(object parameter, SqlQueryBuilder builder)
         {
@@ -77,9 +82,9 @@ namespace TBS.Sql
                 builder.Append(NullLiteral);
             else
             {
-                if (m_customparameterResolvers.TryGetValue(parameter.GetType(), out var customParameterResovler))
+                if (_customParameterResolvers.TryGetValue(parameter.GetType(), out var customParameterResolver))
                 {
-                    var result = customParameterResovler(parameter);
+                    var result = customParameterResolver(parameter);
                     if (result is SqlExpression)
                         Visit(result, builder);
                     else
@@ -107,7 +112,7 @@ namespace TBS.Sql
             else
             {
                 var args = new object[expression.Args.Length];
-                for (int i = 0; i < args.Length; i++)
+                for (var i = 0; i < args.Length; i++)
                 {
                     builder.Push();
                     Visit(expression.Args[i], builder);
@@ -128,21 +133,21 @@ namespace TBS.Sql
         }
         protected internal virtual void VisitExpression(SqlColumn expression, SqlQueryBuilder builder)
         {
-            if (!string.IsNullOrEmpty(expression.Table.Alias))
-                builder.Append($"{QuoteIdentifierIfNeeded(expression.Table.Alias)}.{QuoteIdentifierIfNeeded(expression.ColumnName)}");
-            else
-                builder.Append(QuoteIdentifierIfNeeded(expression.ColumnName));
+            var quoteIdentifierIfNeeded = !string.IsNullOrEmpty(expression.Table.Alias)
+                ? $"{QuoteIdentifierIfNeeded(expression.Table.Alias)}.{QuoteIdentifierIfNeeded(expression.ColumnName)}"
+                : QuoteIdentifierIfNeeded(expression.ColumnName);
+            builder.Append(quoteIdentifierIfNeeded);
         }
         protected internal virtual void VisitExpression(SqlExpressionFunctionCall expression, SqlQueryBuilder builder)
         {
             builder.Append(GetBuildInFunctionName(expression.FunctionName));
             builder.Append('(');
-            for (int i = 0; i < expression.Operants.Count; i++)
+            for (var i = 0; i < expression.Operands.Count; i++)
             {
                 if (i > 0)
                     builder.Append(", ");
 
-                Visit(expression.Operants[i], builder);
+                Visit(expression.Operands[i], builder);
             }
             builder.Append(')');
         }
@@ -156,18 +161,18 @@ namespace TBS.Sql
         }
         protected internal virtual void VisitExpression(SqlConditionGroupOperator expression, SqlQueryBuilder builder)
         {
-            if (expression.Operants.Count == 1)
-                Visit(expression.Operants[0], builder);
+            if (expression.Operands.Count == 1)
+                Visit(expression.Operands[0], builder);
             else
             {
                 var connect = expression.OperatorType == SqlConditionGroupOperatorType.And ? ") AND (" : ") OR (";
                 builder.Append('(');
 
-                for (int i = 0; i < expression.Operants.Count; i++)
+                for (var i = 0; i < expression.Operands.Count; i++)
                 {
                     if (i > 0)
                         builder.Append(connect);
-                    Visit(expression.Operants[i], builder);
+                    Visit(expression.Operands[i], builder);
                 }
 
                 builder.Append(')');
@@ -216,14 +221,14 @@ namespace TBS.Sql
                 builder.Append(" IN (");
 
                 if (expression.Values is IList<int>)
-                    for (int i = 0; i < expression.Values.Count; i++)
+                    for (var i = 0; i < expression.Values.Count; i++)
                     {
                         if (i > 0)
                             builder.Append(", ");
                         builder.Append(expression.Values[i].ToString());
                     }
                 else
-                    for (int i = 0; i < expression.Values.Count; i++)
+                    for (var i = 0; i < expression.Values.Count; i++)
                     {
                         if (i > 0)
                             builder.Append(", ");
@@ -341,10 +346,10 @@ namespace TBS.Sql
             VisitTableClause(query.Into, "INSERT INTO", builder);
             VisitClause(query.Columns, builder);
 
-            if (query is SqlQueryInsertSelect)
+            if (query is SqlQueryInsertSelect select)
             {
                 builder.Append(" ");
-                VisitQuery(((SqlQueryInsertSelect)query).Select, builder);
+                VisitQuery(select.Select, builder);
             }
             else
                 VisitClause(((SqlQueryInsertValues)query).Values, "VALUES", builder);
@@ -377,6 +382,7 @@ namespace TBS.Sql
         protected internal virtual void VisitClause(SqlClauseWith clause, string keyword, SqlQueryBuilder builder)
         {
             var recursive = false;
+            // ReSharper disable once LoopCanBeConvertedToQuery
             for (var i = 0; i < clause.Count; i++)
                 recursive |= clause[i].RecursiveQuery != null;
 
@@ -397,7 +403,7 @@ namespace TBS.Sql
         }
         protected internal virtual void VisitClause(SqlClauseSelect clause, string keyword, SqlQueryBuilder builder)
         {
-            for (int i = 0; i < clause.Count; i++)
+            for (var i = 0; i < clause.Count; i++)
             {
                 if (i > 0)
                     builder.Append(", ");
@@ -409,7 +415,7 @@ namespace TBS.Sql
         }
         protected internal virtual void VisitClause(SqlClauseValues clause, string keyword, SqlQueryBuilder builder)
         {
-            for (int i = 0; i < clause.Count; i++)
+            for (var i = 0; i < clause.Count; i++)
             {
                 if (i > 0)
                     builder.Append(", ");
@@ -421,7 +427,7 @@ namespace TBS.Sql
         }
         protected internal virtual void VisitClause(SqlClauseFrom clause, string keyword, SqlQueryBuilder builder)
         {
-            for (int i = 0; i < clause.Count; i++)
+            for (var i = 0; i < clause.Count; i++)
             {
                 if (i > 0)
                     builder.Append(", ");
@@ -443,7 +449,7 @@ namespace TBS.Sql
         }
         protected internal virtual void VisitClause(SqlClauseGroupBy clause, string keyword, SqlQueryBuilder builder)
         {
-            for (int i = 0; i < clause.Count; i++)
+            for (var i = 0; i < clause.Count; i++)
             {
                 if (i > 0)
                     builder.Append(", ");
@@ -455,7 +461,7 @@ namespace TBS.Sql
         }
         protected internal virtual void VisitClause(SqlClauseOrderBy clause, string keyword, SqlQueryBuilder builder)
         {
-            for (int i = 0; i < clause.Count; i++)
+            for (var i = 0; i < clause.Count; i++)
             {
                 if (i > 0)
                     builder.Append(", ");
@@ -467,7 +473,7 @@ namespace TBS.Sql
         }
         protected internal virtual void VisitClause(SqlClauseSet clause, string keyword, SqlQueryBuilder builder)
         {
-            for (int i = 0; i < clause.Count; i++)
+            for (var i = 0; i < clause.Count; i++)
             {
                 if (i > 0)
                     builder.Append(", ");
@@ -487,7 +493,7 @@ namespace TBS.Sql
                 {
                     builder.Append("DISTINCT ON (");
                     {
-                        for (int i = 0; i < clause.Count; i++)
+                        for (var i = 0; i < clause.Count; i++)
                         {
                             if (i > 0)
                                 builder.Append(", ");
@@ -504,7 +510,7 @@ namespace TBS.Sql
             if (clause.Count > 0)
             {
                 builder.Append('(');
-                for (int i = 0; i < clause.Count; i++)
+                for (var i = 0; i < clause.Count; i++)
                 {
                     if (i > 0)
                         builder.Append(", ");
@@ -516,12 +522,14 @@ namespace TBS.Sql
         }
         protected internal virtual void VisitClause(SqlClauseJoin clause, SqlQueryBuilder builder)
         {
-            for (int i = 0; i < clause.Count; i++)
+            // ReSharper disable once ForCanBeConvertedToForeach
+            for (var i = 0; i < clause.Count; i++)
                 VisitClauseEntry(clause[i], builder);
         }
         protected internal virtual void VisitClause(SqlClauseUnion clause, SqlQueryBuilder builder)
         {
-            for (int i = 0; i < clause.Count; i++)
+            // ReSharper disable once ForCanBeConvertedToForeach
+            for (var i = 0; i < clause.Count; i++)
                 VisitClauseEntry(clause[i], builder);
         }
 
@@ -534,7 +542,7 @@ namespace TBS.Sql
             if (entry.Columns.Length > 0)
             {
                 builder.Append('(');
-                for (int i = 0; i < entry.Columns.Length; i++)
+                for (var i = 0; i < entry.Columns.Length; i++)
                 {
                     if (i > 0)
                         builder.Append(", ");
@@ -570,7 +578,7 @@ namespace TBS.Sql
         protected internal virtual void VisitClauseEntry(SqlClauseValuesEntry entry, SqlQueryBuilder builder)
         {
             builder.Append('(');
-            for (int j = 0; j < entry.Values.Count; j++)
+            for (var j = 0; j < entry.Values.Count; j++)
             {
                 if (j > 0)
                     builder.Append(", ");
@@ -588,7 +596,7 @@ namespace TBS.Sql
             {
                 builder.Append("(");
 
-                for (int j = 0; j < entry.ColumnNames.Length; j++)
+                for (var j = 0; j < entry.ColumnNames.Length; j++)
                 {
                     if (j > 0)
                         builder.Append(", ");
@@ -682,8 +690,8 @@ namespace TBS.Sql
         }
         protected virtual void VisitTableDeclaration(SqlQueryBuilder builder, SqlTable table, bool allowExpressions, bool includeAlias = true)
         {
-            if (table.Table is string)
-                builder.Append(QuoteTableNameIfNeeded((string)table.Table));
+            if (table.Table is string name)
+                builder.Append(QuoteTableNameIfNeeded(name));
             else if (!allowExpressions)
                 throw new Exception("Can not delete/update/insert from/to query.");
             else
@@ -716,12 +724,12 @@ namespace TBS.Sql
 
             if (force)
             {
-                if (parameter is SqlExpression)
-                    return ToExpressionParameterString((SqlExpression)parameter);
+                if (parameter is SqlExpression sqlExpression)
+                    return ToExpressionParameterString(sqlExpression);
 
-                if (m_customparameterResolvers.TryGetValue(type, out var customParameterResovler))
+                if (_customParameterResolvers.TryGetValue(type, out var resolver))
                 {
-                    var result = customParameterResovler(parameter);
+                    var result = resolver(parameter);
                     return result is SqlExpression expression
                         ? ToExpressionParameterString(expression)
                         : (string)result;
@@ -755,8 +763,8 @@ namespace TBS.Sql
 
                 case TypeCode.Object:
                     {
-                        if (parameter is TimeSpan)
-                            return ToTimeSpanParameterString((TimeSpan)parameter);
+                        if (parameter is TimeSpan span)
+                            return ToTimeSpanParameterString(span);
 
                         return force
                             ? ToEscapedString(Convert.ToString(parameter, CultureInfo.InvariantCulture))
@@ -962,7 +970,7 @@ namespace TBS.Sql
         {
             // TODO verify
             return (name.Length > 0 && char.IsNumber(name[0]))
-                   || name.Cast<char>().Any(x => char.IsUpper(x) || (!char.IsLetterOrDigit(x) && !(x == '_' || x == '[' || x == ']')))
+                   || name.Any(x => char.IsUpper(x) || (!char.IsLetterOrDigit(x) && !(x == '_' || x == '[' || x == ']')))
                    || (name.StartsWith("\"") && name.EndsWith("\""));
         }
         internal static string QuoteIdentifierIfNeeded(string name)

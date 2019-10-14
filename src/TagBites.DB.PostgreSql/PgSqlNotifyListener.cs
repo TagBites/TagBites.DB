@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using TBS.Resources;
 
-namespace TBS.Data.DB.PostgreSql
+namespace TagBites.DB.Postgres
 {
     public class PgSqlNotifyListener : IDisposable
     {
@@ -27,7 +27,7 @@ namespace TBS.Data.DB.PostgreSql
         }
         ~PgSqlNotifyListener()
         {
-            Debug.WriteLine(ErrorMessages.UnexpectedFinalizerCalled(nameof(PgSqlNotifyListener)));
+            Debug.WriteLine($"Unexpected finalizer called on IDisposable object {nameof(PgSqlNotifyListener)}.");
             Dispose(false);
         }
 

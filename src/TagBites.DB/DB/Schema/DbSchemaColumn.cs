@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace TBS.Data.DB.Schema
+namespace TagBites.DB
 {
     public class DbSchemaColumn
     {

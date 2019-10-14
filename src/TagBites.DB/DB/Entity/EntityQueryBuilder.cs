@@ -3,14 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
-using TBS.Data.DB;
-using TBS.Data.DB.Entity;
-using TBS.Sql;
-using TBS.Utils;
+using System.Text;
+using TagBites.Sql;
+using TagBites.Utils;
+using static TagBites.Sql.SqlExpression;
 
-using static TBS.Sql.SqlExpression;
-
-namespace TBS.DB.Entity
+namespace TagBites.DB.Entity
 {
     public static class EntityQueryBuilder
     {

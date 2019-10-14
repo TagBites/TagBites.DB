@@ -2,11 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using TBS.Sql;
-using TBS.Utils;
+using TagBites.Sql;
+using TagBites.Utils;
 
-namespace TBS.Data.DB
+namespace TagBites.DB
 {
     public class DbQueryCursorManager : IDbCursorManager
     {

@@ -1,7 +1,11 @@
-﻿using System.Data.Common;
-using TBS.Sql;
+﻿using System;
+using System.Collections.Generic;
+using System.Data.Common;
+using System.Linq;
+using System.Text;
+using TagBites.Sql;
 
-namespace TBS.Data.DB
+namespace TagBites.DB
 {
     public abstract class DbLinkAdapter
     {

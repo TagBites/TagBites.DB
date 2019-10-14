@@ -1,28 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using TBS.Collections.ObjectModel;
-using TBS.Utils;
+using TagBites.Utils;
 
-namespace TBS.Sql
+namespace TagBites.Sql
 {
     public class SqlConditionGroupOperator : SqlCondition
     {
         public SqlConditionGroupOperatorType OperatorType { get; }
-        public IList<SqlCondition> Operants { get; }
+        public IList<SqlCondition> Operands { get; }
 
         public SqlConditionGroupOperator(SqlConditionGroupOperatorType operatorType)
         {
             OperatorType = operatorType;
-            Operants = EmptyConditionalArray;
+            Operands = EmptyConditionalArray;
         }
-        public SqlConditionGroupOperator(SqlConditionGroupOperatorType operatorType, IList<SqlCondition> operants)
+        public SqlConditionGroupOperator(SqlConditionGroupOperatorType operatorType, IList<SqlCondition> operands)
         {
-            Guard.ArgumentNotNullWithNotNullItems(operants, nameof(operants));
+            Guard.ArgumentNotNullWithNotNullItems(operands, nameof(operands));
 
             OperatorType = operatorType;
-            Operants = operants;
+            Operands = operands;
         }
 
 
@@ -37,7 +34,7 @@ namespace TBS.Sql
 
         protected bool Equals(SqlConditionGroupOperator other)
         {
-            return OperatorType == other.OperatorType && Operants.SequenceEqual(other.Operants);
+            return OperatorType == other.OperatorType && Operands.SequenceEqual(other.Operands);
         }
         public override bool Equals(object obj)
         {
@@ -53,7 +50,7 @@ namespace TBS.Sql
         {
             unchecked
             {
-                return ((int)OperatorType * 397) ^ Operants.GetHashCode();
+                return ((int)OperatorType * 397) ^ Operands.GetHashCode();
             }
         }
     }

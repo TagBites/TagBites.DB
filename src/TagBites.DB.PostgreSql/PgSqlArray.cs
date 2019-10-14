@@ -5,25 +5,25 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 
-namespace TBS.Data.DB.PostgreSql
+namespace TagBites.DB.Postgres
 {
     public class PgSqlArray : IEnumerable<string>
     {
-        private int m_startIndex = 1;
-        private readonly List<string> m_array;
+        private int _startIndex;
+        private readonly List<string> _array;
 
         public int StartIndex
         {
-            get => m_startIndex;
+            get => _startIndex;
             set
             {
                 if (value < 0)
                     throw new ArgumentOutOfRangeException(nameof(value));
 
-                m_startIndex = value;
+                _startIndex = value;
             }
         }
-        public int Length => m_array.Count;
+        public int Length => _array.Count;
 
         public virtual string this[int index]
         {
@@ -32,37 +32,37 @@ namespace TBS.Data.DB.PostgreSql
                 if (index < 0)
                     throw new ArgumentOutOfRangeException(nameof(index));
 
-                index -= m_startIndex;
-                return (index < 0 || index >= m_array.Count)
+                index -= _startIndex;
+                return (index < 0 || index >= _array.Count)
                     ? null
-                    : m_array[index];
+                    : _array[index];
             }
             set
             {
                 if (index < 0)
                     throw new ArgumentOutOfRangeException(nameof(index));
 
-                while (index < m_startIndex)
+                while (index < _startIndex)
                 {
-                    m_array.Insert(0, null);
-                    --m_startIndex;
+                    _array.Insert(0, null);
+                    --_startIndex;
                 }
 
-                index -= m_startIndex;
-                while (index >= m_array.Count)
-                    m_array.Add(null);
+                index -= _startIndex;
+                while (index >= _array.Count)
+                    _array.Add(null);
 
-                m_array[index] = value;
+                _array[index] = value;
             }
         }
 
         public PgSqlArray()
         {
-            m_array = new List<string>();
-            m_startIndex = 1;
+            _array = new List<string>();
+            _startIndex = 1;
         }
         public PgSqlArray(params string[] array)
-            : this(array == null ? new string[] { null } : (IEnumerable<string>)array, 1)
+            : this(array == null ? new string[] { null } : array, 1)
         { }
         public PgSqlArray(IEnumerable<string> array)
             : this(array, 1)
@@ -74,28 +74,28 @@ namespace TBS.Data.DB.PostgreSql
             if (startIndex < 0)
                 throw new ArgumentOutOfRangeException(nameof(startIndex));
 
-            m_array = array.ToList();
-            m_startIndex = startIndex;
+            _array = array.ToList();
+            _startIndex = startIndex;
         }
 
 
         public void Add(string value)
         {
-            m_array.Add(value);
+            _array.Add(value);
         }
         public bool Remove(string value)
         {
-            return m_array.Remove(value);
+            return _array.Remove(value);
         }
         public void RemoveAt(int index)
         {
-            m_array.RemoveAt(index);
+            _array.RemoveAt(index);
         }
         public PgSqlArray<T> ToTypedArray<T>() where T : struct
         {
             var array = new PgSqlArray<T>() { StartIndex = StartIndex };
 
-            foreach (var item in m_array)
+            foreach (var item in _array)
                 array.Add(PgSqlArray<T>.TryFromString(item, out var v) ? v : default);
 
             return array;
@@ -107,12 +107,12 @@ namespace TBS.Data.DB.PostgreSql
         }
         public IEnumerator<string> GetEnumerator()
         {
-            return m_array.GetEnumerator();
+            return _array.GetEnumerator();
         }
 
         protected bool Equals(PgSqlArray other)
         {
-            return m_array.SequenceEqual(other.m_array);
+            return _array.SequenceEqual(other._array);
         }
         public override bool Equals(object obj)
         {
@@ -126,31 +126,31 @@ namespace TBS.Data.DB.PostgreSql
         }
         public override int GetHashCode()
         {
-            return m_array != null ? m_array.GetHashCode() : 0;
+            return _array != null ? _array.GetHashCode() : 0;
         }
         public override string ToString()
         {
             var sb = new StringBuilder();
-            if (m_startIndex != 1)
+            if (_startIndex != 1)
             {
                 sb.Append('[');
-                sb.Append(m_startIndex);
+                sb.Append(_startIndex);
                 sb.Append(':');
-                sb.Append(m_startIndex + m_array.Count - 1);
+                sb.Append(_startIndex + _array.Count - 1);
                 sb.Append(']');
                 sb.Append('=');
             }
 
             sb.Append('{');
-            for (int i = 0; i < m_array.Count; i++)
+            for (int i = 0; i < _array.Count; i++)
             {
-                var item = m_array[i];
+                var item = _array[i];
                 if (i > 0)
                     sb.Append(',');
 
                 if (item == null)
                     sb.Append("NULL");
-                else if (item.Contains('\\') || item.Contains(' ') || item.Contains('"') || String.Equals(item, "null", StringComparison.OrdinalIgnoreCase))
+                else if (item.Contains('\\') || item.Contains(' ') || item.Contains('"') || string.Equals(item, "null", StringComparison.OrdinalIgnoreCase))
                 {
                     sb.Append('"');
                     sb.Append(item.Replace("\\", "\\\\").Replace("\"", "\\\""));
@@ -272,7 +272,7 @@ namespace TBS.Data.DB.PostgreSql
 
             source = source.Trim();
 
-            return String.Equals(source, "NULL", StringComparison.OrdinalIgnoreCase)
+            return string.Equals(source, "NULL", StringComparison.OrdinalIgnoreCase)
                 ? null
                 : source;
         }
@@ -281,31 +281,31 @@ namespace TBS.Data.DB.PostgreSql
     public class PgSqlArray<T> : IEnumerable<T?>
         where T : struct
     {
-        private readonly PgSqlArray m_array;
+        private readonly PgSqlArray _array;
 
         public int StartIndex
         {
-            get => m_array.StartIndex;
-            set => m_array.StartIndex = value;
+            get => _array.StartIndex;
+            set => _array.StartIndex = value;
         }
-        public int Length => m_array.Length;
+        public int Length => _array.Length;
 
         public virtual T? this[int index]
         {
-            get => FromString(m_array[index]);
-            set => m_array[index] = value.HasValue ? Convert.ToString(value.Value, CultureInfo.InvariantCulture) : null;
+            get => FromString(_array[index]);
+            set => _array[index] = value.HasValue ? Convert.ToString(value.Value, CultureInfo.InvariantCulture) : null;
         }
 
         public PgSqlArray()
         {
-            m_array = new PgSqlArray();
+            _array = new PgSqlArray();
         }
         public PgSqlArray(params T?[] items)
         {
-            m_array = new PgSqlArray();
+            _array = new PgSqlArray();
 
             if (items == null)
-                Add((T?)null);
+                Add(null);
             else
                 foreach (var item in items)
                     Add(item);
@@ -315,28 +315,28 @@ namespace TBS.Data.DB.PostgreSql
             if (items == null)
                 throw new ArgumentNullException(nameof(items));
 
-            m_array = new PgSqlArray();
+            _array = new PgSqlArray();
 
             foreach (var item in items)
                 Add(item);
         }
         private PgSqlArray(PgSqlArray array)
         {
-            m_array = array ?? throw new ArgumentNullException(nameof(array));
+            _array = array ?? throw new ArgumentNullException(nameof(array));
         }
 
 
         public void Add(T? value)
         {
-            m_array.Add(value.HasValue ? Convert.ToString(value.Value, CultureInfo.InvariantCulture) : null);
+            _array.Add(value.HasValue ? Convert.ToString(value.Value, CultureInfo.InvariantCulture) : null);
         }
         public bool Remove(T? value)
         {
-            return m_array.Remove(value.HasValue ? Convert.ToString(value.Value, CultureInfo.InvariantCulture) : null);
+            return _array.Remove(value.HasValue ? Convert.ToString(value.Value, CultureInfo.InvariantCulture) : null);
         }
         public void RemoveAt(int index)
         {
-            m_array.RemoveAt(index);
+            _array.RemoveAt(index);
         }
 
         IEnumerator IEnumerable.GetEnumerator()
@@ -345,12 +345,12 @@ namespace TBS.Data.DB.PostgreSql
         }
         public IEnumerator<T?> GetEnumerator()
         {
-            return m_array.Select(FromString).GetEnumerator();
+            return _array.Select(FromString).GetEnumerator();
         }
 
         protected bool Equals(PgSqlArray<T> other)
         {
-            return Equals(m_array, other.m_array);
+            return Equals(_array, other._array);
         }
         public override bool Equals(object obj)
         {
@@ -364,11 +364,11 @@ namespace TBS.Data.DB.PostgreSql
         }
         public override int GetHashCode()
         {
-            return (m_array != null ? m_array.GetHashCode() : 0);
+            return (_array != null ? _array.GetHashCode() : 0);
         }
         public override string ToString()
         {
-            return m_array.ToString();
+            return _array.ToString();
         }
 
         internal static T? FromString(string value)
@@ -376,7 +376,7 @@ namespace TBS.Data.DB.PostgreSql
             if (string.IsNullOrEmpty(value))
                 return null;
 
-            if (typeof(T) == typeof(bool) && value?.Length == 1)
+            if (typeof(T) == typeof(bool) && value.Length == 1)
             {
                 var c = char.ToLower(value[0]);
                 if (c == 't')
@@ -420,8 +420,7 @@ namespace TBS.Data.DB.PostgreSql
 
         public static PgSqlArray<T> TryParseDefault(string arrayString)
         {
-            PgSqlArray<T> array;
-            return TryParse(arrayString, out array) ? array : null;
+            return TryParse(arrayString, out var array) ? array : null;
         }
         public static bool TryParse(string arrayString, out PgSqlArray<T> array)
         {

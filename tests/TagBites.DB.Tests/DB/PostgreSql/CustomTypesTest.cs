@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using TBS.Data.DB;
-using TBS.Data.DB.PostgreSql;
+using System.Text;
+using TagBites.DB.Postgres;
+using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TBS.Data.UnitTests.DB
+namespace TagBites.DB.Tests.DB.PostgreSql
 {
     public class CustomTypesTest : DbTestBase
     {
@@ -25,7 +27,7 @@ namespace TBS.Data.UnitTests.DB
 
             void Compare(PgSqlArray array)
             {
-                var value = link.ExecuteScalar("SELECT {0}::text[]", array.ToString());
+                var value = DbLinkExtensions.ExecuteScalar((IDbLink)link, "SELECT {0}::text[]", array.ToString());
 
                 switch (value)
                 {
@@ -47,7 +49,7 @@ namespace TBS.Data.UnitTests.DB
                     ? "int"
                     : typeof(T).Name.ToLower();
 
-                var value = link.ExecuteScalar($"SELECT {{0}}::{name}[]", array.ToString());
+                var value = DbLinkExtensions.ExecuteScalar((IDbLink)link, $"SELECT {{0}}::{name}[]", array.ToString());
 
                 switch (value)
                 {

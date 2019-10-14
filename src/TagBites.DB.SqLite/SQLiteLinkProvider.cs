@@ -1,21 +1,24 @@
-﻿using System.Data.SQLite;
+﻿using System;
+using System.Collections.Generic;
+using System.Data.SQLite;
 using System.IO;
+using System.Linq;
+using System.Text;
 
-namespace TBS.Data.DB.SQLite
+namespace TagBites.DB.SqLite
 {
-    // ReSharper disable once InconsistentNaming
-    public class SQLiteLinkProvider : DbLinkProvider
+    public class SqliteLinkProvider : DbLinkProvider
     {
-        public SQLiteLinkProvider(string connectionString)
+        public SqliteLinkProvider(string connectionString)
             : this(new DbConnectionArguments(connectionString))
         { }
-        public SQLiteLinkProvider(DbConnectionArguments arguments)
-            : this(new SQLiteLinkAdapter(), arguments)
+        public SqliteLinkProvider(DbConnectionArguments arguments)
+            : this(new SqliteLinkAdapter(), arguments)
         { }
-        public SQLiteLinkProvider(SQLiteLinkAdapter adapter, string connectionString)
+        public SqliteLinkProvider(SqliteLinkAdapter adapter, string connectionString)
             : this(adapter, new DbConnectionArguments(connectionString))
         { }
-        public SQLiteLinkProvider(SQLiteLinkAdapter adapter, DbConnectionArguments arguments)
+        public SqliteLinkProvider(SqliteLinkAdapter adapter, DbConnectionArguments arguments)
             : base(adapter, arguments)
         {
             if (!File.Exists(Database))
