@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
-using System.Text;
 using System.Transactions;
 using TagBites.Utils;
 
@@ -317,6 +315,9 @@ namespace TagBites.DB
 
         public bool IsDisposed => m_provider == null;
         public bool IsActive => m_connection != null;
+        public bool IsExecuting { get; private set; }
+        public DateTime LastExecuted { get; private set; }
+
         public string Database
         {
             get
@@ -448,9 +449,18 @@ namespace TagBites.DB
                     return result.Result;
                 }
 
-                var dt = new DataTable();
-                ExecuteOnAdapter(query, adapter => adapter.Fill(dt));
-                return QueryResult.Create(dt);
+                return ExecuteInner(query, (IQuerySource q, out int rowCount) =>
+                {
+                    using (var command = m_provider.LinkAdapter.CreateCommand(m_connection, TransactionInternal, q))
+                    using (var adapter = m_provider.LinkAdapter.CreateDataAdapter(command))
+                    {
+                        var dt = new DataTable();
+                        adapter.Fill(dt);
+                        rowCount = dt.Rows.Count;
+
+                        return QueryResult.Create(dt);
+                    }
+                });
             }
         }
         public object ExecuteScalar(IQuerySource query)
@@ -488,17 +498,28 @@ namespace TagBites.DB
         }
         internal QueryResult[] BatchExecuteInternal(IQuerySource query)
         {
-            using (var set = new DataSet())
+            return ExecuteInner(query, (IQuerySource q, out int rowCount) =>
             {
-                ExecuteOnAdapter(query, adapter => adapter.Fill(set));
+                using (var command = m_provider.LinkAdapter.CreateCommand(m_connection, TransactionInternal, q))
+                using (var adapter = m_provider.LinkAdapter.CreateDataAdapter(command))
+                {
+                    using (var set = new DataSet())
+                    {
+                        adapter.Fill(set);
 
-                var results = new QueryResult[set.Tables.Count];
+                        var results = new QueryResult[set.Tables.Count];
+                        rowCount = 0;
 
-                for (int i = 0; i < set.Tables.Count; i++)
-                    results[i] = QueryResult.Create(set.Tables[i]);
+                        for (int i = 0; i < set.Tables.Count; i++)
+                        {
+                            results[i] = QueryResult.Create(set.Tables[i]);
+                            rowCount += results[i].RowCount;
+                        }
 
-                return results;
-            }
+                        return results;
+                    }
+                }
+            });
         }
         public DelayedBatchQueryResult DelayedBatchExecute(IQuerySource query)
         {
@@ -973,6 +994,39 @@ namespace TagBites.DB
                 }
             });
         }
+        private T ExecuteInner<T>(IQuerySource source, ExecuteQueryWithRowCountDelegate<T> action)
+        {
+            return ExecuteInner(() =>
+            {
+                if (m_query != null)
+                {
+                    var e = new DbLinkQueryEventArgs(source);
+                    m_query(this, e);
+                    source = e.Query;
+                }
+
+                if (m_queryExecuted == null)
+                    return action(source, out _);
+
+                var time = DateTime.UtcNow;
+                Exception ex = null;
+                var rowCount = 0;
+
+                try
+                {
+                    return action(source, out rowCount);
+                }
+                catch (Exception e)
+                {
+                    ex = e;
+                    throw;
+                }
+                finally
+                {
+                    m_queryExecuted(this, new DbLinkQueryExecutedEventArgs(source, DateTime.UtcNow - time, ex, ex != null ? (int?)null : rowCount));
+                }
+            });
+        }
         protected T ExecuteInner<T>(Func<T> action)
         {
             var isUserException = false;
@@ -986,184 +1040,193 @@ namespace TagBites.DB
                 else if (TransactionStatusInternal == DbLinkTransactionStatus.RollingBack)
                     ThrowRollingBack();
 
-                var reconnectAttempts = 0;
-                do
+                IsExecuting = true;
+                try
                 {
-                    try
+                    var reconnectAttempts = 0;
+                    do
                     {
-                        // Check connection
-                        if (m_connection == null)
+                        try
                         {
-                            if (m_transactionContext != null && m_transactionContext.Started)
-                                throw new Exception("Connection was lost after starting a transaction.");
-
-                            try
+                            // Check connection
+                            if (m_connection == null)
                             {
-                                // Connection String Adapter
-                                var cs = m_provider.ConnectionString;
-                                var adapter = ConnectionStringAdapter;
+                                if (m_transactionContext != null && m_transactionContext.Started)
+                                    throw new Exception("Connection was lost after starting a transaction.");
 
-                                if (adapter != null)
+                                try
                                 {
-                                    var arguments = new DbConnectionArguments(cs);
-                                    adapter(arguments);
+                                    // Connection String Adapter
+                                    var cs = m_provider.ConnectionString;
+                                    var adapter = ConnectionStringAdapter;
 
-                                    cs = m_provider.LinkAdapter.CreateConnectionString(arguments);
+                                    if (adapter != null)
+                                    {
+                                        var arguments = new DbConnectionArguments(cs);
+                                        adapter(arguments);
+
+                                        cs = m_provider.LinkAdapter.CreateConnectionString(arguments);
+                                    }
+
+                                    // Create Connection
+                                    m_connection = m_provider.LinkAdapter.CreateConnection(cs);
+                                    OnConnectionCreated();
+                                }
+                                catch
+                                {
+                                    DisposeAndSetNull(ref m_connection);
+                                    throw;
+                                }
+                            }
+
+                            // Open Connection
+                            if (m_connection.State != ConnectionState.Open)
+                            {
+                                if (m_transactionContext != null && m_transactionContext.Started)
+                                    throw new Exception("Connection was lost after starting a transaction.");
+
+                                try
+                                {
+                                    m_connection.Open();
+                                    OnConnectionOpen();
+
+                                    if (m_connectionOpen != null)
+                                    {
+                                        isUserException = true;
+                                        m_suppressTransactionBegin = Provider.Configuration.PostponeTransactionBeginOnConnectionOpenEvent;
+                                        m_connectionOpen(this, EventArgs.Empty);
+                                        isUserException = false;
+                                    }
+                                }
+                                catch
+                                {
+                                    DisposeAndSetNull(ref m_connection);
+                                    throw;
+                                }
+                                finally
+                                {
+                                    m_suppressTransactionBegin = false;
+                                }
+                            }
+
+                            // Transaction
+                            if (!m_suppressTransactionBegin)
+                            {
+                                // Enlist transaction
+                                if (m_transactionContext == null && m_provider.Configuration.UseSystemTransactions)
+                                {
+                                    var transaction = System.Transactions.Transaction.Current;
+                                    if (transaction != null)
+                                        SystemTransactionEnlist(transaction);
                                 }
 
-                                // Create Connection
-                                m_connection = m_provider.LinkAdapter.CreateConnection(cs);
-                                OnConnectionCreated();
-                            }
-                            catch
-                            {
-                                DisposeAndSetNull(ref m_connection);
-                                throw;
-                            }
-                        }
+                                // Start transaction
+                                if (m_transactionContext != null && m_transactionContext.TransactionStatusInternal == DbLinkTransactionStatus.Pending)
+                                {
+                                    // Before Begin
+                                    if (m_transactionBeforeBegin != null)
+                                    {
+                                        isUserException = true;
+                                        m_transactionBeforeBegin(this, EventArgs.Empty);
+                                        isUserException = false;
+                                    }
 
-                        // Open Connection
-                        if (m_connection.State != ConnectionState.Open)
+                                    // Begin
+                                    if (m_transactionContext.SystemTransactionInternal != null)
+                                        m_connection.EnlistTransaction(m_transactionContext.SystemTransactionInternal);
+                                    else
+                                        m_transactionContext.DbTransactionInternal = m_connection.BeginTransaction();
+
+                                    m_transactionContext.Started = true;
+                                    m_transactionContext.TransactionStatusInternal = DbLinkTransactionStatus.Open;
+
+                                    // After Begin
+                                    if (m_transactionBegin != null)
+                                    {
+                                        isUserException = true;
+                                        m_transactionBegin(this, EventArgs.Empty);
+                                        isUserException = false;
+                                    }
+                                }
+                            }
+
+                            // Execute delayed batch
+                            m_batchQueue.Flush();
+
+                            // Execute action
+                            return action();
+                        }
+                        catch (Exception e)
                         {
-                            if (m_transactionContext != null && m_transactionContext.Started)
-                                throw new Exception("Connection was lost after starting a transaction.");
+                            var connectionLost = !isUserException
+                               && (m_connection == null
+                                   || m_connection.State == ConnectionState.Closed
+                                   || IsConnectionBrokenException(e));
 
-                            try
+                            // Format Exception
+                            Exception ex = OnFormatException(e);
+
+                            // Clear current transaction
+                            if (TransactionStatusInternal != DbLinkTransactionStatus.None)
                             {
-                                m_connection.Open();
-                                OnConnectionOpen();
+                                if (m_transactionContext.Exception == null)
+                                    m_transactionContext.Exception = ex;
 
-                                if (m_connectionOpen != null)
+                                try
                                 {
-                                    isUserException = true;
-                                    m_suppressTransactionBegin = Provider.Configuration.PostponeTransactionBeginOnConnectionOpenEvent;
-                                    m_connectionOpen(this, EventArgs.Empty);
-                                    isUserException = false;
+                                    MarkTransaction(true, true);
                                 }
+                                catch (Exception ex2)
+                                {
+                                    throw ToAggregateException("Exception occurred while executing transaction rollback after another exception.", ex, ex2);
+                                }
+
+                                if (connectionLost)
+                                    DisposeAndSetNull(ref m_connection);
+
+                                if (e == ex)
+                                    throw;
+                                throw ex;
                             }
-                            catch
+
+                            // Is Connection Lost
+                            if (!connectionLost)
                             {
-                                DisposeAndSetNull(ref m_connection);
-                                throw;
+                                if (e == ex)
+                                    throw;
+                                throw ex;
                             }
-                            finally
+
+                            DisposeAndSetNull(ref m_connection);
+
+                            // Connection Reconnect
+                            if (m_connectionLost == null)
                             {
-                                m_suppressTransactionBegin = false;
+                                if (e == ex)
+                                    throw;
+                                throw ex;
                             }
+
+                            var ea = new DbLinkConnectionLostEventArgs(reconnectAttempts);
+                            m_connectionLost(this, ea);
+
+                            if (!ea.Reconnect)
+                            {
+                                if (e == ex)
+                                    throw;
+                                throw ex;
+                            }
+
+                            ++reconnectAttempts;
                         }
-
-                        // Transaction
-                        if (!m_suppressTransactionBegin)
-                        {
-                            // Enlist transaction
-                            if (m_transactionContext == null && m_provider.Configuration.UseSystemTransactions)
-                            {
-                                var transaction = System.Transactions.Transaction.Current;
-                                if (transaction != null)
-                                    SystemTransactionEnlist(transaction);
-                            }
-
-                            // Start transaction
-                            if (m_transactionContext != null && m_transactionContext.TransactionStatusInternal == DbLinkTransactionStatus.Pending)
-                            {
-                                // Before Begin
-                                if (m_transactionBeforeBegin != null)
-                                {
-                                    isUserException = true;
-                                    m_transactionBeforeBegin(this, EventArgs.Empty);
-                                    isUserException = false;
-                                }
-
-                                // Begin
-                                if (m_transactionContext.SystemTransactionInternal != null)
-                                    m_connection.EnlistTransaction(m_transactionContext.SystemTransactionInternal);
-                                else
-                                    m_transactionContext.DbTransactionInternal = m_connection.BeginTransaction();
-
-                                m_transactionContext.Started = true;
-                                m_transactionContext.TransactionStatusInternal = DbLinkTransactionStatus.Open;
-
-                                // After Begin
-                                if (m_transactionBegin != null)
-                                {
-                                    isUserException = true;
-                                    m_transactionBegin(this, EventArgs.Empty);
-                                    isUserException = false;
-                                }
-                            }
-                        }
-
-                        // Execute delayed batch
-                        m_batchQueue.Flush();
-
-                        // Execute action
-                        return action();
                     }
-                    catch (Exception e)
-                    {
-                        var connectionLost = !isUserException
-                           && (m_connection == null
-                               || m_connection.State == ConnectionState.Closed
-                               || IsConnectionBrokenException(e));
-
-                        // Format Exception
-                        Exception ex = OnFormatException(e);
-
-                        // Clear current transaction
-                        if (TransactionStatusInternal != DbLinkTransactionStatus.None)
-                        {
-                            if (m_transactionContext.Exception == null)
-                                m_transactionContext.Exception = ex;
-
-                            try
-                            {
-                                MarkTransaction(true, true);
-                            }
-                            catch (Exception ex2)
-                            {
-                                throw ToAggregateException("Exception occurred while executing transaction rollback after another exception.", ex, ex2);
-                            }
-
-                            if (connectionLost)
-                                DisposeAndSetNull(ref m_connection);
-
-                            if (e == ex)
-                                throw;
-                            throw ex;
-                        }
-
-                        // Is Connection Lost
-                        if (!connectionLost)
-                        {
-                            if (e == ex)
-                                throw;
-                            throw ex;
-                        }
-
-                        DisposeAndSetNull(ref m_connection);
-
-                        // Connection Reconnect
-                        if (m_connectionLost == null)
-                        {
-                            if (e == ex)
-                                throw;
-                            throw ex;
-                        }
-
-                        var ea = new DbLinkConnectionLostEventArgs(reconnectAttempts);
-                        m_connectionLost(this, ea);
-
-                        if (!ea.Reconnect)
-                        {
-                            if (e == ex)
-                                throw;
-                            throw ex;
-                        }
-
-                        ++reconnectAttempts;
-                    }
+                    while (true);
                 }
-                while (true);
+                finally
+                {
+                    LastExecuted = DateTime.Now;
+                    IsExecuting = false;
+                }
             }
         }
         protected virtual bool IsConnectionBrokenException(Exception e)
@@ -1243,5 +1306,7 @@ namespace TagBites.DB
         }
 
         void IDisposable.Dispose() => throw new NotSupportedException("Can not call dispose!");
+
+        private delegate T ExecuteQueryWithRowCountDelegate<out T>(IQuerySource query, out int rowCount);
     }
 }
