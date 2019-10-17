@@ -18,7 +18,7 @@ namespace TagBites.Sql
             Guard.ArgumentNotNull(query, "builder");
 
             Name = name;
-            Columns = columns ?? new string[0];
+            Columns = columns ?? Array.Empty<string>();
             Query = query;
         }
         public SqlClauseWithEntry(string name, string[] columns, SqlLiteral select)
@@ -27,7 +27,7 @@ namespace TagBites.Sql
             Guard.ArgumentNotNull(select, "select");
 
             Name = name;
-            Columns = columns ?? new string[0];
+            Columns = columns ?? Array.Empty<string>();
             Query = select;
         }
         public SqlClauseWithEntry(string name, string[] columns, SqlLiteralExpression select)
@@ -36,7 +36,7 @@ namespace TagBites.Sql
             Guard.ArgumentNotNull(select, "select");
 
             Name = name;
-            Columns = columns ?? new string[0];
+            Columns = columns ?? Array.Empty<string>();
             Query = select;
         }
         public SqlClauseWithEntry(string name, string[] columns, SqlExpressionQuery select)
@@ -45,7 +45,7 @@ namespace TagBites.Sql
             Guard.ArgumentNotNull(select, "select");
 
             Name = name;
-            Columns = columns ?? new string[0];
+            Columns = columns ?? Array.Empty<string>();
             Query = select;
         }
 

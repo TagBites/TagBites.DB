@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace TagBites.Sql
 {
@@ -16,7 +14,7 @@ namespace TagBites.Sql
         public SqlLiteralExpression(string format, SqlExpression[] args)
         {
             Format = format;
-            Args = args ?? new SqlExpression[0];
+            Args = args ?? Array.Empty<SqlExpression>();
         }
 
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using TagBites.Utils;
 
@@ -12,7 +13,7 @@ namespace TagBites.Sql
         public SqlConditionGroupOperator(SqlConditionGroupOperatorType operatorType)
         {
             OperatorType = operatorType;
-            Operands = EmptyConditionalArray;
+            Operands = Array.Empty<SqlCondition>();
         }
         public SqlConditionGroupOperator(SqlConditionGroupOperatorType operatorType, IList<SqlCondition> operands)
         {
