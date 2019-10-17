@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace TagBites.DB
 {
@@ -16,5 +13,8 @@ namespace TagBites.DB
         event EventHandler TransactionBeforeBegin;
         event EventHandler TransactionBegin;
         event DbLinkTransactionCloseEventHandler TransactionClose;
+
+
+        void Terminate();
     }
 }

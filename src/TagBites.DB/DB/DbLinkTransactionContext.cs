@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.Common;
-using System.Linq;
-using System.Text;
 
 namespace TagBites.DB
 {
@@ -145,6 +142,11 @@ namespace TagBites.DB
             SystemTransaction = systemTransaction;
         }
 
+
+        public void Terminate()
+        {
+            m_context.MarkTransaction(true);
+        }
 
         internal void Attach()
         {
