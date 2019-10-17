@@ -100,7 +100,7 @@ namespace TagBites.Utils
                     return iti.GenericTypeArguments;
             }
 
-            return new Type[0];
+            return Array.Empty<Type>();
         }
         public static T TryGetFirstAttributeDefault<T>(Type type, bool inherit) where T : Attribute
         {

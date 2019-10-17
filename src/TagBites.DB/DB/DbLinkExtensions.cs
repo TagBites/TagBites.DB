@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
 using TagBites.DB.Entity;
 using TagBites.Sql;
 using TagBites.Utils;
@@ -220,7 +219,7 @@ namespace TagBites.DB
         {
             var items = recordsKeys as IList ?? recordsKeys.ToArray();
             if (items.Count == 0)
-                return new T[0];
+                return Array.Empty<T>();
 
             var q = EntityQueryBuilder.CreateSelectQuery<T>(items);
             return link.Execute<T>(q);
@@ -229,7 +228,7 @@ namespace TagBites.DB
         {
             var items = recordsKeys as IList ?? recordsKeys.ToArray();
             if (items.Count == 0)
-                return new T[0];
+                return Array.Empty<T>();
 
             var q = EntityQueryBuilder.CreateSelectQuery<T>(items);
             return link.Execute<T>(q);
@@ -275,7 +274,7 @@ namespace TagBites.DB
         {
             var items = GetItems(entities);
             if (items.Count == 0)
-                return new T[0];
+                return Array.Empty<T>();
 
             var q = EntityQueryBuilder.CreateInsertQuery(items, properties, excludeProperties, true);
             var result = link.Execute<T>(q);
@@ -323,7 +322,7 @@ namespace TagBites.DB
         {
             var items = GetItems(entities);
             if (items.Count == 0)
-                return new T[0];
+                return Array.Empty<T>();
 
             var q = EntityQueryBuilder.CreateUpdateQuery(items, properties, excludeProperties, true);
             var result = link.Execute<T>(q);
@@ -371,7 +370,7 @@ namespace TagBites.DB
         {
             var items = GetItems(entities);
             if (items.Count == 0)
-                return new T[0];
+                return Array.Empty<T>();
 
             var q = EntityQueryBuilder.CreateUpsertQuery(items, mode, properties, excludeProperties, true);
             var result = link.Execute<T>(q);

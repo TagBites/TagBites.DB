@@ -7,9 +7,6 @@ namespace TagBites.Sql
 {
     public abstract class SqlExpression
     {
-        internal static readonly SqlExpression[] EmptyExpressionArray = new SqlExpression[0];
-        internal static readonly SqlCondition[] EmptyConditionalArray = new SqlCondition[0];
-
         public static readonly SqlExpression Null = new SqlLiteral("null");
         public static readonly SqlExpression One = Argument(1);
         public static readonly SqlExpression Zero = Argument(0);

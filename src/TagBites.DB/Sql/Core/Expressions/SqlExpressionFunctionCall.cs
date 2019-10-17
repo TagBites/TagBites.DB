@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using TagBites.Utils;
 
 namespace TagBites.Sql
@@ -13,7 +14,7 @@ namespace TagBites.Sql
             Guard.ArgumentNotNullOrEmpty(functionName, nameof(functionName));
 
             FunctionName = functionName;
-            Operands = EmptyExpressionArray;
+            Operands = Array.Empty<SqlExpression>();
         }
         public SqlExpressionFunctionCall(string functionName, IList<SqlExpression> operands)
         {
