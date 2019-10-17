@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using TagBites.Utils;
 
 namespace TagBites.DB
@@ -133,12 +130,14 @@ namespace TagBites.DB
         public IQuerySource Query { get; }
         public TimeSpan Duration { get; }
         public Exception Exception { get; }
+        public int? RowCount { get; }
 
-        public DbLinkQueryExecutedEventArgs(IQuerySource query, TimeSpan duration, Exception exception)
+        public DbLinkQueryExecutedEventArgs(IQuerySource query, TimeSpan duration, Exception exception, int? rowCount = null)
         {
             Query = query;
             Duration = duration;
             Exception = exception;
+            RowCount = rowCount;
         }
     }
 }

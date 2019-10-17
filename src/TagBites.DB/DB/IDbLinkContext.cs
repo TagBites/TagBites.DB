@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace TagBites.DB
 {
@@ -11,6 +8,8 @@ namespace TagBites.DB
         object SynchRoot { get; }
         string Database { get; set; }
         bool IsActive { get; }
+        bool IsExecuting { get; }
+        DateTime LastExecuted { get; }
         IDbLinkProvider Provider { get; }
 
         event EventHandler ConnectionClose;
