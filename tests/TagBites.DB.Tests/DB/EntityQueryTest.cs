@@ -4,14 +4,14 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
-using System.Text;
+using TagBites.DB;
 using TagBites.DB.Entity;
 using TagBites.DB.Tests.DB.Core;
 using TagBites.Sql;
 using Xunit;
 using static TagBites.Sql.SqlExpression;
 
-namespace TagBites.DB.Tests.DB
+namespace TagBites.Data.UnitTests.DB
 {
     public class EntityQueryTest : DbTestBase
     {
@@ -28,47 +28,64 @@ namespace TagBites.DB.Tests.DB
 
         #endregion
 
-        #region IQueryable<T> source methods
+
+        #region Base
 
         [Fact]
         public void QueryableBaseTest()
         {
-            CollectionTest(GetMainQuery().Item1, x => new EntityQuery<MainEnitity>(x));
+            CollectionTest(GetMainQuery().Item1, x => new EntityQueryable<MainEnitity>(x));
         }
 
+        #endregion
+
+        #region Generation
+
         [Fact]
-        public void QueryableGenerationTest()
+        public void Generation_DefaultIfEmpty_CorrectResult()
         {
-            (var q, var t) = GetMainQuery();
+            var (q, t) = GetMainQuery();
             var entity = new MainEnitity() { Id = 2 };
-            CollectionTest(q, x => new EntityQuery<MainEnitity>(x).DefaultIfEmpty(), x => Assert.Null(x.Single()));
-            CollectionTest(q, x => new EntityQuery<MainEnitity>(x).DefaultIfEmpty(entity), x => Assert.Equal(x.Single(), entity));
+            CollectionTest(q, x => new EntityQueryable<MainEnitity>(x).DefaultIfEmpty(), x => Assert.Null(x.Single()));
+            CollectionTest(q, x => new EntityQueryable<MainEnitity>(x).DefaultIfEmpty(entity), x => Assert.Equal(x.Single(), entity));
         }
 
+        #endregion
+
+        #region Filtering
+
         [Fact]
-        public void QueryableFilteringTest()
+        public void Filtering_Where_CorrectResult()
         {
-            // Where
-            {
-                var date = new DateTime(2012, 12, 12);
-                (var q, var t) = GetMainQuery();
-                q.Where.Add(Or(
-                   AreEquals(t.ColumnInt, Argument(1)),
-                   And(
-                       Or(AreNotEquals(t.ColumnString, Argument("test")), ToCondition(t.ColumnsBool)),
-                       IsLessOrEqual(t.ColumnDatetime, Argument(date)))));
-                CollectionTest(q, x => new EntityQuery<MainEnitity>(x).Where(y => y.ColumnInt == 1 || ((y.ColumnString != "test" || y.ColumnsBool) && y.ColumnDatetime <= date)));
-                CollectionTestException(x => new EntityQuery<MainEnitity>(x).Where((y, i) => y.ColumnString != "test"));
-            }
-            // TODO: BJ: OfType  
+
+            var date = new DateTime(2012, 12, 12);
+            (var q, var t) = GetMainQuery();
+            q.Where.Add(Or(
+                AreEquals(t.ColumnInt, Argument(1)),
+                And(
+                    Or(AreNotEquals(t.ColumnString, Argument("test")), ToCondition(t.ColumnsBool)),
+                    IsLessOrEqual(t.ColumnDatetime, Argument(date)))));
+            CollectionTest(q, x => new EntityQueryable<MainEnitity>(x).Where(y => y.ColumnInt == 1 || ((y.ColumnString != "test" || y.ColumnsBool) && y.ColumnDatetime <= date)));
+            CollectionTestException(x => new EntityQueryable<MainEnitity>(x).Where((y, i) => y.ColumnString != "test"));
+
         }
 
         [Fact]
-        public void QueryableMappingTest()
+        public void Filtering_OfType_CorrectResult()
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+
+        #region Mapping
+
+        [Fact]
+        public void Mapping_Select_CorrectResult()
         {
             var select1Query = new SqlQuerySelect();
             select1Query.Select.Add(select1Query.From.Add("public.tb_entity"), "column_int");
-            CollectionTest(select1Query, x => new EntityQuery<MainEnitity>(x).Select(y => y.ColumnInt));
+            CollectionTest(select1Query, x => new EntityQueryable<MainEnitity>(x).Select(y => y.ColumnInt));
 
             //var select2Query = new SqlQuerySelect();
             //var select2Table = select2Query.From.Add("public.tb_entity");
@@ -78,34 +95,52 @@ namespace TagBites.DB.Tests.DB
             var selectAnonymousQuery = new SqlQuerySelect();
             var selectAnonymousTable = selectAnonymousQuery.From.Add<MainEnitityTable>();
             selectAnonymousQuery.Select.Add(selectAnonymousTable.FirstId);
-            CollectionTest(selectAnonymousQuery, x => new EntityQuery<MainEnitity>(x)
-              .Select(y => new { y.FirstId, y.ColumnDatetime, y.ColumnsBool })
-              .Select(y => new { y.FirstId, y.ColumnsBool })
-              .Select(y => new { y.FirstId }));
+            CollectionTest(selectAnonymousQuery, x => new EntityQueryable<MainEnitity>(x)
+                .Select(y => new { y.FirstId, y.ColumnDatetime, y.ColumnsBool })
+                .Select(y => new { y.FirstId, y.ColumnsBool })
+                .Select(y => new { y.FirstId }));
 
             selectAnonymousQuery.Select.Add(selectAnonymousTable.ColumnsBool);
-            CollectionTest(selectAnonymousQuery, x => new EntityQuery<MainEnitity>(x)
-              .Select(y => new { y.FirstId, y.ColumnDatetime, y.ColumnsBool })
-              .Select(y => new { y.FirstId, y.ColumnsBool }));
+            CollectionTest(selectAnonymousQuery, x => new EntityQueryable<MainEnitity>(x)
+                .Select(y => new { y.FirstId, y.ColumnDatetime, y.ColumnsBool })
+                .Select(y => new { y.FirstId, y.ColumnsBool }));
 
             selectAnonymousQuery.Select.Add(selectAnonymousTable.ColumnDatetime);
-            CollectionTest(selectAnonymousQuery, x => new EntityQuery<MainEnitity>(x)
-               .Select(y => new { y.FirstId, y.ColumnDatetime, y.ColumnsBool }));
+            CollectionTest(selectAnonymousQuery, x => new EntityQueryable<MainEnitity>(x)
+                .Select(y => new { y.FirstId, y.ColumnDatetime, y.ColumnsBool }));
 
             // Select - index
-            CollectionTestException(x => new EntityQuery<MainEnitity>(x).Select((y, i) => y.ColumnString != "test"));
+            CollectionTestException(x => new EntityQueryable<MainEnitity>(x).Select((y, i) => y.ColumnString != "test"));
         }
 
+        #endregion
+
+        #region Join
+
         [Fact]
-        public void QueryableJoinTest()
+        public void Join_Join_CorrectResult()
         {
-            // TODO: BJ: Join
-            // TODO: BJ: GroupJoin
-            // TODO: BJ: SelectMany
+            throw new NotImplementedException();
         }
 
         [Fact]
-        public void QueryableConcatenationTest()
+        public void Join_GroupJoin_CorrectResult()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Fact]
+        public void Join_SelectMany_CorrectResult()
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+
+        #region Concatenation
+
+        [Fact]
+        public void Concatenation_Concat_CorrectResult()
         {
             (var q2, var t2) = GetMainQuery();
             q2.Where.Add(IsGreater(t2.ColumnInt, Argument(10)));
@@ -118,296 +153,377 @@ namespace TagBites.DB.Tests.DB
 
             CollectionTest(q, x =>
             {
-                var first = new EntityQuery<MainEnitity>(x).Where(y => y.ColumnInt < 100);
-                var second = new EntityQuery<MainEnitity>(x).Where(y => y.ColumnInt > 10);
+                var first = new EntityQueryable<MainEnitity>(x).Where(y => y.ColumnInt < 100);
+                var second = new EntityQueryable<MainEnitity>(x).Where(y => y.ColumnInt > 10);
                 return first.Concat(second);
             });
         }
 
-        [Fact]
-        public void QueryableSetTest()
-        {
-            //// Distinct
-            {
-                //(var q, var t) = GetMainQuery();
-                //q.Distinct.Enabled = true;
-                //CollectionTest(q, x => new EntityQuery<MainEnitity>(x).Distinct());
-                //CollectionTestException(x => new EntityQuery<MainEnitity>(x).Distinct(m_mainEntityEqualityComparer));
-            }
-            // GroupBy
-            {
-                (var q, var t) = GetMainQuery();
-                q.OrderBy.Add(t.ColumnInt, SqlClauseOrderByEntryType.Ascending);
-                CollectionTest(q, x => new EntityQuery<MainEnitity>(x).GroupBy(y => y.ColumnInt));
-                //CollectionTest(q, x => new EntityQuery<MainEnitity>(x).GroupBy(y => y.ColumnInt, m_integerComparer));
-            }
-            // Uniom
-            {
-                //(var q, var t) = GetMainQuery();
-                //var collection = new[] { new MainEnitity { Id = 1 } };
-                //CollectionTest(q, x => new EntityQuery<MainEnitity>(x).Union(collection));
+        #endregion
 
-                // TODO
-            }
-            // Intersect
-            {
-                // TODO
-            }
-            // Except
-            {
-                // TODO
-            }
+        #region Set
+
+        [Fact]
+        public void Set_Distinct_CorrectResult()
+        {
+            throw new NotImplementedException();
+
+            //(var q, var t) = GetMainQuery();
+            //q.Distinct.Enabled = true;
+            //CollectionTest(q, x => new EntityQuery<MainEnitity>(x).Distinct());
+            //CollectionTestException(x => new EntityQuery<MainEnitity>(x).Distinct(m_mainEntityEqualityComparer));
         }
 
         [Fact]
-        public void QueryableConvolutionTest()
+        public void Set_GroupBy_CorrectResult()
+        {
+            var (q, t) = GetMainQuery();
+            q.OrderBy.Add(t.ColumnInt, SqlClauseOrderByEntryType.Ascending);
+            CollectionTest(q, x => new EntityQueryable<MainEnitity>(x).GroupBy(y => y.ColumnInt));
+        }
+
+        [Fact]
+        public void Set_Union_CorrectResult()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Fact]
+        public void Set_Intersect_CorrectResult()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Fact]
+        public void Set__CorrectResult()
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+
+        #region Convolution
+
+        [Fact]
+        public void Convolution_Zip_CorrectResult()
         {
             var collection = new List<int>();
-            CollectionTestException(x => new EntityQuery<MainEnitity>(x).Zip(collection, (y, z) => new MainEnitity()));
+            CollectionTestException(x => new EntityQueryable<MainEnitity>(x).Zip(collection, (y, z) => new MainEnitity()));
         }
+        #endregion
+
+        #region Partitioning
 
         [Fact]
-        public void QueryablePartitioningTest()
+        public void Partitioning_SkipTake_CorrectResult()
         {
             (var q, var t) = GetMainQuery();
             q.Limit = 10;
             q.Offset = 5;
-            CollectionTest(q, x => new EntityQuery<MainEnitity>(x).Skip(5).Take(10));
-        }
-
-        [Fact]
-        public void QueryableOrderingByTest()
-        {
-            // OrderBy
-            {
-                (var q, var t) = GetMainQuery();
-                q.OrderBy.Add(t.ColumnInt, SqlClauseOrderByEntryType.Ascending);
-                CollectionTest(q, x => new EntityQuery<MainEnitity>(x).OrderBy(y => y.ColumnInt));
-
-                CollectionTestException(x => new EntityQuery<MainEnitity>(x).OrderBy(y => y.ColumnInt, m_integerComparer));
-            }
-            // ThenBy
-            {
-                (var q, var t) = GetMainQuery();
-                q.OrderBy.Add(t.ColumnInt, SqlClauseOrderByEntryType.Ascending);
-                q.OrderBy.Add(t.ColumnString, SqlClauseOrderByEntryType.Ascending);
-                CollectionTest(q, x => new EntityQuery<MainEnitity>(x).OrderBy(y => y.ColumnInt).ThenBy(y => y.ColumnString));
-
-                CollectionTestException(x => new EntityQuery<MainEnitity>(x).OrderBy(y => y.ColumnInt, m_integerComparer).ThenBy(y => y.ColumnString, m_stringComparer));
-            }
-            // OrderByDescending
-            {
-                (var q, var t) = GetMainQuery();
-                q.OrderBy.Add(t.ColumnInt, SqlClauseOrderByEntryType.Descending);
-                CollectionTest(q, x => new EntityQuery<MainEnitity>(x).OrderByDescending(y => y.ColumnInt));
-
-                CollectionTestException(x => new EntityQuery<MainEnitity>(x).OrderByDescending(y => y.ColumnInt, m_integerComparer).ThenBy(y => y.ColumnString, m_stringComparer));
-            }
-            // ThenByDescending
-            {
-                (var q, var t) = GetMainQuery();
-                q.OrderBy.Add(t.ColumnInt, SqlClauseOrderByEntryType.Descending);
-                q.OrderBy.Add(t.ColumnString, SqlClauseOrderByEntryType.Descending);
-                CollectionTest(q, x => new EntityQuery<MainEnitity>(x).OrderByDescending(y => y.ColumnInt).ThenByDescending(y => y.ColumnString));
-
-                CollectionTestException(x => new EntityQuery<MainEnitity>(x).OrderByDescending(y => y.ColumnInt, m_integerComparer).ThenByDescending(y => y.ColumnString, m_stringComparer));
-            }
-            // Reverse
-            {
-                CollectionTestException(x => new EntityQuery<MainEnitity>(x).Reverse());
-            }
-        }
-
-        [Fact]
-        public void QueryableConversionTest()
-        {
-            // TODO: BJ: Cast
-            // TODO: BJ: AsQueryable
-
-            //var cast = "SELECT tf_1.id, tf_1.column_int, tf_1.column_string, tf_1.column_datetime, tf_1.column_bool, tf_1.firstid FROM public.tb_entity AS tf_1";
-            //CollectionTest<MainEnitity, object>(cast, x => x.AsQueryable<object>(), null, x => Assert.Equal(typeof(IEnumerable<object>), x.GetType()));
+            CollectionTest(q, x => new EntityQueryable<MainEnitity>(x).Skip(5).Take(10));
         }
 
         #endregion
 
-        #region Single value methods
+        #region Ordering
 
         [Fact]
-        public void QuearyableElementTest()
+        public void Ordering_OrderBy_CorrectResult()
+        {
+            var (q, t) = GetMainQuery();
+            q.OrderBy.Add(t.ColumnInt, SqlClauseOrderByEntryType.Ascending);
+            CollectionTest(q, x => new EntityQueryable<MainEnitity>(x).OrderBy(y => y.ColumnInt));
+
+            CollectionTestException(x => new EntityQueryable<MainEnitity>(x).OrderBy(y => y.ColumnInt, m_integerComparer));
+        }
+
+        [Fact]
+        public void Ordering_ThenBy_CorrectResult()
+        {
+            var (q, t) = GetMainQuery();
+            q.OrderBy.Add(t.ColumnInt, SqlClauseOrderByEntryType.Ascending);
+            q.OrderBy.Add(t.ColumnString, SqlClauseOrderByEntryType.Ascending);
+            CollectionTest(q, x => new EntityQueryable<MainEnitity>(x).OrderBy(y => y.ColumnInt).ThenBy(y => y.ColumnString));
+
+            CollectionTestException(x => new EntityQueryable<MainEnitity>(x).OrderBy(y => y.ColumnInt, m_integerComparer).ThenBy(y => y.ColumnString, m_stringComparer));
+        }
+
+        [Fact]
+        public void Ordering_OrderByDescending_CorrectResult()
+        {
+            var (q, t) = GetMainQuery();
+            q.OrderBy.Add(t.ColumnInt, SqlClauseOrderByEntryType.Descending);
+            CollectionTest(q, x => new EntityQueryable<MainEnitity>(x).OrderByDescending(y => y.ColumnInt));
+
+            CollectionTestException(x => new EntityQueryable<MainEnitity>(x).OrderByDescending(y => y.ColumnInt, m_integerComparer).ThenBy(y => y.ColumnString, m_stringComparer));
+        }
+
+        [Fact]
+        public void Ordering_ThenByDescending_CorrectResult()
+        {
+            var (q, t) = GetMainQuery();
+            q.OrderBy.Add(t.ColumnInt, SqlClauseOrderByEntryType.Descending);
+            q.OrderBy.Add(t.ColumnString, SqlClauseOrderByEntryType.Descending);
+            CollectionTest(q, x => new EntityQueryable<MainEnitity>(x).OrderByDescending(y => y.ColumnInt).ThenByDescending(y => y.ColumnString));
+
+            CollectionTestException(x => new EntityQueryable<MainEnitity>(x).OrderByDescending(y => y.ColumnInt, m_integerComparer).ThenByDescending(y => y.ColumnString, m_stringComparer));
+        }
+
+        [Fact]
+        public void Ordering_Reverse_CorrectResult()
+        {
+            CollectionTestException(x => new EntityQueryable<MainEnitity>(x).Reverse());
+        }
+
+        #endregion
+
+        #region Conversion
+
+        [Fact]
+        public void Conversion_Cast_CorrectResult()
+        {
+            throw new NotImplementedException();
+        }
+
+        [Fact]
+        public void Conversion_AsQueryable_CorrectResult()
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion
+
+
+        #region Element
+
+        [Fact]
+        public void Element_First_CorrectResult()
         {
             var entity = new MainEnitity() { ColumnInt = 12 };
-            {
-                // Queries
-                (var firstQuery, var firstQueryTable) = GetMainQuery();
-                firstQuery.Limit = 1;
 
-                (var firstExpressionQuery, var firstQueryExpressionTable) = GetMainQuery();
-                firstExpressionQuery.Where.Add(IsGreater(firstQueryExpressionTable.ColumnInt, Argument(10)));
-                firstExpressionQuery.Limit = 1;
+            // Queries
+            (var firstQuery, var firstQueryTable) = GetMainQuery();
+            firstQuery.Limit = 1;
 
-                // First
-                {
-                    SingleWithInitializationTest(firstQuery, x => new EntityQuery<MainEnitity>(x).First(), x => Assert.Equal(entity, x), new MainEnitity[] { entity });
-                    SingleTestExceptionResult(firstQuery, x => new EntityQuery<MainEnitity>(x).First(), new MainEnitity[0]);
-                    SingleWithInitializationTest(firstExpressionQuery, x => new EntityQuery<MainEnitity>(x).First(y => y.ColumnInt > 10), x => Assert.Equal(entity, x), new MainEnitity[] { entity });
-                }
-                // FirstOrDefault
-                {
-                    SingleTest(firstQuery, x => new EntityQuery<MainEnitity>(x).FirstOrDefault(), Assert.Null);
-                    SingleWithInitializationTest(firstQuery, x => new EntityQuery<MainEnitity>(x).FirstOrDefault(), x => Assert.Equal(entity, x), new MainEnitity[] { entity });
-                    SingleTest(firstExpressionQuery, x => new EntityQuery<MainEnitity>(x).FirstOrDefault(y => y.ColumnInt > 10), Assert.Null);
-                    SingleWithInitializationTest(firstExpressionQuery, x => new EntityQuery<MainEnitity>(x).FirstOrDefault(y => y.ColumnInt > 10), x => Assert.Equal(entity, x), new MainEnitity[] { entity });
-                }
-            }
-            {
-                // Queries
-                (var singleQuery, var singleQueryTable) = GetMainQuery();
-                singleQuery.Limit = 2;
+            (var firstExpressionQuery, var firstQueryExpressionTable) = GetMainQuery();
+            firstExpressionQuery.Where.Add(IsGreater(firstQueryExpressionTable.ColumnInt, Argument(10)));
+            firstExpressionQuery.Limit = 1;
 
-                (var singleExpressionQuery, var singleExpressionQueryTable) = GetMainQuery();
-                singleExpressionQuery.Where.Add(IsGreater(singleExpressionQueryTable.ColumnInt, Argument(10)));
-                singleExpressionQuery.Limit = 2;
-
-                // Single
-                {
-                    SingleWithInitializationTest(singleQuery, x => new EntityQuery<MainEnitity>(x).Single(), x => Assert.Equal(entity, x), new MainEnitity[] { entity });
-                    SingleTestExceptionResult(singleQuery, x => new EntityQuery<MainEnitity>(x).Single(), new MainEnitity[0]);
-                    SingleTestExceptionResult(singleQuery, x => new EntityQuery<MainEnitity>(x).Single(), new MainEnitity[] { entity, entity });
-                    SingleWithInitializationTest(singleExpressionQuery, x => new EntityQuery<MainEnitity>(x).Single(y => y.ColumnInt > 10), x => Assert.Equal(entity, x), new MainEnitity[] { entity });
-                }
-                // SingleOrDefault
-                {
-                    SingleTest(singleQuery, x => new EntityQuery<MainEnitity>(x).SingleOrDefault());
-                    SingleTest(singleExpressionQuery, x => new EntityQuery<MainEnitity>(x).SingleOrDefault(y => y.ColumnInt > 10));
-                }
-            }
-            {
-                // Last
-                SingleTestExceptionMethod(x => new EntityQuery<MainEnitity>(x).Last());
-                SingleTestExceptionMethod(x => new EntityQuery<MainEnitity>(x).Last(y => y.ColumnInt > 10));
-                // LastOrDefault
-                SingleTestExceptionMethod(x => new EntityQuery<MainEnitity>(x).LastOrDefault());
-                SingleTestExceptionMethod(x => new EntityQuery<MainEnitity>(x).LastOrDefault(y => y.ColumnInt > 10));
-                // ElementAt
-                SingleTestExceptionMethod(x => new EntityQuery<MainEnitity>(x).ElementAt(5));
-                // ElementAtOrDefault
-                SingleTestExceptionMethod(x => new EntityQuery<MainEnitity>(x).ElementAtOrDefault(5));
-            }
+            SingleWithInitializationTest(firstQuery, x => new EntityQueryable<MainEnitity>(x).First(), x => Assert.Equal(entity, x), new MainEnitity[] { entity });
+            SingleTestExceptionResult(firstQuery, x => new EntityQueryable<MainEnitity>(x).First(), new MainEnitity[0]);
+            SingleWithInitializationTest(firstExpressionQuery, x => new EntityQueryable<MainEnitity>(x).First(y => y.ColumnInt > 10), x => Assert.Equal(entity, x), new MainEnitity[] { entity });
         }
 
         [Fact]
-        public void QueryableAggregationTest()
+        public void Element_FirstOrDefault_CorrectResult()
         {
-            {
-                var countQuery = new SqlQuerySelect();
-                countQuery.Select.Add(SqlFunction.Count(Literal("*")));
-                countQuery.From.Add(GetMainQuery().Item1);
+            var entity = new MainEnitity() { ColumnInt = 12 };
 
-                (var countExpressionBaseQuery, var countExpressionBaseQueryTable) = GetMainQuery();
-                countExpressionBaseQuery.Where.Add(IsGreater(countExpressionBaseQueryTable.ColumnInt, Argument(5)));
-                var countExpressionQuery = new SqlQuerySelect();
-                countExpressionQuery.Select.Add(SqlFunction.Count(Literal("*")));
-                countExpressionQuery.From.Add(countExpressionBaseQuery);
+            // Queries
+            var (firstQuery, firstQueryTable) = GetMainQuery();
+            firstQuery.Limit = 1;
 
-                // Count
-                {
-                    SingleTest(countQuery, x => new EntityQuery<MainEnitity>(x).Count());
-                    SingleTest(countExpressionQuery, x => new EntityQuery<MainEnitity>(x).Count(y => y.ColumnInt > 5));
-                }
-                // LongCount
-                {
-                    SingleTest(countQuery, x => new EntityQuery<MainEnitity>(x).LongCount());
-                    SingleTest(countExpressionQuery, x => new EntityQuery<MainEnitity>(x).LongCount(y => y.ColumnInt > 5));
-                }
-            }
-            // Sum
-            {
-                var q = new SqlQuerySelect();
-                var t = q.From.Add<MainEnitityTable>();
-                q.Select.Add(SqlFunction.Sum(t.ColumnInt));
-                SingleTest(q, x => new EntityQuery<MainEnitity>(x).Sum(y => y.ColumnInt));
-            }
-            // Min
-            {
-                var q = new SqlQuerySelect();
-                var t = q.From.Add<MainEnitityTable>();
-                q.Select.Add(SqlFunction.Min(t.ColumnInt));
-                SingleTest(q, x => new EntityQuery<MainEnitity>(x).Min(y => y.ColumnInt));
-            }
-            // Max
-            {
-                var q = new SqlQuerySelect();
-                var t = q.From.Add<MainEnitityTable>();
-                q.Select.Add(SqlFunction.Max(t.ColumnInt));
-                SingleTest(q, x => new EntityQuery<MainEnitity>(x).Max(y => y.ColumnInt));
-            }
-            // Average
-            {
-                var q = new SqlQuerySelect();
-                var t = q.From.Add<MainEnitityTable>();
-                q.Select.Add(SqlFunction.Avg(t.ColumnInt));
-                SingleTest(q, x => new EntityQuery<MainEnitity>(x).Average(y => y.ColumnInt));
-            }
+            var (firstExpressionQuery, firstQueryExpressionTable) = GetMainQuery();
+            firstExpressionQuery.Where.Add(IsGreater(firstQueryExpressionTable.ColumnInt, Argument(10)));
+            firstExpressionQuery.Limit = 1;
+
+            SingleTest(firstQuery, x => new EntityQueryable<MainEnitity>(x).FirstOrDefault(), Assert.Null);
+            SingleWithInitializationTest(firstQuery, x => new EntityQueryable<MainEnitity>(x).FirstOrDefault(), x => Assert.Equal(entity, x), new MainEnitity[] { entity });
+            SingleTest(firstExpressionQuery, x => new EntityQueryable<MainEnitity>(x).FirstOrDefault(y => y.ColumnInt > 10), Assert.Null);
+            SingleWithInitializationTest(firstExpressionQuery, x => new EntityQueryable<MainEnitity>(x).FirstOrDefault(y => y.ColumnInt > 10), x => Assert.Equal(entity, x), new MainEnitity[] { entity });
         }
 
         [Fact]
-        public void QueryableQualifierTest()
+        public void Element_Single_CorrectResult()
         {
-            // Any
-            {
-                var subquery = new SqlQuerySelect();
-                var qt = subquery.From.Add<MainEnitityTable>();
-                subquery.Select.Add(Argument(1));
-                var query = new SqlQuerySelect();
-                query.Select.Add(Exists((SqlExpression)subquery));
+            var entity = new MainEnitity() { ColumnInt = 12 };
 
-                SingleWithInitializationTest(query, x => new EntityQuery<MainEnitity>(x).Any(), Assert.False, new MainEnitity[] { });
+            // Queries
+            (var singleQuery, var singleQueryTable) = GetMainQuery();
+            singleQuery.Limit = 2;
 
-                subquery.Where.Add(IsGreater(qt.ColumnInt, Argument(2)));
-                SingleWithInitializationTest(query, x => new EntityQuery<MainEnitity>(x).Any(y => y.ColumnInt > 2), Assert.False, new MainEnitity[] { });
+            (var singleExpressionQuery, var singleExpressionQueryTable) = GetMainQuery();
+            singleExpressionQuery.Where.Add(IsGreater(singleExpressionQueryTable.ColumnInt, Argument(10)));
+            singleExpressionQuery.Limit = 2;
 
-            }
-            //All
-            {
-                var subquery = new SqlQuerySelect();
-                var qt = subquery.From.Add<MainEnitityTable>();
-                subquery.Select.Add(Argument(1));
-                subquery.Where.Add(Not(IsGreater(qt.ColumnInt, Argument(2))));
-                var query = new SqlQuerySelect();
-                query.Select.Add(NotExists((SqlExpression)subquery));
+            SingleWithInitializationTest(singleQuery, x => new EntityQueryable<MainEnitity>(x).Single(), x => Assert.Equal(entity, x), new MainEnitity[] { entity });
+            SingleTestExceptionResult(singleQuery, x => new EntityQueryable<MainEnitity>(x).Single(), new MainEnitity[0]);
+            SingleTestExceptionResult(singleQuery, x => new EntityQueryable<MainEnitity>(x).Single(), new MainEnitity[] { entity, entity });
+            SingleWithInitializationTest(singleExpressionQuery, x => new EntityQueryable<MainEnitity>(x).Single(y => y.ColumnInt > 10), x => Assert.Equal(entity, x), new MainEnitity[] { entity });
 
-                SingleWithInitializationTest(query, x => new EntityQuery<MainEnitity>(x).All(y => y.ColumnInt > 2), Assert.True, new MainEnitity[] { });
-
-            }
-            // Contains
-            {
-
-                var entity = new MainEnitity();
-                var subquery = new SqlQuerySelect();
-                var qt = subquery.From.Add<MainEnitityTable>();
-                subquery.Select.Add(Argument(1));
-                subquery.Where.AddEquals(qt.ColumnInt, Argument(2));
-                var query = new SqlQuerySelect();
-                query.Select.Add(Exists((SqlExpression)subquery));
-
-                SingleWithInitializationTest(query, x => new EntityQuery<MainEnitity>(x).Select(y => y.ColumnInt).Contains(2), Assert.False, new MainEnitity[] { });
-                SingleWithInitializationTest(query, x => new EntityQuery<MainEnitity>(x).Select(y => y.ColumnInt).Contains(2), Assert.True, new MainEnitity[] { new MainEnitity() { ColumnInt = 2 } });
-                SingleWithInitializationTest(GetMainQuery().Item1, x => new EntityQuery<MainEnitity>(x).Contains(entity), Assert.True, new MainEnitity[] { entity });
-                SingleWithInitializationTest(GetMainQuery().Item1, x => new EntityQuery<MainEnitity>(x).Contains(entity), Assert.False, new MainEnitity[] { });
-                SingleTestExceptionMethod(x => new EntityQuery<MainEnitity>(x).Contains(entity, m_mainEntityEqualityComparer));
-
-            }
         }
 
         [Fact]
-        public void QueryableEqualityTest()
+        public void Element_SingleOrDefault_CorrectResult()
         {
-            var source = new List<MainEnitity>();
-            SingleTestExceptionMethod(x => new EntityQuery<MainEnitity>(x).SequenceEqual(source));
-            SingleTestExceptionMethod(x => new EntityQuery<MainEnitity>(x).SequenceEqual(source, m_mainEntityEqualityComparer));
+            var entity = new MainEnitity() { ColumnInt = 12 };
+
+            // Queries
+            (var singleQuery, var singleQueryTable) = GetMainQuery();
+            singleQuery.Limit = 2;
+
+            (var singleExpressionQuery, var singleExpressionQueryTable) = GetMainQuery();
+            singleExpressionQuery.Where.Add(IsGreater(singleExpressionQueryTable.ColumnInt, Argument(10)));
+            singleExpressionQuery.Limit = 2;
+
+            SingleTest(singleQuery, x => new EntityQueryable<MainEnitity>(x).SingleOrDefault());
+            SingleTest(singleExpressionQuery, x => new EntityQueryable<MainEnitity>(x).SingleOrDefault(y => y.ColumnInt > 10));
+        }
+
+        [Fact]
+        public void Element_Last_CorrectResult()
+        {
+            SingleTestExceptionMethod(x => new EntityQueryable<MainEnitity>(x).Last());
+            SingleTestExceptionMethod(x => new EntityQueryable<MainEnitity>(x).Last(y => y.ColumnInt > 10));
+        }
+
+        [Fact]
+        public void Element_LastOrDefault_CorrectResult()
+        {
+            SingleTestExceptionMethod(x => new EntityQueryable<MainEnitity>(x).LastOrDefault());
+            SingleTestExceptionMethod(x => new EntityQueryable<MainEnitity>(x).LastOrDefault(y => y.ColumnInt > 10));
+        }
+
+        [Fact]
+        public void Element_ElementAtt_CorrectResult()
+        {
+            SingleTestExceptionMethod(x => new EntityQueryable<MainEnitity>(x).ElementAt(5));
+        }
+
+        [Fact]
+        public void Element_ElementAtOrDefault_CorrectResult()
+        {
+            SingleTestExceptionMethod(x => new EntityQueryable<MainEnitity>(x).ElementAtOrDefault(5));
         }
 
         #endregion
+
+        #region Aggregation
+
+        [Fact]
+        public void Aggregation_Sum_CorrectResult()
+        {
+            var q = new SqlQuerySelect();
+            var t = q.From.Add<MainEnitityTable>();
+            q.Select.Add(SqlFunction.Sum(t.ColumnInt));
+
+            SingleTest(q, x => new EntityQueryable<MainEnitity>(x).Sum(y => y.ColumnInt));
+        }
+
+        [Fact]
+        public void Aggregation_Min_CorrectResult()
+        {
+            var q = new SqlQuerySelect();
+            var t = q.From.Add<MainEnitityTable>();
+            q.Select.Add(SqlFunction.Min(t.ColumnInt));
+
+            SingleTest(q, x => new EntityQueryable<MainEnitity>(x).Min(y => y.ColumnInt));
+        }
+
+        [Fact]
+        public void Aggregation_Max_CorrectResult()
+        {
+            var q = new SqlQuerySelect();
+            var t = q.From.Add<MainEnitityTable>();
+            q.Select.Add(SqlFunction.Max(t.ColumnInt));
+
+            SingleTest(q, x => new EntityQueryable<MainEnitity>(x).Max(y => y.ColumnInt));
+        }
+
+        [Fact]
+        public void Aggregation_Average_CorrectResult()
+        {
+            var q = new SqlQuerySelect();
+            var t = q.From.Add<MainEnitityTable>();
+            q.Select.Add(SqlFunction.Avg(t.ColumnInt));
+
+            SingleTest(q, x => new EntityQueryable<MainEnitity>(x).Average(y => y.ColumnInt));
+        }
+
+        [Fact]
+        public void Aggregation_Count_CorrectResult()
+        {
+            var countQuery = new SqlQuerySelect();
+            countQuery.Select.Add(SqlFunction.Count(Literal("*")));
+            countQuery.From.Add(GetMainQuery().Item1);
+
+            var (countExpressionBaseQuery, countExpressionBaseQueryTable) = GetMainQuery();
+            countExpressionBaseQuery.Where.Add(IsGreater(countExpressionBaseQueryTable.ColumnInt, Argument(5)));
+            var countExpressionQuery = new SqlQuerySelect();
+            countExpressionQuery.Select.Add(SqlFunction.Count(Literal("*")));
+            countExpressionQuery.From.Add(countExpressionBaseQuery);
+
+            SingleTest(countQuery, x => new EntityQueryable<MainEnitity>(x).Count());
+            SingleTest(countExpressionQuery, x => new EntityQueryable<MainEnitity>(x).Count(y => y.ColumnInt > 5));
+
+            SingleTest(countQuery, x => new EntityQueryable<MainEnitity>(x).LongCount());
+            SingleTest(countExpressionQuery, x => new EntityQueryable<MainEnitity>(x).LongCount(y => y.ColumnInt > 5));
+        }
+
+        #endregion
+
+        #region Qualifier
+
+        [Fact]
+        public void Qualifier_Any_CorrectResult()
+        {
+            var subQuery = new SqlQuerySelect();
+            var qt = subQuery.From.Add<MainEnitityTable>();
+            subQuery.Select.Add(Argument(1));
+            var query = new SqlQuerySelect();
+            query.Select.Add(Exists((SqlExpression)subQuery));
+
+            SingleWithInitializationTest(query, x => new EntityQueryable<MainEnitity>(x).Any(), Assert.False, new MainEnitity[] { });
+
+            subQuery.Where.Add(IsGreater(qt.ColumnInt, Argument(2)));
+            SingleWithInitializationTest(query, x => new EntityQueryable<MainEnitity>(x).Any(y => y.ColumnInt > 2), Assert.False, new MainEnitity[] { });
+        }
+
+        [Fact]
+        public void Qualifier_All_CorrectResult()
+        {
+            var subquery = new SqlQuerySelect();
+            var qt = subquery.From.Add<MainEnitityTable>();
+            subquery.Select.Add(Argument(1));
+            subquery.Where.Add(Not(IsGreater(qt.ColumnInt, Argument(2))));
+            var query = new SqlQuerySelect();
+            query.Select.Add(NotExists((SqlExpression)subquery));
+
+            SingleWithInitializationTest(query, x => new EntityQueryable<MainEnitity>(x).All(y => y.ColumnInt > 2), Assert.True, new MainEnitity[] { });
+        }
+
+        [Fact]
+        public void Qualifier_Contains_CorrectResult()
+        {
+            var entity = new MainEnitity();
+            var subquery = new SqlQuerySelect();
+            var qt = subquery.From.Add<MainEnitityTable>();
+            subquery.Select.Add(Argument(1));
+            subquery.Where.AddEquals(qt.ColumnInt, Argument(2));
+            var query = new SqlQuerySelect();
+            query.Select.Add(Exists((SqlExpression)subquery));
+
+            SingleWithInitializationTest(query, x => new EntityQueryable<MainEnitity>(x).Select(y => y.ColumnInt).Contains(2), Assert.False, new MainEnitity[] { });
+            SingleWithInitializationTest(query, x => new EntityQueryable<MainEnitity>(x).Select(y => y.ColumnInt).Contains(2), Assert.True, new MainEnitity[] { new MainEnitity() { ColumnInt = 2 } });
+            SingleWithInitializationTest(GetMainQuery().Item1, x => new EntityQueryable<MainEnitity>(x).Contains(entity), Assert.True, new MainEnitity[] { entity });
+            SingleWithInitializationTest(GetMainQuery().Item1, x => new EntityQueryable<MainEnitity>(x).Contains(entity), Assert.False, new MainEnitity[] { });
+            SingleTestExceptionMethod(x => new EntityQueryable<MainEnitity>(x).Contains(entity, m_mainEntityEqualityComparer));
+        }
+
+        #endregion
+
+        #region Equality
+
+        [Fact]
+        public void Equality_SequenceEqual_CorrectResult()
+        {
+            var source = new List<MainEnitity>();
+            SingleTestExceptionMethod(x => new EntityQueryable<MainEnitity>(x).SequenceEqual(source));
+            SingleTestExceptionMethod(x => new EntityQueryable<MainEnitity>(x).SequenceEqual(source, m_mainEntityEqualityComparer));
+        }
+
+        #endregion
+
 
         #region Helper methods
 
@@ -425,7 +541,7 @@ namespace TagBites.DB.Tests.DB
             return (q, qt);
         }
 
-        private void CollectionTest<TResult>(SqlQuerySelect querySelect, Func<DbLinkQueryProvider, IQueryable<TResult>> entityQuery, Action<IEnumerable<TResult>> resultAsserts = null)
+        private void CollectionTest<TResult>(SqlQuerySelect querySelect, Func<EntityQueryProvider, IQueryable<TResult>> entityQuery, Action<IEnumerable<TResult>> resultAsserts = null)
         {
             StandardTestCore<object>(querySelect, x =>
             {
@@ -433,7 +549,7 @@ namespace TagBites.DB.Tests.DB
                 resultAsserts?.Invoke(result);
             });
         }
-        private void CollectionWithInitializationTest<TResult, TEntity>(SqlQuerySelect querySelect, Func<DbLinkQueryProvider, IQueryable<TResult>> entityQuery, Action<IEnumerable<TResult>> resultAsserts = null, IEnumerable<TEntity> values = null)
+        private void CollectionWithInitializationTest<TResult, TEntity>(SqlQuerySelect querySelect, Func<EntityQueryProvider, IQueryable<TResult>> entityQuery, Action<IEnumerable<TResult>> resultAsserts = null, IEnumerable<TEntity> values = null)
             where TEntity : class
         {
             StandardTestCore(querySelect, x =>
@@ -442,7 +558,7 @@ namespace TagBites.DB.Tests.DB
                 resultAsserts?.Invoke(result);
             }, values);
         }
-        private void SingleTest<TResult>(SqlQuerySelect querySelect, Func<DbLinkQueryProvider, TResult> entityQuery, Action<TResult> resultAsserts = null)
+        private void SingleTest<TResult>(SqlQuerySelect querySelect, Func<EntityQueryProvider, TResult> entityQuery, Action<TResult> resultAsserts = null)
         {
             StandardTestCore<object>(querySelect, x =>
             {
@@ -450,7 +566,7 @@ namespace TagBites.DB.Tests.DB
                 resultAsserts?.Invoke(result);
             });
         }
-        private void SingleWithInitializationTest<TResult, TEntity>(SqlQuerySelect querySelect, Func<DbLinkQueryProvider, TResult> entityQuery, Action<TResult> resultAsserts = null, IEnumerable<TEntity> values = null)
+        private void SingleWithInitializationTest<TResult, TEntity>(SqlQuerySelect querySelect, Func<EntityQueryProvider, TResult> entityQuery, Action<TResult> resultAsserts = null, IEnumerable<TEntity> values = null)
             where TEntity : class
         {
             StandardTestCore(querySelect, x =>
@@ -460,32 +576,32 @@ namespace TagBites.DB.Tests.DB
             }, values);
         }
 
-        private void CollectionTestException<TResult>(Func<DbLinkQueryProvider, IQueryable<TResult>> entityQuery)
+        private void CollectionTestException<TResult>(Func<EntityQueryProvider, IQueryable<TResult>> entityQuery)
         {
             TestExceptionCore<NotSupportedException, object>(null, x => entityQuery(x).GetEnumerator().MoveNext());
         }
-        private void SingleTestExceptionMethod<TResult>(Func<DbLinkQueryProvider, TResult> entityQuery)
+        private void SingleTestExceptionMethod<TResult>(Func<EntityQueryProvider, TResult> entityQuery)
         {
             TestExceptionCore<NotSupportedException, object>(null, x => entityQuery(x));
         }
-        private void SingleTestExceptionResult<TResult, TEntity>(SqlQuerySelect querySelect, Func<DbLinkQueryProvider, TResult> entityQuery, IEnumerable<TEntity> values = null)
+        private void SingleTestExceptionResult<TResult, TEntity>(SqlQuerySelect querySelect, Func<EntityQueryProvider, TResult> entityQuery, IEnumerable<TEntity> values = null)
             where TEntity : class
         {
             TestExceptionCore<TargetInvocationException, TEntity>(querySelect, x => entityQuery(x), values);
         }
 
-        private void StandardTestCore<TEntity>(SqlQuerySelect querySelect, Action<DbLinkQueryProvider> action, IEnumerable<TEntity> values = null)
+        private void StandardTestCore<TEntity>(SqlQuerySelect querySelect, Action<EntityQueryProvider> action, IEnumerable<TEntity> values = null)
              where TEntity : class
         {
             TestCore(querySelect, action, values);
         }
-        private void TestExceptionCore<TException, TEntity>(SqlQuerySelect querySelect, Action<DbLinkQueryProvider> action, IEnumerable<TEntity> values = null)
+        private void TestExceptionCore<TException, TEntity>(SqlQuerySelect querySelect, Action<EntityQueryProvider> action, IEnumerable<TEntity> values = null)
             where TException : Exception
             where TEntity : class
         {
             TestCore(querySelect, x => Assert.Throws<TException>(() => action(x)), values);
         }
-        private void TestCore<TEntity>(SqlQuerySelect querySelect, Action<DbLinkQueryProvider> action, IEnumerable<TEntity> values = null)
+        private void TestCore<TEntity>(SqlQuerySelect querySelect, Action<EntityQueryProvider> action, IEnumerable<TEntity> values = null)
             where TEntity : class
         {
             var querySelectString = querySelect?.ToString();
@@ -493,12 +609,12 @@ namespace TagBites.DB.Tests.DB
             using (var link = NpgsqlProvider.CreateLink())
             using (var transaction = link.Begin())
             {
-                DbLinkExtensions.ExecuteNonQuery(link, DbStructureSql);
+                link.ExecuteNonQuery(DbStructureSql);
                 if (values != null)
                     foreach (var item in values)
-                        DbLinkExtensions.Insert(link, item);
+                        link.Insert(item);
 
-                var provider = new DbLinkQueryProvider(link);
+                var provider = new EntityQueryProvider(link);
                 if (querySelect != null)
                     provider.SqlQueryGenerated = s => Assert.Equal(querySelectString, s.ToString());
 

@@ -196,12 +196,12 @@ namespace TagBites.DB
 
         public static IOrderedQueryable<TSource> EntityQuery<TSource>(this IDbLink link)
         {
-            return new EntityQuery<TSource>(new DbLinkQueryProvider(link));
+            return new EntityQuery<TSource>(new EntityQueryProvider(link));
         }
         public static SqlQuerySelect ParseEntityQuery<TSource>(this IDbLink link, IQueryable<TSource> queryable)
         {
             var provider = queryable.Provider as IDbLinkEntityQueryProvider
-                           ?? new DbLinkQueryProvider(link);
+                           ?? new EntityQueryProvider(link);
             return provider.GetQuery(queryable.Expression);
         }
 
