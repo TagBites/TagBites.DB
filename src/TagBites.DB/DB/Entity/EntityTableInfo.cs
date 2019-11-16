@@ -4,7 +4,6 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using TagBites.Utils;
 
 namespace TagBites.DB.Entity
@@ -14,6 +13,7 @@ namespace TagBites.DB.Entity
         private readonly Dictionary<string, EntityColumnInfo> s_propertyNamesToInfo;
         private readonly Dictionary<string, EntityColumnInfo> s_columnNamesToInfo;
         private readonly Dictionary<string, EntityForeignKeyInfo> s_foreingPropertyNamesInfo;
+        private readonly Dictionary<string, EntityInversePropertyInfo> s_inversePropertyNamesInfo;
 
         public Type Type { get; }
         public string Schema { get; }
@@ -23,11 +23,13 @@ namespace TagBites.DB.Entity
         public bool HasPrimaryKey => PrimaryKey.Count > 0;
         public IList<EntityColumnInfo> Columns { get; }
         public IList<EntityForeignKeyInfo> ForeignKeys { get; }
+        public IList<EntityInversePropertyInfo> InverseProperties { get; }
 
         public EntityTableInfo(Type type, TableAttribute table)
         {
             var columns = new List<EntityColumnInfo>();
             var foreignKeys = new List<EntityForeignKeyInfo>();
+            var inverseProperties = new List<EntityInversePropertyInfo>();
 
             foreach (var property in TypeUtils.GetProperties(type))
             {
@@ -59,7 +61,8 @@ namespace TagBites.DB.Entity
                     var inversePropertyAttribute = MemberUtils.TryGetFirstAttribute<InversePropertyAttribute>(property, true);
                     if (inversePropertyAttribute != null)
                     {
-
+                        var info = new EntityInversePropertyInfo(property, inversePropertyAttribute.Property, property.PropertyType.GetGenericArguments().FirstOrDefault());
+                        inverseProperties.Add(info);
                     }
                 }
             }
@@ -71,9 +74,11 @@ namespace TagBites.DB.Entity
             Columns = columns.OrderByDescending(x => x.IsKeyPart).ThenBy(x => x.Order).ToList().AsReadOnly();
             PrimaryKey = columns.Where(x => x.IsKeyPart).OrderBy(x => x.Order).ToList().AsReadOnly();
             ForeignKeys = foreignKeys.ToList().AsReadOnly();
+            InverseProperties = inverseProperties.ToList().AsReadOnly();
 
             s_columnNamesToInfo = columns.ToDictionary(x => x.Name);
             s_foreingPropertyNamesInfo = foreignKeys.ToDictionary(x => x.PropertyName);
+            s_inversePropertyNamesInfo = inverseProperties.ToDictionary(x => x.PropertyName);
         }
 
 
@@ -89,6 +94,10 @@ namespace TagBites.DB.Entity
         public EntityForeignKeyInfo GetForeignKeyPropertyName(string propertyName)
         {
             return s_foreingPropertyNamesInfo.TryGetValue(propertyName, out var v) ? v : null;
+        }
+        public EntityInversePropertyInfo GetInversePropertyName(string propertyName)
+        {
+            return s_inversePropertyNamesInfo.TryGetValue(propertyName, out var v) ? v : null;
         }
 
         public static EntityTableInfo GetTableByType(Type type)
