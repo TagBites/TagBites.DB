@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 using TagBites.Sql;
 using TagBites.Utils;
 
@@ -22,6 +21,7 @@ namespace TagBites.DB.Entity
             Parameters = parameters;
         }
     }
+
     internal class QueryTranslator : ExpressionVisitor
     {
         #region Exceptions
@@ -93,48 +93,52 @@ namespace TagBites.DB.Entity
         protected override Expression VisitBinary(BinaryExpression node)
         {
             var currentNode = base.VisitBinary(node);
-            VisitBinaryInner(node.NodeType);
-            return currentNode;
-        }
-        private void VisitBinaryInner(ExpressionType type)
-        {
+
             var rightObject = GetObject();
             var leftObject = GetObject();
+            var result = VisitBinaryInner(node.NodeType, leftObject, rightObject);
+            PushObject(result);
 
+            return currentNode;
+        }
+        private object VisitBinaryInner(ExpressionType type, object leftObject, object rightObject)
+        {
             if (type == ExpressionType.AndAlso || type == ExpressionType.OrElse)
-                PushObject((SqlExpression.Combine(
+                return SqlExpression.Combine(
                     type == ExpressionType.AndAlso ? SqlConditionGroupOperatorType.And : SqlConditionGroupOperatorType.Or,
                     leftObject,
-                    rightObject)));
-            else if (type == ExpressionType.Equal && (rightObject == null || leftObject == null))
-                PushObject((SqlExpression.IsNull(rightObject != null ? rightObject : leftObject)));
-            else if (type == ExpressionType.NotEqual && (rightObject == null || leftObject == null))
-                PushObject((SqlExpression.IsNotNull(rightObject != null ? rightObject : leftObject)));
-            else
-            {
-                Func<SqlExpression, SqlExpression, SqlExpression> function = null;
-                switch (type)
-                {
-                    case ExpressionType.Add: function = SqlExpression.Plus; break;
-                    case ExpressionType.Subtract: function = SqlExpression.Minus; break;
-                    case ExpressionType.Divide: function = SqlExpression.Divide; break;
-                    case ExpressionType.Modulo: function = SqlExpression.Modulo; break;
-                    case ExpressionType.Multiply: function = SqlExpression.Multiply; break;
-                    case ExpressionType.And: function = SqlExpression.BitwiseAnd; break;
-                    case ExpressionType.Or: function = SqlExpression.BitwiseOr; break;
-                    case ExpressionType.ExclusiveOr: function = SqlExpression.BitwiseXor; break;
+                    rightObject);
+            if (type == ExpressionType.Equal && (rightObject == null || leftObject == null))
+                return (SqlExpression.IsNull(rightObject ?? leftObject));
+            if (type == ExpressionType.NotEqual && (rightObject == null || leftObject == null))
+                return (SqlExpression.IsNotNull(rightObject ?? leftObject));
 
-                    case ExpressionType.Equal: function = SqlExpression.AreEquals; break;
-                    case ExpressionType.NotEqual: function = SqlExpression.AreNotEquals; break;
-                    case ExpressionType.GreaterThan: function = SqlExpression.IsGreater; break;
-                    case ExpressionType.GreaterThanOrEqual: function = SqlExpression.IsGreaterOrEqual; break;
-                    case ExpressionType.LessThan: function = SqlExpression.IsLess; break;
-                    case ExpressionType.LessThanOrEqual: function = SqlExpression.IsLessOrEqual; break;
-                    //case ExpressionType.li: return SqlConditionBinaryOperatorType.Like;
-                    // TODO: BJ: Like operator
-                    default: throw new Exception($"Operator {type} not supported");
-                }
-                PushObject((function(SqlExpression.ToExpression(leftObject), SqlExpression.ToExpression(rightObject))));
+            var function = GetFunction(type);
+
+            return function(SqlExpression.ToExpression(leftObject), SqlExpression.ToExpression(rightObject));
+        }
+        private Func<SqlExpression, SqlExpression, SqlExpression> GetFunction(ExpressionType type)
+        {
+            switch (type)
+            {
+                case ExpressionType.Add: return SqlExpression.Plus;
+                case ExpressionType.Subtract: return SqlExpression.Minus;
+                case ExpressionType.Divide: return SqlExpression.Divide;
+                case ExpressionType.Modulo: return SqlExpression.Modulo;
+                case ExpressionType.Multiply: return SqlExpression.Multiply;
+                case ExpressionType.And: return SqlExpression.BitwiseAnd;
+                case ExpressionType.Or: return SqlExpression.BitwiseOr;
+                case ExpressionType.ExclusiveOr: return SqlExpression.BitwiseXor;
+
+                case ExpressionType.Equal: return SqlExpression.AreEquals;
+                case ExpressionType.NotEqual: return SqlExpression.AreNotEquals;
+                case ExpressionType.GreaterThan: return SqlExpression.IsGreater;
+                case ExpressionType.GreaterThanOrEqual: return SqlExpression.IsGreaterOrEqual;
+                case ExpressionType.LessThan: return SqlExpression.IsLess;
+                case ExpressionType.LessThanOrEqual: return SqlExpression.IsLessOrEqual;
+                //case ExpressionType.li: return SqlConditionBinaryOperatorType.Like;
+                // TODO: BJ: Like operator
+                default: throw new Exception($"Operator {type} not supported");
             }
         }
 
@@ -150,9 +154,8 @@ namespace TagBites.DB.Entity
         }
         private void VisitConstantInner(ConstantExpression node)
         {
-            if (node.Value is IQueryable)
+            if (node.Value is IQueryable queryable)
             {
-                var queryable = node.Value as IQueryable;
                 var tableInfo = EntityTableInfo.GetTableByType(queryable.ElementType);
                 m_querySelectStack.Push(new SqlQuerySelect());
                 var expressioNode = new SqlExpressionNode()

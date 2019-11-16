@@ -4,28 +4,47 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 using TagBites.Sql;
 
 namespace TagBites.DB.Entity
 {
-    public class DbLinkQueryProvider : QueryProvider, IDbLinkEntityQueryProvider
+    public class EntityQueryProvider : IQueryProvider, IDbLinkEntityQueryProvider, IDisposable
     {
         internal Action<SqlQuerySelect> SqlQueryGenerated;
 
         private readonly IDbLink m_link;
 
-        public DbLinkQueryProvider(IDbLink dbLink)
+        public EntityQueryProvider(IDbLink dbLink)
         {
             m_link = dbLink;
         }
+        ~EntityQueryProvider()
+        {
+            Dispose();
+        }
 
+
+        public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
+        {
+            return new EntityQueryable<TElement>(this, expression);
+        }
+        public IQueryable CreateQuery(Expression expression)
+        {
+            try
+            {
+                return (IQueryable)Activator.CreateInstance(typeof(EntityQueryable<>).MakeGenericType(expression.Type), this, expression);
+            }
+            catch (TargetInvocationException e)
+            {
+                throw e.InnerException;
+            }
+        }
 
         public SqlQuerySelect GetQuery(Expression expression)
         {
             return new QueryTranslator().Translate(expression);
         }
-        public override TResult Execute<TResult>(Expression expression)
+        public TResult Execute<TResult>(Expression expression)
         {
             var isCollection = typeof(TResult).GetTypeInfo().IsGenericType &&
                 typeof(TResult).GetGenericTypeDefinition() == typeof(IEnumerable<>);
@@ -67,7 +86,7 @@ namespace TagBites.DB.Entity
                 return m_link.ExecuteScalar<TResult>(sqlQuerySelect);
             }
         }
-        public override object Execute(Expression expression)
+        public object Execute(Expression expression)
         {
             var m_translator = new QueryTranslator();
             var sqlQuerySelect = m_translator.Translate(expression);
@@ -83,6 +102,11 @@ namespace TagBites.DB.Entity
         private QueryObjectResult<T> CreateResultCore<T>(QueryResult dataProvider, QueryObjectInitializer initializer)
         {
             return new QueryObjectResult<T>(dataProvider, initializer);
+        }
+
+        public void Dispose()
+        {
+            m_link?.Dispose();
         }
     }
 }
