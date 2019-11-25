@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Company>Tag Bites sp. z o.o.</Company>
     <Authors>Tag Bites sp. z o.o.</Authors>
-    <Copyright>Tag Bites sp. z o.o. © 2012-2018</Copyright>
+    <Copyright>Tag Bites sp. z o.o. © 2012-2019</Copyright>
   </PropertyGroup>
 
   <!-- Bin/Obj directories -->
@@ -18,6 +18,11 @@
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <LangVersion>latest</LangVersion>
     <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+  <!-- Warnings -->
+  <PropertyGroup>
+      <NoWarn>1701;1702;1591</NoWarn>
   </PropertyGroup>
 
   <!-- Globalziation -->

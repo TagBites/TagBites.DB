@@ -2,9 +2,9 @@
 
   <!-- Package info -->
   <PropertyGroup>
-    <PackageId>TagBites.DB.PostgreSql</PackageId>
-    <Product>TagBites.DB.PostgreSql</Product>
-    <Title>TagBites.DB.PostgreSql</Title>
+    <PackageId>TagBites.DB.Postgres</PackageId>
+    <Product>TagBites.DB.Postgres</Product>
+    <Title>TagBites.DB.Postgres</Title>
 
     <Description></Description>
     <PackageTags></PackageTags>
@@ -21,8 +21,15 @@
 
   <!-- Targets -->
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net462</TargetFrameworks>
   </PropertyGroup>
+  
+  <PropertyGroup>
+    <RootNamespace>TagBites.DB.Postgres</RootNamespace>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\TagBites.DB\TagBites.DB.csproj" />
   </ItemGroup>

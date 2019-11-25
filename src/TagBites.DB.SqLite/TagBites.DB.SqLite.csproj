@@ -26,6 +26,8 @@
 
   <PropertyGroup>
     <RootNamespace>TagBites.DB.SqLite</RootNamespace>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
