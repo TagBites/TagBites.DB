@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using TagBites.DB.Configuration;
 using TagBites.DB.Entity;
 using TagBites.Sql;
 using TagBites.Utils;
@@ -65,7 +66,7 @@ namespace TagBites.DB
         {
             return ExecuteRowScalars<T>(link, new Query(queryFormat, agrs));
         }
-        public static IList<T> ExecuteRowScalars<T>(this IDbLink link, IQuerySource query, T defaultValue = default(T))
+        public static IList<T> ExecuteRowScalars<T>(this IDbLink link, IQuerySource query)
         {
             Guard.ArgumentNotNull(query, "query");
 
@@ -81,7 +82,7 @@ namespace TagBites.DB
                         if (value is DBNull)
                             value = null;
 
-                        items.Add(DataHelper.TryChangeTypeDefault<T>(value, defaultValue));
+                        items.Add(DbLinkDataConverter.Default.ChangeType<T>(value));
                     }
                 }
 
@@ -120,7 +121,7 @@ namespace TagBites.DB
         {
             return ExecuteColumnScalars<T>(link, new Query(queryFormat, agrs));
         }
-        public static IList<T> ExecuteColumnScalars<T>(this IDbLink link, IQuerySource query, T defaultValue = default(T))
+        public static IList<T> ExecuteColumnScalars<T>(this IDbLink link, IQuerySource query)
         {
             Guard.ArgumentNotNull(query, "query");
 
@@ -134,7 +135,7 @@ namespace TagBites.DB
                     if (value is DBNull)
                         value = null;
 
-                    items.Add(DataHelper.TryChangeTypeDefault<T>(value, defaultValue));
+                    items.Add(DbLinkDataConverter.Default.ChangeType<T>(value));
                 }
 
                 return items;
@@ -168,12 +169,12 @@ namespace TagBites.DB
         public static T ExecuteScalar<T>(this IDbLink link, string queryFormat, params object[] agrs)
         {
             var value = link.ExecuteScalar(new Query(queryFormat, agrs));
-            return DataHelper.TryChangeTypeDefault<T>(value);
+            return DbLinkDataConverter.Default.ChangeType<T>(value);
         }
-        public static T ExecuteScalar<T>(this IDbLink link, IQuerySource query, T defaultValue = default(T))
+        public static T ExecuteScalar<T>(this IDbLink link, IQuerySource query)
         {
             var value = link.ExecuteScalar(query);
-            return DataHelper.TryChangeTypeDefault<T>(value, defaultValue);
+            return DbLinkDataConverter.Default.ChangeType<T>(value);
         }
 
         public static QueryObjectResult<T> Execute<T>(this IDbLink link, string queryFormat, params object[] agrs)

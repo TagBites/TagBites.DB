@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using TagBites.Utils;
 
 namespace TagBites.DB
@@ -50,10 +48,6 @@ namespace TagBites.DB
         {
             return m_queryDataProvider.GetValue<T>(m_row, columnName);
         }
-        public T GetValue<T>(string columnName, T defaultValue)
-        {
-            return m_queryDataProvider.GetValue<T>(m_row, columnName, defaultValue);
-        }
 
         public object GetValue(int columnIndex)
         {
@@ -62,10 +56,6 @@ namespace TagBites.DB
         public T GetValue<T>(int columnIndex)
         {
             return m_queryDataProvider.GetValue<T>(m_row, columnIndex);
-        }
-        public T GetValue<T>(int columnIndex, T defaultValue)
-        {
-            return m_queryDataProvider.GetValue<T>(m_row, columnIndex, defaultValue);
         }
 
         bool ICollection<object>.Contains(object item)

@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
+using TagBites.DB.Configuration;
 using TagBites.Utils;
 
 namespace TagBites.DB
@@ -125,10 +125,9 @@ namespace TagBites.DB
                 {
                     queryObjectProperty.PropertyInfo.SetValue(
                         result,
-                        DataHelper.TryChangeTypeDefault(
+                        DbLinkDataConverter.Default.ChangeType(
                             m_dataProvider[rowIndex, queryObjectProperty.ColumnIndex],
-                            queryObjectProperty.PropertyInfo.PropertyType,
-                            null),
+                            queryObjectProperty.PropertyInfo.PropertyType),
                         null);
                 }
                 // 
