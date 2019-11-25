@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Text;
+using TagBites.DB.Configuration;
 using TagBites.Utils;
 
 namespace TagBites.DB
@@ -28,11 +27,7 @@ namespace TagBites.DB
         }
         public T GetValue<T>(int rowIndex, string columnName)
         {
-            return DataHelper.TryChangeTypeDefault<T>(this[rowIndex, columnName]);
-        }
-        public T GetValue<T>(int rowIndex, string columnName, T defaultValue)
-        {
-            return DataHelper.TryChangeTypeDefault<T>(this[rowIndex, columnName], defaultValue);
+            return DbLinkDataConverter.Default.ChangeType<T>(this[rowIndex, columnName]);
         }
 
         public object GetValue(int rowIndex, int columnIndex)
@@ -41,11 +36,7 @@ namespace TagBites.DB
         }
         public T GetValue<T>(int rowIndex, int columnIndex)
         {
-            return DataHelper.TryChangeTypeDefault<T>(this[rowIndex, columnIndex]);
-        }
-        public T GetValue<T>(int rowIndex, int columnIndex, T defaultValue)
-        {
-            return DataHelper.TryChangeTypeDefault<T>(this[rowIndex, columnIndex], defaultValue);
+            return DbLinkDataConverter.Default.ChangeType<T>(this[rowIndex, columnIndex]);
         }
 
         public QueryResultRow GetRow(int index)
@@ -78,21 +69,21 @@ namespace TagBites.DB
 
             return list;
         }
-        public IList<T> ToColumnScalars<T>(T defaultValue = default(T))
+        public IList<T> ToColumnScalars<T>()
         {
             var list = new T[RowCount];
 
-            for (int i = 0; i < RowCount; i++)
-                list[i] = GetValue<T>(i, 0, defaultValue);
+            for (var i = 0; i < RowCount; i++)
+                list[i] = GetValue<T>(i, 0);
 
             return list;
         }
-        public IList<T> ToRowScalars<T>(T defaultValue = default(T))
+        public IList<T> ToRowScalars<T>()
         {
             var list = new T[ColumnCount];
 
             for (int i = 0; i < ColumnCount; i++)
-                list[i] = GetValue<T>(0, i, defaultValue);
+                list[i] = GetValue<T>(0, i);
 
             return list;
         }
