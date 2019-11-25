@@ -136,6 +136,8 @@ namespace TagBites.DB
 
             LinkAdapter = linkAdapter;
             ConnectionString = linkAdapter.CreateConnectionString(arguments);
+
+            StartEvaluation();
         }
 
         #endregion
@@ -220,6 +222,8 @@ namespace TagBites.DB
             // Create new context
             if (context == null)
             {
+                Evaluate();
+
                 var isNewContext = true;
                 var newContextEvent = ContextCreated;
 
@@ -435,6 +439,34 @@ namespace TagBites.DB
             }
 
             return released;
+        }
+
+        #endregion
+
+        #region License evaluation
+
+        private static long s_nextEvaluationTime = 0;
+
+
+        private void StartEvaluation()
+        {
+            if (TagBites.DB.Licensing.LicenseManager.HasLicense)
+                return;
+
+            if (s_nextEvaluationTime == 0)
+                s_nextEvaluationTime = DateTime.UtcNow.Ticks + TimeSpan.TicksPerMinute * 5;
+        }
+        private void Evaluate()
+        {
+            if (s_nextEvaluationTime > 0)
+            {
+                var now = DateTime.UtcNow.Ticks;
+                if (s_nextEvaluationTime < now)
+                {
+                    s_nextEvaluationTime = now + TimeSpan.TicksPerMinute * 2;
+                    throw new Exception("This is evaluation version. Please purchase a TagBites.DB license.");
+                }
+            }
         }
 
         #endregion
