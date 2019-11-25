@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using TagBites.DB.Postgres;
 using TagBites.DB.Tests.DB.Core;
@@ -51,15 +48,6 @@ namespace TagBites.DB.Tests.DB.PostgreSql
             if (!NpgsqlProvider.IsCursorSupported)
                 return;
 
-            int openCount = 0;
-            NpgsqlProvider.ContextCreated += (sender, args) =>
-            {
-                args.LinkContext.ConnectionOpen += (s2, e2) =>
-                {
-                    ++openCount;
-                };
-            };
-
             var q = new Query("SELECT * FROM (SELECT 1 AS id UNION SELECT 2) AS t ORDER BY id");
 
             using (var cursorManager = NpgsqlProvider.CreateCursorManager())
@@ -80,9 +68,9 @@ namespace TagBites.DB.Tests.DB.PostgreSql
                         Assert.Equal(1, result.RowCount);
                         Assert.Equal(2, result.GetValue<int>(0, 0));
                     }
-            }
 
-            Assert.Equal(1, openCount);
+                Assert.Equal(0, cursorManager.ConnectionCount);
+            }
         }
 
         [Fact]

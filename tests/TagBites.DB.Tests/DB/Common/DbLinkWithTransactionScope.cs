@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.Common;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
 using TagBites.DB.Configuration;
@@ -20,8 +17,11 @@ namespace TagBites.DB.Tests.DB.Common
             {
                 using (var link = DefaultProvider.CreateLink())
                 {
-                    using (var t = link.Begin())
-                        link.ExecuteNonQuery("SELECT 1");
+                    using (var t2 = link.Begin())
+                    {
+                        using (var t = link.Begin())
+                            link.ExecuteNonQuery("SELECT 1");
+                    }
 
                     try
                     {
@@ -49,6 +49,9 @@ namespace TagBites.DB.Tests.DB.Common
         [Fact]
         public void SuppressTransactionScopeTest()
         {
+            if (!DefaultProvider.Configuration.UseSystemTransactions)
+                return;
+
             using (new TransactionScope())
             {
                 using (new TransactionScope(TransactionScopeOption.Suppress))
@@ -117,6 +120,9 @@ namespace TagBites.DB.Tests.DB.Common
         [Fact]
         public void TransactionScopeTest()
         {
+            if (!DefaultProvider.Configuration.UseSystemTransactions)
+                return;
+
             using (var scope = new TransactionScope())
             {
                 using (var link = DefaultProvider.CreateLink())
@@ -234,6 +240,53 @@ namespace TagBites.DB.Tests.DB.Common
                     if (DefaultProvider.Configuration.LinkCreateOnDifferentSystemTransaction != DbLinkCreateOnDifferentSystemTransaction.ThrowException)
                         Assert.True(false);
                 }
+            }
+        }
+
+        [Fact]
+        public async Task TransactionScopeWithConcurrentTasksTest()
+        {
+            using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+            {
+                IDbLinkContext c1 = null;
+                IDbLinkContext c2 = null;
+
+                var task1 = Task.Run(async () =>
+                {
+                    using (var link2 = DefaultProvider.CreateExclusiveLink())
+                    using (var transaction2 = link2.Begin())
+                    {
+                        c1 = link2.ConnectionContext;
+
+                        for (var i = 0; i < 5; i++)
+                        {
+                            await Task.Delay(100);
+                            link2.Execute("Select 1");
+                        }
+                        transaction2.Commit();
+                    }
+                });
+                var task2 = Task.Run(async () =>
+                {
+                    using (var link2 = DefaultProvider.CreateExclusiveLink())
+                    using (var transaction2 = link2.Begin())
+                    {
+                        c2 = link2.ConnectionContext;
+
+                        for (var i = 0; i < 5; i++)
+                        {
+                            if (c1 == c2)
+                                throw new Exception();
+
+                            await Task.Delay(100);
+                            link2.Execute("Select 1");
+                        }
+                        transaction2.Commit();
+                    }
+                });
+
+                await Task.WhenAll(task1, task2);
+                scope.Complete();
             }
         }
 

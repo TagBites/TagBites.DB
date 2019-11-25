@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using TagBites.DB.Tests.DB.Core;
 using Xunit;
@@ -25,7 +22,7 @@ namespace TagBites.DB.Tests.DB.PostgreSql
             using (var link = NpgsqlProvider.CreateLink())
             {
                 link.ConnectionContext.ConnectionLost += onConnectionLost;
-                var result = DbLinkExtensions.ExecuteScalar<bool>((IDbLink)link, "SELECT (CASE WHEN now() < {0} THEN pg_terminate_backend(pg_backend_pid()) ELSE FALSE END)",
+                var result = link.ExecuteScalar<bool>("SELECT (CASE WHEN now() < {0} THEN pg_terminate_backend(pg_backend_pid()) ELSE FALSE END)",
                     DateTime.Now.AddSeconds(1));
                 Assert.False(result);
             }
@@ -51,7 +48,7 @@ namespace TagBites.DB.Tests.DB.PostgreSql
                     try
                     {
                         string q = @"SELECT pg_terminate_backend(pg_backend_pid())";
-                        DbLinkExtensions.Execute(breakLink, q);
+                        breakLink.Execute(q);
                         Assert.True(false);
                     }
                     catch
@@ -98,7 +95,7 @@ namespace TagBites.DB.Tests.DB.PostgreSql
 
                 try
                 {
-                    DbLinkExtensions.ExecuteNonQuery(link, "fake query");
+                    link.ExecuteNonQuery("fake query");
                 }
                 catch { }
 

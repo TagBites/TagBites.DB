@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
-using System.Text;
 using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
@@ -17,29 +14,29 @@ namespace TagBites.DB.Tests.DB
             using (var link = NpgsqlProvider.CreateLink())
             using (var transaction = link.Begin())
             {
-                DbLinkExtensions.ExecuteNonQuery(link, "CREATE TABLE tmp ( id SERIAL PRIMARY KEY, value TEXT )");
+                link.ExecuteNonQuery("CREATE TABLE tmp ( id SERIAL PRIMARY KEY, value TEXT )");
 
                 var entity = new Entity();
                 entity.Value = "V";
 
-                entity = DbLinkExtensions.UpsertReturning(link, entity);
+                entity = link.UpsertReturning(entity);
                 Assert.Equal("V", entity.Value);
                 Assert.Equal(1, entity.Id);
 
-                var entity2 = DbLinkExtensions.GetByKey<Entity>((IDbLink)link, 1);
+                var entity2 = link.GetByKey<Entity>(1);
                 Assert.Equal(entity.Value, entity2.Value);
                 Assert.Equal(entity.Id, entity2.Id);
 
                 entity.Value = "V2";
-                entity = DbLinkExtensions.UpsertReturning(link, entity);
+                entity = link.UpsertReturning(entity);
                 Assert.Equal("V2", entity.Value);
                 Assert.Equal(1, entity2.Id);
 
-                var entity3 = DbLinkExtensions.EntityQuery<Entity>(link).FirstOrDefault(x => x.Id == 1);
+                var entity3 = link.EntityQuery<Entity>().FirstOrDefault(x => x.Id == 1);
                 Assert.Equal(entity.Value, entity3?.Value);
 
-                DbLinkExtensions.DeleteByKey<Entity>((IDbLink)link, 1);
-                var entity4 = DbLinkExtensions.GetByKey<Entity>((IDbLink)link, 1);
+                link.DeleteByKey<Entity>(1);
+                var entity4 = link.GetByKey<Entity>(1);
                 Assert.Null(entity4);
 
                 transaction.Rollback();
@@ -52,19 +49,19 @@ namespace TagBites.DB.Tests.DB
             using (var link = NpgsqlProvider.CreateLink())
             using (var transaction = link.Begin())
             {
-                DbLinkExtensions.ExecuteNonQuery(link, "CREATE TABLE tmp ( id SERIAL PRIMARY KEY, value TEXT )");
+                link.ExecuteNonQuery("CREATE TABLE tmp ( id SERIAL PRIMARY KEY, value TEXT )");
 
                 var entity = new Entity();
                 entity.Value = "V";
 
-                entity = DbLinkExtensions.UpsertReturning(link, entity);
+                entity = link.UpsertReturning(entity);
                 Assert.Equal(1, entity.Id);
 
-                var entity2 = DbLinkExtensions.EntityQuery<Entity>(link).First(x => x.Value == "V");
+                var entity2 = link.EntityQuery<Entity>().First(x => x.Value == "V");
                 Assert.Equal(entity.Value, entity2.Value);
 
-                var entityQuery = DbLinkExtensions.EntityQuery<Entity>(link).Where(x => x.Value == "V").Select(x => new { x.Id, x.Value });
-                var entityQuerySelect = DbLinkExtensions.ParseEntityQuery(link, entityQuery);
+                var entityQuery = link.EntityQuery<Entity>().Where(x => x.Value == "V").Select(x => new { x.Id, x.Value });
+                var entityQuerySelect = link.ParseEntityQuery(entityQuery);
                 var entity3 = entityQuery.First();
                 Assert.Equal(entity.Value, entity3.Value);
 

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TagBites.DB.Npgsql;
+﻿using TagBites.DB.Npgsql;
 using TagBites.DB.Postgres;
 using TagBites.DB.SqLite;
 
@@ -10,7 +6,7 @@ namespace TagBites.DB.Tests.DB.Core
 {
     public static class DbManager
     {
-        public static PgSqlLinkProvider CreateNpgsqlProvider(bool pooling = true, int minPoolSize = 1, int maxPoolSize = 3)
+        public static PgSqlLinkProvider CreateNpgsqlProvider(bool pooling = true, int minPoolSize = 1, int maxPoolSize = 10)
         {
             var arguments = new DbConnectionArguments()
             {
@@ -27,7 +23,7 @@ namespace TagBites.DB.Tests.DB.Core
 
             return new NpgsqlLinkProvider(arguments)
             {
-                Configuration = { UseSystemTransactions = true, ImplicitCreateTransactionScopeIfNotExists = true }
+                Configuration = { UseSystemTransactions = false, ImplicitCreateTransactionScopeIfNotExists = true }
             };
         }
 
