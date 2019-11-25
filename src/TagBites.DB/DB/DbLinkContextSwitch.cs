@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using TagBites.Utils;
 
 namespace TagBites.DB
@@ -19,6 +16,7 @@ namespace TagBites.DB
         private readonly DbLinkContextSwitchMode m_mode;
         private DbLinkContext m_context;
         private DbLinkContextKey m_oldContextKey;
+        private bool m_attached;
 
         internal System.Transactions.TransactionScope TransactionScope { get; set; }
 
@@ -48,6 +46,8 @@ namespace TagBites.DB
 
                         context.AttachInternal();
                         context.Provider.CurrentContextKey = context.Key;
+
+                        m_attached = true;
                     }
                 }
                 else
@@ -123,8 +123,11 @@ namespace TagBites.DB
                     {
                         m_context.Provider.CurrentContextKey = m_oldContextKey;
 
-                        if (m_mode == DbLinkContextSwitchMode.Activate)
+                        if (m_attached)
+                        {
                             m_context.Release();
+                            m_attached = false;
+                        }
                     }
                     catch (Exception e)
                     {
