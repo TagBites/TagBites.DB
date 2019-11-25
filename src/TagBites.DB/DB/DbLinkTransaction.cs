@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using TagBites.Utils;
 
 namespace TagBites.DB
@@ -14,7 +11,9 @@ namespace TagBites.DB
         private readonly object m_locker;
         private readonly int m_nestingLevel;
 
+        public IDbLinkContext ConnectionContext => m_context;
         public IDbLinkTransactionContext Context => m_context.TransactionContext;
+        public DbLinkTransactionStatus Status => m_context.TransactionContext.Status;
 
         internal DbLinkTransaction(DbLinkContext context)
         {
@@ -24,7 +23,7 @@ namespace TagBites.DB
             m_locker = m_context.SynchRoot;
 
             context.TransactionContextInternal.Attach();
-            m_nestingLevel = context.TransactionContext.NestingLevel;
+            m_nestingLevel = context.TransactionContext.Level;
         }
         ~DbLinkTransaction()
         {

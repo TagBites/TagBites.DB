@@ -110,6 +110,7 @@ namespace TagBites.DB
                 }
             }
         }
+        IDbLinkContext IDbLinkTransactionContext.ConnectionContext => ConnectionContext;
         public DbLinkBag Bag
         {
             get
@@ -126,20 +127,20 @@ namespace TagBites.DB
 
         public bool Started { get; internal set; }
         public Exception Exception { get; internal set; }
-        public int NestingLevel => TransactionRefferenceCountInternal;
-        public bool SystemTransaction { get; set; }
+        public int Level => TransactionRefferenceCountInternal;
+        public bool IsSystemTransaction { get; internal set; }
+        public DbLinkTransactionStatus Status { get; internal set; }
 
         internal System.Transactions.Transaction SystemTransactionInternal { get; set; }
         internal DbTransaction DbTransactionInternal { get; set; }
-        internal DbLinkTransactionStatus TransactionStatusInternal { get; set; }
         internal int TransactionRefferenceCountInternal { get; private set; }
 
-        internal DbLinkTransactionContext(DbLinkContext context, DbLinkTransactionStatus status, bool systemTransaction)
+        internal DbLinkTransactionContext(DbLinkContext context, DbLinkTransactionStatus status, bool isSystemTransaction)
         {
             m_context = context;
             m_locker = context.SynchRoot;
-            TransactionStatusInternal = status;
-            SystemTransaction = systemTransaction;
+            Status = status;
+            IsSystemTransaction = isSystemTransaction;
         }
 
 
