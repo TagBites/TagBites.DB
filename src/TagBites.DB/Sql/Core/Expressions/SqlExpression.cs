@@ -206,6 +206,48 @@ namespace TagBites.Sql
 
             return Function("COALESCE", operands);
         }
+        public static SqlExpression Greatest(params SqlExpression[] operands)
+        {
+            Guard.ArgumentNotNullOrEmptyWithNotNullItems(operands, nameof(operands));
+
+            if (operands.Length == 1)
+                return operands[0];
+
+            // TODO return special expression type (different null handling for databases)
+            return Function("GREATEST", operands);
+        }
+        public static SqlExpression Least(params SqlExpression[] operands)
+        {
+            Guard.ArgumentNotNullOrEmptyWithNotNullItems(operands, nameof(operands));
+
+            if (operands.Length == 1)
+                return operands[0];
+
+            // TODO return special expression type (different null handling for databases)
+            return Function("LEAST", operands);
+        }
+        public static SqlExpression When(SqlCondition whenCondition, SqlExpression operandWhenTrue)
+        {
+            Guard.ArgumentNotNull(whenCondition, nameof(whenCondition));
+            Guard.ArgumentNotNull(operandWhenTrue, nameof(operandWhenTrue));
+
+            return LiteralExpression("CASE WHEN {0} THEN {1} END", whenCondition, operandWhenTrue);
+        }
+        public static SqlExpression When(SqlCondition whenCondition, SqlExpression operandWhenTrue, SqlExpression operandWhenFalse)
+        {
+            Guard.ArgumentNotNull(whenCondition, nameof(whenCondition));
+            Guard.ArgumentNotNull(operandWhenTrue, nameof(operandWhenTrue));
+            Guard.ArgumentNotNull(operandWhenFalse, nameof(operandWhenFalse));
+
+            return LiteralExpression("CASE WHEN {0} THEN {1} ELSE {2} END", whenCondition, operandWhenTrue, operandWhenFalse);
+        }
+        public static SqlExpression WhenNotEqualsTo(SqlExpression resultOperand, SqlExpression notEqualsToOperand)
+        {
+            Guard.ArgumentNotNull(resultOperand, nameof(resultOperand));
+            Guard.ArgumentNotNull(notEqualsToOperand, nameof(notEqualsToOperand));
+
+            return Function("NULLIF", resultOperand, notEqualsToOperand);
+        }
 
         public static SqlCondition LiteralCondition(string sqlLiteral)
         {
