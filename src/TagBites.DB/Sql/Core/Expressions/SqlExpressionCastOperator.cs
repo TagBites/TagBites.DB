@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.Data;
 using TagBites.Utils;
 
 namespace TagBites.Sql
@@ -10,7 +8,7 @@ namespace TagBites.Sql
     {
         public SqlExpression Operand { get; }
         public Type NetType { get; }
-        //public DbType? DbType { get; }
+        public DbType? DbType { get; }
         public string DbTypeName { get; }
 
         public SqlExpressionCastOperator(SqlExpression operand, Type netType)
@@ -21,13 +19,13 @@ namespace TagBites.Sql
             NetType = netType;
             Operand = operand;
         }
-        //public SqlExpressionCastOperator(SqlExpression operand, DbType dbType)
-        //{
-        //    Guard.ArgumentNotNull(operand, nameof(operand));
+        public SqlExpressionCastOperator(SqlExpression operand, DbType dbType)
+        {
+            Guard.ArgumentNotNull(operand, nameof(operand));
 
-        //    DbType = dbType;
-        //    Operand = operand;
-        //}
+            DbType = dbType;
+            Operand = operand;
+        }
         public SqlExpressionCastOperator(SqlExpression operand, string dbTypeName)
         {
             Guard.ArgumentNotNull(operand, nameof(operand));

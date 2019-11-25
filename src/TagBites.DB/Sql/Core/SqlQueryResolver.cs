@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Data;
 using System.Globalization;
 using System.Linq;
 using TagBites.DB;
@@ -279,8 +280,8 @@ namespace TagBites.Sql
 
             if (expression.NetType != null)
                 builder.Append(GetTypeName(expression.NetType));
-            //else if (expression.DbType.HasValue)
-            //    builder.Append(GetTypeName(expression.DbType.Value));
+            else if (expression.DbType.HasValue)
+                builder.Append(GetTypeName(expression.DbType.Value));
             else
                 builder.Append(expression.DbTypeName);
 
@@ -794,72 +795,72 @@ namespace TagBites.Sql
             return builder.Query;
         }
 
-        //public virtual string GetTypeName(DbType dbType)
-        //{
-        //    switch (dbType)
-        //    {
-        //        case DbType.Boolean:
-        //            return "BOOL";
+        public virtual string GetTypeName(DbType dbType)
+        {
+            switch (dbType)
+            {
+                case DbType.Boolean:
+                    return "BOOL";
 
-        //        case DbType.Byte:
-        //        case DbType.SByte:
-        //        case DbType.Int16:
-        //        case DbType.UInt16:
-        //            return "INT2";
+                case DbType.Byte:
+                case DbType.SByte:
+                case DbType.Int16:
+                case DbType.UInt16:
+                    return "INT2";
 
-        //        case DbType.Int32:
-        //        case DbType.UInt32:
-        //            return "INT4";
+                case DbType.Int32:
+                case DbType.UInt32:
+                    return "INT4";
 
-        //        case DbType.Int64:
-        //        case DbType.UInt64:
-        //            return "INT8";
+                case DbType.Int64:
+                case DbType.UInt64:
+                    return "INT8";
 
-        //        case DbType.Single:
-        //            return "FLOAT4";
+                case DbType.Single:
+                    return "FLOAT4";
 
-        //        case DbType.Double:
-        //            return "FLOAT8";
+                case DbType.Double:
+                    return "FLOAT8";
 
-        //        case DbType.Decimal:
-        //        case DbType.VarNumeric:
-        //            return "NUMERIC";
+                case DbType.Decimal:
+                case DbType.VarNumeric:
+                    return "NUMERIC";
 
-        //        case DbType.Currency:
-        //            return "MONEY";
+                case DbType.Currency:
+                    return "MONEY";
 
-        //        case DbType.DateTime:
-        //        case DbType.DateTime2:
-        //            return "TIMESTAMP";
+                case DbType.DateTime:
+                case DbType.DateTime2:
+                    return "TIMESTAMP";
 
-        //        case DbType.DateTimeOffset:
-        //            return "TIMESTAMPTZ";
+                case DbType.DateTimeOffset:
+                    return "TIMESTAMPTZ";
 
-        //        case DbType.Date:
-        //            return "DATE";
+                case DbType.Date:
+                    return "DATE";
 
-        //        case DbType.Time:
-        //            return "TIME";
+                case DbType.Time:
+                    return "TIME";
 
-        //        case DbType.Guid:
-        //            return "UUID";
+                case DbType.Guid:
+                    return "UUID";
 
-        //        case DbType.Xml:
-        //            return "XML";
+                case DbType.Xml:
+                    return "XML";
 
-        //        case DbType.Binary:
-        //            return "BYTEA";
+                case DbType.Binary:
+                    return "BYTEA";
 
-        //        case DbType.String:
-        //        case DbType.StringFixedLength:
-        //        case DbType.AnsiString:
-        //        case DbType.AnsiStringFixedLength:
-        //            return "TEXT";
+                case DbType.String:
+                case DbType.StringFixedLength:
+                case DbType.AnsiString:
+                case DbType.AnsiStringFixedLength:
+                    return "TEXT";
 
-        //        default:
-        //            return "UNKNOWN";
-        //    }
-        //}
+                default:
+                    return "UNKNOWN";
+            }
+        }
         public virtual string GetTypeName(Type netType)
         {
             var nullableType = Nullable.GetUnderlyingType(netType);
