@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using TagBites.Utils;
 
@@ -184,10 +185,10 @@ namespace TagBites.Sql
         {
             return new SqlExpressionCastOperator(operand, netType);
         }
-        //public static SqlExpression Cast(SqlExpression operand, DbType dbType)
-        //{
-        //    return new SqlExpressionCastOperator(operand, dbType);
-        //}
+        public static SqlExpression Cast(SqlExpression operand, DbType dbType)
+        {
+            return new SqlExpressionCastOperator(operand, dbType);
+        }
         public static SqlExpression Cast(SqlExpression operand, string dbTypeName)
         {
             return new SqlExpressionCastOperator(operand, dbTypeName);

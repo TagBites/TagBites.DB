@@ -1,6 +1,4 @@
 ﻿using System;
-using TagBites.Sql.Postgres.Clauses;
-using TagBites.Sql.Postgres.Queries;
 
 namespace TagBites.Sql.Postgres
 {
