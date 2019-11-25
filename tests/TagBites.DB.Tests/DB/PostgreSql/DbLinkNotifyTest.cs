@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using TagBites.DB.Postgres;
 using TagBites.DB.Tests.DB.Core;
 using Xunit;
@@ -22,16 +18,16 @@ namespace TagBites.DB.Tests.DB.PostgreSql
                 link.Listen("x0");
 
                 link.Notify("x0", "1");
-                DbLinkExtensions.ExecuteNonQuery(link, "SELECT 1");
+                link.ExecuteNonQuery("SELECT 1");
                 Assert.Equal(1, hitCount);
 
                 link.Notify("x0", "2");
-                DbLinkExtensions.ExecuteNonQuery(link, "SELECT 1");
+                link.ExecuteNonQuery("SELECT 1");
                 Assert.Equal(2, hitCount);
 
                 link.Unlisten("x0");
                 link.Notify("x0", "4");
-                DbLinkExtensions.ExecuteNonQuery(link, "SELECT 1");
+                link.ExecuteNonQuery("SELECT 1");
                 Assert.Equal(2, hitCount);
             }
         }
@@ -50,7 +46,7 @@ namespace TagBites.DB.Tests.DB.PostgreSql
                 sender.Notify("x1", "1");
                 sender.Notify("x1", "2");
 
-                DbLinkExtensions.ExecuteNonQuery(receiver, "SELECT 1");
+                receiver.ExecuteNonQuery("SELECT 1");
                 Assert.Equal(2, hitCount);
             }
         }
@@ -97,13 +93,13 @@ namespace TagBites.DB.Tests.DB.PostgreSql
                     sender.Notify("x3", "2");
                     Assert.Equal(0, hitCount);
 
-                    DbLinkExtensions.ExecuteNonQuery(receiver, "SELECT 1");
+                    receiver.ExecuteNonQuery("SELECT 1");
                     Assert.Equal(0, hitCount);
 
                     transaction.Commit();
                 }
 
-                DbLinkExtensions.ExecuteNonQuery(receiver, "SELECT 1");
+                receiver.ExecuteNonQuery("SELECT 1");
                 Assert.Equal(2, hitCount);
             }
         }
@@ -147,6 +143,7 @@ namespace TagBites.DB.Tests.DB.PostgreSql
 
                     await notifyManager.ListenAsync("x4", "y4").ConfigureAwait(false);
                     await notifyManager.UnlistenAsync("a4", "b4").ConfigureAwait(false);
+                    await Task.Delay(1000);
                     Assert.Equal(2, hitD1);
                     Assert.Equal(2, hitD2);
 

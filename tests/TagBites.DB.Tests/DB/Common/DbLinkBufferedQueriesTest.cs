@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TagBites.DB.Tests.DB.Core;
+﻿using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
 namespace TagBites.DB.Tests.DB.Common
@@ -110,7 +106,7 @@ namespace TagBites.DB.Tests.DB.Common
             {
                 result = link.DelayedBatchExecute(q1);
                 Assert.False(result.HasResult);
-                link.ExecuteScalar<int>("Select 'a'");
+                link.ExecuteScalar("Select 'a'");
                 Assert.True(result.HasResult);
             }
         }

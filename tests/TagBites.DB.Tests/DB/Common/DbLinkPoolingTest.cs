@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TagBites.DB.Tests.DB.Core;
@@ -25,15 +22,15 @@ namespace TagBites.DB.Tests.DB.Common
         }
 
         [Fact]
-        public void NoDeadlockTest()
+        public async Task NoDeadlockTest()
         {
-            var tasks = Enumerable.Range(1, 30).Select(x => Task.Run(() =>
+            var tasks = Enumerable.Range(1, 30).Select(x => Task.Run(async () =>
             {
                 for (int i = 0; i < 50; i++)
                 {
                     using (var link2 = CreateLink())
                     {
-                        Thread.Sleep(1);
+                        await Task.Delay(1);
 
                         using (var link = CreateLink())
                         using (var transaction = link.Begin())
@@ -45,7 +42,7 @@ namespace TagBites.DB.Tests.DB.Common
                     }
                 }
             }));
-            Task.WaitAll(tasks.ToArray());
+            await Task.WhenAll(tasks.ToArray());
         }
     }
 }

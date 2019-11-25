@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TagBites.DB.Tests.DB.Core;
+﻿using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
 namespace TagBites.DB.Tests.DB.Common
@@ -109,7 +105,7 @@ namespace TagBites.DB.Tests.DB.Common
                 ((DbLinkContext)link.ConnectionContext).GetOpenConnection().Close();
 
                 using (var link2 = NpgsqlProvider.CreateLink())
-                    DbLinkExtensions.ExecuteNonQuery(link2, "SELECT 1");
+                    link2.ExecuteNonQuery("SELECT 1");
             }
         }
     }

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TagBites.DB.Tests.DB.Core;
+﻿using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
 namespace TagBites.DB.Tests.DB.SQLite
@@ -44,11 +40,11 @@ namespace TagBites.DB.Tests.DB.SQLite
 
                         var result = cursor.Execute(0, 1);
                         Assert.Equal(1, result.RowCount);
-                        Assert.Equal((long)1, result.GetValue<long>(0, 0));
+                        Assert.Equal(1, result.GetValue<long>(0, 0));
 
                         result = cursor.Execute(1, 1);
                         Assert.Equal(1, result.RowCount);
-                        Assert.Equal((long)2, result.GetValue<long>(0, 0));
+                        Assert.Equal(2, result.GetValue<long>(0, 0));
                     }
             }
 
