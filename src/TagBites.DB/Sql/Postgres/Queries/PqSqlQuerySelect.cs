@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TagBites.Sql.Postgres.Clauses;
-
-namespace TagBites.Sql.Postgres.Queries
+﻿namespace TagBites.Sql.Postgres
 {
     public class PqSqlQuerySelect : SqlQuerySelect
     {
