@@ -4,25 +4,29 @@ namespace TagBites.DB
 {
     public interface IDbLinkContext : IDbLink
     {
-        DbLinkBag Bag { get; }
-        object SynchRoot { get; }
-        string Database { get; set; }
-        bool IsActive { get; }
-        bool IsExecuting { get; }
-        DateTime LastExecuted { get; }
-        IDbLinkProvider Provider { get; }
-
         event EventHandler ConnectionClose;
         event DbLinkConnectionLostEventHandler ConnectionLost;
         event EventHandler ConnectionOpen;
         event DbExceptionFormatEventHandler ExceptionFormat;
         event DbLinkInfoMessageEventHandler InfoMessage;
         event DbLinkQueryEventHandler Query;
+        event EventHandler<DbLinkQueryExecutedEventArgs> QueryExecuted;
         event EventHandler TransactionBeforeBegin;
         event EventHandler TransactionBegin;
+        event EventHandler TransactionBeforeCommit;
         event DbLinkTransactionCloseEventHandler TransactionClose;
         event EventHandler TransactionContextBegin;
         event DbLinkTransactionContextCloseEventHandler TransactionContextClose;
+
+        IDbLinkProvider Provider { get; }
+        DbLinkBag Bag { get; }
+        object SynchRoot { get; }
+        bool IsActive { get; }
+        bool IsExecuting { get; }
+        string Database { get; set; }
+        DateTime LastExecuted { get; }
+
+
 
         IDbLink CreateLink();
     }

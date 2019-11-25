@@ -307,7 +307,7 @@ namespace TagBites.DB
                 if (m_transactionContext == null)
                     return DbLinkTransactionStatus.None;
 
-                return m_transactionContext.TransactionStatusInternal;
+                return m_transactionContext.Status;
             }
         }
 
@@ -597,7 +597,7 @@ namespace TagBites.DB
                         finally { m_transactionContext.DbTransactionInternal = null; }
                     }
 
-                    m_transactionContext.TransactionStatusInternal = DbLinkTransactionStatus.None;
+                    m_transactionContext.Status = DbLinkTransactionStatus.None;
                     m_transactionContext.Release(true);
                     m_transactionContext = null;
 
@@ -743,9 +743,9 @@ namespace TagBites.DB
                     m_transactionContextBegin?.Invoke(this, EventArgs.Empty);
                 }
             }
-            else if (m_transactionContext.TransactionStatusInternal == DbLinkTransactionStatus.RollingBack)
+            else if (m_transactionContext.Status == DbLinkTransactionStatus.RollingBack)
                 ThrowRollingBack();
-            else if (m_transactionContext.TransactionStatusInternal == DbLinkTransactionStatus.Committing)
+            else if (m_transactionContext.Status == DbLinkTransactionStatus.Committing)
                 ThrowCommitting();
 
             return new DbLinkTransaction(this);
@@ -811,7 +811,7 @@ namespace TagBites.DB
                 if (TransactionStatusInternal == DbLinkTransactionStatus.None)
                     throw new InvalidOperationException("There is no transaction!");
 
-                if (m_transactionContext.TransactionStatusInternal == DbLinkTransactionStatus.RollingBack && !rollback)
+                if (m_transactionContext.Status == DbLinkTransactionStatus.RollingBack && !rollback)
                     throw new InvalidOperationException("Can not commit already rollback transaction.");
 
                 // Commit
@@ -820,15 +820,15 @@ namespace TagBites.DB
                     if (m_transactionContext.TransactionRefferenceCountInternal == 1)
                     {
                         m_batchQueue.Flush();
-                        m_transactionContext.TransactionStatusInternal = DbLinkTransactionStatus.Committing;
+                        m_transactionContext.Status = DbLinkTransactionStatus.Committing;
                     }
                 }
                 // Rollback
                 else
                 {
-                    if (m_transactionContext.TransactionStatusInternal != DbLinkTransactionStatus.RollingBack)
+                    if (m_transactionContext.Status != DbLinkTransactionStatus.RollingBack)
                     {
-                        m_transactionContext.TransactionStatusInternal = DbLinkTransactionStatus.RollingBack;
+                        m_transactionContext.Status = DbLinkTransactionStatus.RollingBack;
 
                         // System Transaction
                         if (m_transactionContext.SystemTransactionInternal != null)
@@ -859,9 +859,9 @@ namespace TagBites.DB
                     ex = new InvalidOperationException("There is no transaction.");
                 else if (level != 0)
                 {
-                    var expectedLevel = TransactionStatusInternal == DbLinkTransactionStatus.RollingBack && m_transactionContext.SystemTransaction
-                        ? TransactionContextInternal.NestingLevel + 1
-                        : TransactionContextInternal.NestingLevel;
+                    var expectedLevel = TransactionStatusInternal == DbLinkTransactionStatus.RollingBack && m_transactionContext.IsSystemTransaction
+                        ? TransactionContextInternal.Level + 1
+                        : TransactionContextInternal.Level;
 
                     if (expectedLevel != level)
                         ex = new InvalidOperationException("Transaction nested incorrectly.");
@@ -881,7 +881,7 @@ namespace TagBites.DB
                         // Commit
                         try
                         {
-                            if (m_transactionContext.TransactionStatusInternal == DbLinkTransactionStatus.Committing)
+                            if (m_transactionContext.Status == DbLinkTransactionStatus.Committing)
                             {
                                 OnTransactionBeforeCommit();
 
@@ -910,7 +910,7 @@ namespace TagBites.DB
                     // Close Event
                     var reason = ex != null
                         ? DbLinkTransactionCloseReason.Exception
-                        : (m_transactionContext.TransactionStatusInternal == DbLinkTransactionStatus.RollingBack ? DbLinkTransactionCloseReason.Rollback : DbLinkTransactionCloseReason.Commit);
+                        : (m_transactionContext.Status == DbLinkTransactionStatus.RollingBack ? DbLinkTransactionCloseReason.Rollback : DbLinkTransactionCloseReason.Commit);
                     var bag = m_transactionContext.Bag;
 
                     if (m_transactionContext.Started && transactionClose != null)
@@ -925,11 +925,11 @@ namespace TagBites.DB
                     }
 
                     // Cancel batch execution
-                    if (m_transactionContext.TransactionStatusInternal != DbLinkTransactionStatus.Committing)
+                    if (m_transactionContext.Status != DbLinkTransactionStatus.Committing)
                         m_batchQueue.Cancel();
 
                     // Clear Transaction
-                    m_transactionContext.TransactionStatusInternal = DbLinkTransactionStatus.None;
+                    m_transactionContext.Status = DbLinkTransactionStatus.None;
                     m_transactionContext.Release(true);
                     m_transactionContext = null;
 
@@ -1121,7 +1121,7 @@ namespace TagBites.DB
                                 }
 
                                 // Start transaction
-                                if (m_transactionContext != null && m_transactionContext.TransactionStatusInternal == DbLinkTransactionStatus.Pending)
+                                if (m_transactionContext != null && m_transactionContext.Status == DbLinkTransactionStatus.Pending)
                                 {
                                     // Before Begin
                                     if (m_transactionBeforeBegin != null)
@@ -1138,7 +1138,7 @@ namespace TagBites.DB
                                         m_transactionContext.DbTransactionInternal = m_connection.BeginTransaction();
 
                                     m_transactionContext.Started = true;
-                                    m_transactionContext.TransactionStatusInternal = DbLinkTransactionStatus.Open;
+                                    m_transactionContext.Status = DbLinkTransactionStatus.Open;
 
                                     // After Begin
                                     if (m_transactionBegin != null)

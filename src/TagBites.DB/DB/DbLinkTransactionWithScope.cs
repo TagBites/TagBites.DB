@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Transactions;
 using TagBites.Utils;
 
@@ -17,6 +14,7 @@ namespace TagBites.DB
         private readonly int m_nestingLevel;
         private readonly object m_synchRoot;
 
+        public IDbLinkContext ConnectionContext => m_context;
         public IDbLinkTransactionContext Context => m_context.TransactionContext;
 
         internal DbLinkTransactionWithScope(DbLinkContext context, TransactionScope transactionScope, Transaction transaction)
@@ -31,7 +29,7 @@ namespace TagBites.DB
             m_synchRoot = context.SynchRoot;
 
             context.TransactionContextInternal.Attach();
-            m_nestingLevel = context.TransactionContext.NestingLevel;
+            m_nestingLevel = context.TransactionContext.Level;
         }
         ~DbLinkTransactionWithScope()
         {
