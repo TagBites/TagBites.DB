@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using TagBites.DB.Configuration;
+﻿using TagBites.DB.Configuration;
 using TagBites.Sql;
 
 namespace TagBites.DB
@@ -24,6 +20,9 @@ namespace TagBites.DB
         string Server { get; }
         bool UsePooling { get; }
         int UsingConnectionsCount { get; }
+
+        IDbLinkContext CurrentConnectionContext { get; }
+        IDbLinkTransactionContext CurrentTransactionContext { get; }
 
 
         IDbCursorManager CreateCursorManager();

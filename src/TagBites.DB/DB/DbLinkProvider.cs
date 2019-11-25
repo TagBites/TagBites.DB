@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using TagBites.DB.Configuration;
 using TagBites.Sql;
@@ -108,6 +107,9 @@ namespace TagBites.DB
         public virtual bool IsCursorSupported => true;
         internal DbLinkAdapter LinkAdapter { get; }
         internal string ConnectionString { get; }
+
+        public IDbLinkContext CurrentConnectionContext => GetCurrentContext();
+        public IDbLinkTransactionContext CurrentTransactionContext => CurrentConnectionContext?.TransactionContext;
 
         #endregion
 
@@ -286,7 +288,6 @@ namespace TagBites.DB
         {
             return CreateExclusiveLink(null);
         }
-
         [EditorBrowsable(EditorBrowsableState.Never)]
         public DbLink CreateExclusiveLink(Action<DbConnectionArguments> connectionStringAdapter)
         {
@@ -349,6 +350,25 @@ namespace TagBites.DB
                 link.Dispose();
                 throw;
             }
+        }
+
+        private DbLinkContext GetCurrentContext()
+        {
+            var currentContextKey = CurrentContextKey;
+            var useSystemTransactions = Configuration.UseSystemTransactions;
+            var transaction = useSystemTransactions ? System.Transactions.Transaction.Current : null;
+
+            if (transaction != null && Configuration.LinkCreateOnDifferentSystemTransaction == DbLinkCreateOnDifferentSystemTransaction.CreateLinkWithNewContextOrAssigedToCurrentTransaction)
+            {
+                lock (SynchRootForContextCollections)
+                    return m_activeConnections.FirstOrDefault(x => x.TransactionContextInternal?.SystemTransactionInternal == transaction);
+            }
+
+            if (currentContextKey != null)
+                lock (SynchRootForContextCollections)
+                    return m_activeConnections.FirstOrDefault(x => x.Key == currentContextKey);
+
+            return null;
         }
 
         IDbLink IDbLinkProvider.CreateLink() { return CreateLink(); }
