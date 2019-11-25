@@ -43,32 +43,6 @@ namespace TagBites.DB.Tests.DB
             }
         }
 
-        [Fact]
-        public void EntityTableMethodsTest2()
-        {
-            using (var link = NpgsqlProvider.CreateLink())
-            using (var transaction = link.Begin())
-            {
-                link.ExecuteNonQuery("CREATE TABLE tmp ( id SERIAL PRIMARY KEY, value TEXT )");
-
-                var entity = new Entity();
-                entity.Value = "V";
-
-                entity = link.UpsertReturning(entity);
-                Assert.Equal(1, entity.Id);
-
-                var entity2 = link.EntityQuery<Entity>().First(x => x.Value == "V");
-                Assert.Equal(entity.Value, entity2.Value);
-
-                var entityQuery = link.EntityQuery<Entity>().Where(x => x.Value == "V").Select(x => new { x.Id, x.Value });
-                var entityQuerySelect = link.ParseEntityQuery(entityQuery);
-                var entity3 = entityQuery.First();
-                Assert.Equal(entity.Value, entity3.Value);
-
-                transaction.Rollback();
-            }
-        }
-
         [Table("tmp")]
         public class Entity
         {

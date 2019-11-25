@@ -6,7 +6,7 @@ namespace TagBites.DB.Tests.DB.Core
 {
     public static class DbManager
     {
-        public static PgSqlLinkProvider CreateNpgsqlProvider(bool pooling = true, int minPoolSize = 1, int maxPoolSize = 10)
+        public static PgSqlLinkProvider CreateNpgsqlProvider(bool pooling = true, int minPoolSize = 1, int maxPoolSize = 3)
         {
             var arguments = new DbConnectionArguments()
             {

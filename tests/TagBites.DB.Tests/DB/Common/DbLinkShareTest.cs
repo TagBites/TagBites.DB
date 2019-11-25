@@ -1,10 +1,26 @@
-﻿using TagBites.DB.Tests.DB.Core;
+﻿using System.Threading.Tasks;
+using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
 namespace TagBites.DB.Tests.DB.Common
 {
     public class DbLinkShareTest : DbTestBase
     {
+        [Fact]
+        public async Task ShareLinkWithChildTaskTest()
+        {
+            using (var link = DefaultProvider.CreateLink())
+            {
+                await Task.Run(() =>
+                {
+                    using (var link2 = DefaultProvider.CreateLink())
+                    {
+                        Assert.Equal(link.ConnectionContext, link2.ConnectionContext);
+                    }
+                });
+            }
+        }
+
         [Fact]
         public void ShareLinkOverNestedCalls()
         {

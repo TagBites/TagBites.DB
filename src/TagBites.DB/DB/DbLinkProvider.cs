@@ -34,7 +34,6 @@ namespace TagBites.DB
         #region Members
 
         internal readonly string Id = Guid.NewGuid().ToString("N");
-        private readonly object SynchRootForContextLookup = new object();
         private readonly object SynchRootForContextCreation = new object();
         private readonly object SynchRootForContextCollections = new object();
 
@@ -122,19 +121,18 @@ namespace TagBites.DB
             if (arguments == null)
                 throw new ArgumentNullException(nameof(arguments));
 
+
             Database = arguments.Database;
             Server = arguments.Host;
             Port = arguments.Port == 0 ? linkAdapter.DefaultPort : arguments.Port;
             UsePooling = arguments.UsePooling;
+            MinPoolSize = arguments.MinPoolSize;
+            MaxPoolSize = Math.Max(MinPoolSize, arguments.MaxPoolSize);
+
+            m_createContextSemaphore = new Semaphore(MaxPoolSize, MaxPoolSize);
 
             if (UsePooling)
-            {
-                MinPoolSize = arguments.MinPoolSize;
-                MaxPoolSize = arguments.MaxPoolSize;
-
-                m_createContextSemaphore = new Semaphore(MaxPoolSize, MaxPoolSize);
                 m_poolContexts = new Queue<DbLinkContext>();
-            }
 
             LinkAdapter = linkAdapter;
             ConnectionString = linkAdapter.CreateConnectionString(arguments);
@@ -155,10 +153,7 @@ namespace TagBites.DB
 
         #region Create link
 
-        public DbLink CreateLink()
-        {
-            return CreateLink(DbLinkCreateOption.Required);
-        }
+        public DbLink CreateLink() => CreateLink(DbLinkCreateOption.Required);
         public DbLink CreateLink(DbLinkCreateOption createOption)
         {
             DbLink link = null;
@@ -170,54 +165,51 @@ namespace TagBites.DB
             // Get current context
             if (createOption == DbLinkCreateOption.Required)
             {
-                lock (SynchRootForContextLookup)
+                var useSystemTransactions = Configuration.UseSystemTransactions;
+                var transaction = useSystemTransactions ? System.Transactions.Transaction.Current : null;
+
+                if (transaction != null && Configuration.LinkCreateOnDifferentSystemTransaction == DbLinkCreateOnDifferentSystemTransaction.CreateLinkWithNewContextOrAssigedToCurrentTransaction)
                 {
-                    var useSystemTransactions = Configuration.UseSystemTransactions;
-                    var transaction = useSystemTransactions ? System.Transactions.Transaction.Current : null;
+                    lock (SynchRootForContextCollections)
+                        context = m_activeConnections.FirstOrDefault(x => x.TransactionContextInternal?.SystemTransactionInternal == transaction);
 
-                    if (transaction != null && Configuration.LinkCreateOnDifferentSystemTransaction == DbLinkCreateOnDifferentSystemTransaction.CreateLinkWithNewContextOrAssigedToCurrentTransaction)
-                    {
+                    if (context != null && context.Key != currentContextKey)
+                        if (currentContextKey == null)
+                            CurrentContextKey = context.Key;
+                        else
+                            switcher = new DbLinkContextSwitch(context, DbLinkContextSwitchMode.Activate);
+                }
+                else
+                {
+                    if (currentContextKey != null)
                         lock (SynchRootForContextCollections)
-                            context = m_activeConnections.FirstOrDefault(x => x.TransactionContextInternal?.SystemTransactionInternal == transaction);
+                            context = m_activeConnections.FirstOrDefault(x => x.Key == currentContextKey);
 
-                        if (context != null && context.Key != currentContextKey)
-                            if (currentContextKey == null)
-                                CurrentContextKey = context.Key;
-                            else
-                                switcher = new DbLinkContextSwitch(context, DbLinkContextSwitchMode.Activate);
-                    }
-                    else
+                    // Use existing context
+                    if (useSystemTransactions && context != null)
                     {
-                        if (currentContextKey != null)
-                            lock (SynchRootForContextCollections)
-                                context = m_activeConnections.FirstOrDefault(x => x.Key == currentContextKey);
+                        var linkTransaction = context.TransactionContextInternal?.SystemTransactionInternal;
+                        System.Transactions.TransactionScope transactionScope = null;
 
-                        // Use existing context
-                        if (useSystemTransactions && context != null)
+                        if (linkTransaction != null && transaction != linkTransaction)
                         {
-                            var linkTransaction = context.TransactionContextInternal?.SystemTransactionInternal;
-                            System.Transactions.TransactionScope transactionScope = null;
-
-                            if (linkTransaction != null && transaction != linkTransaction)
-                            {
-                                if (Configuration.LinkCreateOnDifferentSystemTransaction == DbLinkCreateOnDifferentSystemTransaction.CreateLinkWithNewContextOrAssigedToCurrentTransaction)
-                                    context = null;
-                                else if (Configuration.LinkCreateOnDifferentSystemTransaction == DbLinkCreateOnDifferentSystemTransaction.TryToMoveTransactionOrThrowException && transaction == null)
-                                    transactionScope = new System.Transactions.TransactionScope(linkTransaction.DependentClone(System.Transactions.DependentCloneOption.BlockCommitUntilComplete));
-                                else
-                                    throw new Exception("This link is already assosiated with different transaction.");
-                            }
-
-                            if (context != null && transactionScope != null)
-                                switcher = new DbLinkContextSwitch(context, DbLinkContextSwitchMode.Activate) { TransactionScope = transactionScope };
+                            if (Configuration.LinkCreateOnDifferentSystemTransaction == DbLinkCreateOnDifferentSystemTransaction.CreateLinkWithNewContextOrAssigedToCurrentTransaction)
+                                context = null;
+                            else if (Configuration.LinkCreateOnDifferentSystemTransaction == DbLinkCreateOnDifferentSystemTransaction.TryToMoveTransactionOrThrowException && transaction == null)
+                                transactionScope = new System.Transactions.TransactionScope(linkTransaction.DependentClone(System.Transactions.DependentCloneOption.BlockCommitUntilComplete));
+                            else
+                                throw new Exception("This link is already associated with different transaction.");
                         }
-                    }
 
-                    if (context != null)
-                    {
-                        link = CreateLinkCore(context);
-                        link.Switcher = switcher;
+                        if (context != null && transactionScope != null)
+                            switcher = new DbLinkContextSwitch(context, DbLinkContextSwitchMode.Activate) { TransactionScope = transactionScope };
                     }
+                }
+
+                if (context != null)
+                {
+                    link = CreateLinkCore(context);
+                    link.Switcher = switcher;
                 }
             }
 
@@ -231,6 +223,8 @@ namespace TagBites.DB
 
                 try
                 {
+                    m_createContextSemaphore.WaitOne();
+
                     lock (SynchRootForContextCreation)
                     {
                         // Context from pool
@@ -238,8 +232,6 @@ namespace TagBites.DB
                             context = CreateLinkContext();
                         else
                         {
-                            m_createContextSemaphore.WaitOne();
-
                             lock (SynchRootForContextCollections)
                             {
                                 if (m_poolContexts.Count > 0)
@@ -284,30 +276,20 @@ namespace TagBites.DB
             return link;
         }
 
-        public DbLink CreateExclusiveLink()
-        {
-            return CreateExclusiveLink(null);
-        }
+        public DbLink CreateExclusiveLink() => CreateExclusiveLink(null);
         [EditorBrowsable(EditorBrowsableState.Never)]
         public DbLink CreateExclusiveLink(Action<DbConnectionArguments> connectionStringAdapter)
         {
-            DbLink link;
+            m_createContextSemaphore.WaitOne();
 
-            lock (SynchRootForContextCreation)
-            {
-                if (UsePooling)
-                    m_createContextSemaphore.WaitOne();
+            var context = CreateLinkContext();
+            context.ConnectionStringAdapter = connectionStringAdapter;
 
-                var context = CreateLinkContext();
-                context.ConnectionStringAdapter = connectionStringAdapter;
+            lock (SynchRootForContextCollections)
+                m_activeConnections.Add(context);
+            ContextCreated?.Invoke(this, new DbLinkContextEventArgs(context));
 
-                lock (SynchRootForContextCollections)
-                    m_activeConnections.Add(context);
-                ContextCreated?.Invoke(this, new DbLinkContextEventArgs(context));
-
-                link = CreateLinkCore(context);
-            }
-
+            var link = CreateLinkCore(context);
             PrepareLink(link, true);
             return link;
         }
@@ -342,7 +324,6 @@ namespace TagBites.DB
                     var transaction = System.Transactions.Transaction.Current;
                     if (transaction != null)
                         context.SystemTransactionEnlist(transaction, true);
-
                 }
             }
             catch
@@ -354,16 +335,18 @@ namespace TagBites.DB
 
         private DbLinkContext GetCurrentContext()
         {
-            var currentContextKey = CurrentContextKey;
-            var useSystemTransactions = Configuration.UseSystemTransactions;
-            var transaction = useSystemTransactions ? System.Transactions.Transaction.Current : null;
-
-            if (transaction != null && Configuration.LinkCreateOnDifferentSystemTransaction == DbLinkCreateOnDifferentSystemTransaction.CreateLinkWithNewContextOrAssigedToCurrentTransaction)
+            if (Configuration.UseSystemTransactions
+                && Configuration.LinkCreateOnDifferentSystemTransaction == DbLinkCreateOnDifferentSystemTransaction.CreateLinkWithNewContextOrAssigedToCurrentTransaction)
             {
-                lock (SynchRootForContextCollections)
-                    return m_activeConnections.FirstOrDefault(x => x.TransactionContextInternal?.SystemTransactionInternal == transaction);
+                var transaction = System.Transactions.Transaction.Current;
+                if (transaction != null)
+                {
+                    lock (SynchRootForContextCollections)
+                        return m_activeConnections.FirstOrDefault(x => x.TransactionContextInternal?.SystemTransactionInternal == transaction);
+                }
             }
 
+            var currentContextKey = CurrentContextKey;
             if (currentContextKey != null)
                 lock (SynchRootForContextCollections)
                     return m_activeConnections.FirstOrDefault(x => x.Key == currentContextKey);
@@ -394,70 +377,32 @@ namespace TagBites.DB
         {
             var released = true;
             var pooling = UsePooling;
-            var synchRootLocked = false;
 
-            // Deadlock:
-            // - 2 wątki mają współdzielić kontekst (pierwszy tworzy, drugi korzysta).
-            // - pierwszy blokuje SynchRoot i czeka na m_createContextSemaphore, poneiwaz pula jest wykorzystana
-            // - drugi czeka na SynchRoot
-            // - trzeci chce zwolnić kontekst, ale nie może bo czeka na SynchRoot
-            // Rozwiązanie:
-            // - nie blokować SynchRoot jeżeli wątek czeka na m_createContextSemaphore
-            // - dodatkowy lock SynchRootForContextLookup, aby co najwyżej jeden wątek wykonywał aktywne czekanie (wpp błąd w m_createContextSemaphore.WaitOne(0))
-            lock (SynchRootForContextLookup)
+            lock (SynchRootForContextCreation)
             {
-                if (!pooling)
-                    Monitor.Enter(SynchRootForContextCreation, ref synchRootLocked);
-                else
-                {
-                    while (true)
-                    {
-                        synchRootLocked = Monitor.TryEnter(SynchRootForContextCreation);
-                        if (synchRootLocked)
-                            break;
+                lock (SynchRootForContextCollections)
+                    if (!m_activeConnections.Remove(context))
+                        throw new Exception("Unknown context!");
 
-                        var poolingLocked = m_createContextSemaphore.WaitOne(0);
-                        if (poolingLocked)
-                            m_createContextSemaphore.Release(1);
-                        else
-                            break;
+                // Clear CallContext
+                if (CurrentContextKey == context.Key)
+                    CurrentContextKey = null;
 
-                        Thread.Sleep(1);
-                    }
-                }
-
-                try
+                // Clear Pooling
+                if (pooling)
                 {
                     lock (SynchRootForContextCollections)
-                        if (!m_activeConnections.Remove(context))
-                            throw new Exception("Unknown context!");
-
-                    // Clear CallContext
-                    if (CurrentContextKey == context.Key)
-                        CurrentContextKey = null;
-
-                    // Clear Pooling
-                    if (pooling)
                     {
-                        lock (SynchRootForContextCollections)
+                        if (m_poolContexts.Count < MinPoolSize)
                         {
-                            if (m_poolContexts.Count < MinPoolSize)
-                            {
-                                m_poolContexts.Enqueue(context);
-                                released = false;
-                            }
+                            m_poolContexts.Enqueue(context);
+                            released = false;
                         }
-
-                        m_createContextSemaphore.Release(1);
                     }
-                }
-                finally
-                {
-                    if (synchRootLocked)
-                        Monitor.Exit(SynchRootForContextCreation);
                 }
             }
 
+            m_createContextSemaphore.Release(1);
             return released;
         }
 
