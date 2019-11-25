@@ -600,6 +600,7 @@ namespace TagBites.DB
                         ex = e;
                     }
                 }
+                m_connectionRefferenceCount = 0;
 
                 // Dispose transaction
                 if (m_transactionContext != null)
