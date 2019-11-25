@@ -586,6 +586,20 @@ namespace TagBites.DB
 
                 if (--m_connectionRefferenceCount != 0)
                     return;
+                m_connectionRefferenceCount = int.MinValue;
+
+                // Batch execution
+                if (m_transactionContext == null)
+                {
+                    try
+                    {
+                        m_batchQueue.Flush();
+                    }
+                    catch (Exception e)
+                    {
+                        ex = e;
+                    }
+                }
 
                 // Dispose transaction
                 if (m_transactionContext != null)
@@ -604,17 +618,6 @@ namespace TagBites.DB
                     ex = new InvalidOperationException("Trying to release link before releasing transaction.");
 
                     m_batchQueue.Cancel();
-                }
-                else
-                {
-                    try
-                    {
-                        m_batchQueue.Flush();
-                    }
-                    catch (Exception e)
-                    {
-                        ex = e;
-                    }
                 }
 
                 // Release Context
