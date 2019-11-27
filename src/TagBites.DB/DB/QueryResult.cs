@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Data;
 using TagBites.DB.Configuration;
-using TagBites.Utils;
 
 namespace TagBites.DB
 {
@@ -13,31 +12,36 @@ namespace TagBites.DB
         public abstract int RowCount { get; }
         public abstract int ColumnCount { get; }
 
-        public abstract object this[int row, string columnName] { get; }
-        public abstract object this[int row, int column] { get; }
+        public object this[int row, string columnName] => GetValue(row, columnName);
+        public object this[int row, int column] => GetValue(row, column);
 
-
-        public abstract bool ContainsColumn(string columnName);
-        public abstract int GetColumnIndex(string columnName);
-        public abstract string GetColumnName(int column);
 
         public object GetValue(int rowIndex, string columnName)
         {
-            return this[rowIndex, columnName];
+            var columnIndex = GetColumnIndex(columnName);
+            return GetValue(rowIndex, columnIndex);
         }
         public T GetValue<T>(int rowIndex, string columnName)
         {
-            return DbLinkDataConverter.Default.ChangeType<T>(this[rowIndex, columnName]);
+            var columnIndex = GetColumnIndex(columnName);
+            return GetValue<T>(rowIndex, columnIndex);
         }
 
         public object GetValue(int rowIndex, int columnIndex)
         {
-            return this[rowIndex, columnIndex];
+            var value = GetValueCore(rowIndex, columnIndex);
+            return DbLinkDataConverter.Default.FromDbType(value);
         }
         public T GetValue<T>(int rowIndex, int columnIndex)
         {
-            return DbLinkDataConverter.Default.ChangeType<T>(this[rowIndex, columnIndex]);
+            var value = GetValueCore(rowIndex, columnIndex);
+            return DbLinkDataConverter.Default.ChangeType<T>(value);
         }
+
+        public bool ContainsColumn(string columnName) => GetColumnIndex(columnName) >= 0;
+        public abstract int GetColumnIndex(string columnName);
+        public abstract string GetColumnName(int column);
+        protected abstract object GetValueCore(int row, int column);
 
         public QueryResultRow GetRow(int index)
         {
@@ -111,57 +115,27 @@ namespace TagBites.DB
             public override int RowCount => 0;
             public override int ColumnCount => 0;
 
-            public override object this[int row, string columnName] => null;
-            public override object this[int row, int column] => null;
 
-
-            public override bool ContainsColumn(string columnName) { return false; }
-            public override int GetColumnIndex(string columnName) { return -1; }
-            public override string GetColumnName(int column) { return null; }
+            public override int GetColumnIndex(string columnName) => -1;
+            public override string GetColumnName(int column) => null;
+            protected override object GetValueCore(int row, int column) => null;
         }
         private class DataTableProvider : QueryResult
         {
-            private readonly DataTable m_data;
+            private readonly DataTable _data;
 
-            public override int RowCount => m_data.Rows.Count;
-            public override int ColumnCount => m_data.Columns.Count;
-
-            public override object this[int row, string columnName]
-            {
-                get
-                {
-                    var v = m_data.Rows[row][columnName];
-                    return v is DBNull ? null : v;
-                }
-            }
-            public override object this[int row, int column]
-            {
-                get
-                {
-                    var v = m_data.Rows[row][column];
-                    return v is DBNull ? null : v;
-                }
-            }
+            public override int RowCount => _data.Rows.Count;
+            public override int ColumnCount => _data.Columns.Count;
 
             public DataTableProvider(DataTable table)
             {
-                Guard.ArgumentNotNull(table, "table");
-                m_data = table;
+                _data = table ?? throw new ArgumentNullException(nameof(table));
             }
 
 
-            public override bool ContainsColumn(string columnName)
-            {
-                return m_data.Columns.Contains(columnName);
-            }
-            public override int GetColumnIndex(string columnName)
-            {
-                return m_data.Columns.IndexOf(columnName);
-            }
-            public override string GetColumnName(int column)
-            {
-                return m_data.Columns[column].ColumnName;
-            }
+            public override int GetColumnIndex(string columnName) => _data.Columns.IndexOf(columnName);
+            public override string GetColumnName(int column) => _data.Columns[column].ColumnName;
+            protected override object GetValueCore(int row, int column) => _data.Rows[row][column];
         }
     }
 }

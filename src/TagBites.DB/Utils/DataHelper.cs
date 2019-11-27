@@ -613,7 +613,7 @@ namespace TagBites.Utils
 
         public static bool IsNull(object value)
         {
-            return value == null || GetTypeCode(value.GetType()) == TypeCode.DBNull;
+            return value == null || value is DBNull;
         }
         public static bool IsDefault<T>(T value)
         {

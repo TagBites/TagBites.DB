@@ -7,66 +7,45 @@ namespace TagBites.DB
 {
     public sealed class QueryResultRow : IList<object>
     {
-        private readonly QueryResult m_queryDataProvider;
-        private int m_row;
+        private readonly QueryResult _source;
 
         bool ICollection<object>.IsReadOnly => true;
-        int ICollection<object>.Count => m_queryDataProvider.ColumnCount;
-        public int ColumnCount => m_queryDataProvider.ColumnCount;
-        public int RowIndex
-        {
-            get => m_row;
-            internal set => m_row = value;
-        }
+        int ICollection<object>.Count => _source.ColumnCount;
+
+        public int ColumnCount => _source.ColumnCount;
+        public int RowIndex { get; internal set; }
 
         object IList<object>.this[int index]
         {
             get => this[index];
             set => throw new NotSupportedException();
         }
-        public object this[int columnIndex] => m_queryDataProvider[m_row, columnIndex];
-        public object this[string columnName] => m_queryDataProvider[m_row, columnName];
+        public object this[int columnIndex] => _source[RowIndex, columnIndex];
+        public object this[string columnName] => _source[RowIndex, columnName];
 
-        internal QueryResultRow(QueryResult queryDataProvider, int row)
+        internal QueryResultRow(QueryResult source, int row)
         {
-            Guard.ArgumentNotNull(queryDataProvider, "queryDataProvider");
-            Guard.ArgumentIndexInRange(row, "row", queryDataProvider.RowCount);
+            Guard.ArgumentNotNull(source, nameof(source));
+            Guard.ArgumentIndexInRange(row, nameof(row), source.RowCount);
 
-            m_queryDataProvider = queryDataProvider;
-            m_row = row;
+            _source = source;
+            RowIndex = row;
         }
 
-        public bool ContainsColumn(string columnName) => m_queryDataProvider.ContainsColumn(columnName);
-        public int GetColumnIndex(string columnName) => m_queryDataProvider.GetColumnIndex(columnName);
-        public string GetColumnName(int column) => m_queryDataProvider.GetColumnName(column);
 
-        public object GetValue(string columnName)
-        {
-            return m_queryDataProvider.GetValue(m_row, columnName);
-        }
-        public T GetValue<T>(string columnName)
-        {
-            return m_queryDataProvider.GetValue<T>(m_row, columnName);
-        }
+        public bool ContainsColumn(string columnName) => _source.ContainsColumn(columnName);
+        public int GetColumnIndex(string columnName) => _source.GetColumnIndex(columnName);
+        public string GetColumnName(int column) => _source.GetColumnName(column);
 
-        public object GetValue(int columnIndex)
-        {
-            return m_queryDataProvider.GetValue(m_row, columnIndex);
-        }
-        public T GetValue<T>(int columnIndex)
-        {
-            return m_queryDataProvider.GetValue<T>(m_row, columnIndex);
-        }
+        public object GetValue(string columnName) => _source.GetValue(RowIndex, columnName);
+        public T GetValue<T>(string columnName) => _source.GetValue<T>(RowIndex, columnName);
 
-        bool ICollection<object>.Contains(object item)
-        {
-            return ((IList<object>)this).IndexOf(item) != -1;
-        }
+        public object GetValue(int columnIndex) => _source.GetValue(RowIndex, columnIndex);
+        public T GetValue<T>(int columnIndex) => _source.GetValue<T>(RowIndex, columnIndex);
+
+        bool ICollection<object>.Contains(object item) => ((IList<object>)this).IndexOf(item) != -1;
         int IList<object>.IndexOf(object item)
         {
-            if (DataHelper.IsNull(item))
-                return -1;
-
             var count = ColumnCount;
             for (var i = 0; i < count; i++)
                 if (Equals(item, this[i]))
@@ -81,39 +60,22 @@ namespace TagBites.DB
                 array[arrayIndex + i] = this[i];
         }
 
-        void ICollection<object>.Add(object item)
-        {
-            throw new NotSupportedException();
-        }
-        void IList<object>.Insert(int index, object item)
-        {
-            throw new NotSupportedException();
-        }
-        bool ICollection<object>.Remove(object item)
-        {
-            throw new NotSupportedException();
-        }
-        void IList<object>.RemoveAt(int index)
-        {
-            throw new NotSupportedException();
-        }
-        void ICollection<object>.Clear()
-        {
-            throw new NotSupportedException();
-        }
+        void ICollection<object>.Add(object item) => throw new NotSupportedException();
+        void IList<object>.Insert(int index, object item) => throw new NotSupportedException();
+        bool ICollection<object>.Remove(object item) => throw new NotSupportedException();
+        void IList<object>.RemoveAt(int index) => throw new NotSupportedException();
+        void ICollection<object>.Clear() => throw new NotSupportedException();
 
-        private IEnumerable<object> GetEnumerable()
-        {
-            for (int i = 0; i < m_queryDataProvider.ColumnCount; i++)
-                yield return m_queryDataProvider[m_row, i];
-        }
         public IEnumerator<object> GetEnumerator()
         {
             return GetEnumerable().GetEnumerator();
+
+            IEnumerable<object> GetEnumerable()
+            {
+                for (var i = 0; i < _source.ColumnCount; i++)
+                    yield return _source[RowIndex, i];
+            }
         }
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }
