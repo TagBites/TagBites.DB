@@ -22,7 +22,7 @@ namespace TagBites.DB.Entity
             InversePropertyName = inversePropertyName;
             InversePropertyType = inversePropertyType;
 
-            var table = MemberUtils.TryGetFirstAttribute<TableAttribute>(property, true);
+            var table = TypeUtils.TryGetFirstAttributeDefault<TableAttribute>(inversePropertyType, true);
             if (table == null)
                 throw new Exception();
         }
