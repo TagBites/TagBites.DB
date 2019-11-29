@@ -79,9 +79,6 @@ namespace TagBites.DB
                     for (var i = 0; i < reader.FieldCount; i++)
                     {
                         var value = reader.GetValue(i);
-                        if (value is DBNull)
-                            value = null;
-
                         items.Add(DbLinkDataConverter.Default.ChangeType<T>(value));
                     }
                 }
@@ -102,10 +99,7 @@ namespace TagBites.DB
                     for (var i = 0; i < reader.FieldCount; i++)
                     {
                         var value = reader.GetValue(i);
-                        if (value is DBNull)
-                            value = null;
-
-                        items.Add(value);
+                        items.Add(DbLinkDataConverter.Default.FromDbType(value));
                     }
                 }
 
@@ -132,9 +126,6 @@ namespace TagBites.DB
                 while (reader.Read() && reader.FieldCount > 0)
                 {
                     var value = reader.GetValue(0);
-                    if (value is DBNull)
-                        value = null;
-
                     items.Add(DbLinkDataConverter.Default.ChangeType<T>(value));
                 }
 
@@ -152,10 +143,7 @@ namespace TagBites.DB
                 while (reader.Read() && reader.FieldCount > 0)
                 {
                     var value = reader.GetValue(0);
-                    if (value is DBNull)
-                        value = null;
-
-                    items.Add(value);
+                    items.Add(DbLinkDataConverter.Default.FromDbType(value));
                 }
 
                 return items;
