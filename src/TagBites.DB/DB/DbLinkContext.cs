@@ -1091,7 +1091,7 @@ namespace TagBites.DB
 
                                 try
                                 {
-                                    m_connection.Open();
+                                    m_connection.OpenAsync().GetAwaiter().GetResult();
                                     OnConnectionOpen();
 
                                     if (m_connectionOpen != null)
