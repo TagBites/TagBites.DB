@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using TagBites.DB;
 
@@ -44,8 +43,9 @@ namespace TagBites.Sql
         }
         public void AppendParameter(object value)
         {
-            for (int i = 0; i < m_parameters.Count; i++)
-                if (Equals(m_parameters[i].Value, value))
+            // ReSharper disable once ForCanBeConvertedToForeach
+            for (var i = 0; i < m_parameters.Count; i++)
+                if (ReferenceEquals(m_parameters[i].Value, value))
                 {
                     m_buffor.Append(m_parameters[i].Name);
                     return;
