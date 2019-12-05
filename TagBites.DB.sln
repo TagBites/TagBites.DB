@@ -26,6 +26,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TagBites.DB.Sqlite", "src\T
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TagBites.DB.Postgres", "src\TagBites.DB.Postgres\TagBites.DB.Postgres.csproj", "{8710A285-F269-4F09-B435-D2612DF7522A}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TagBites.DB.Devart", "src\TagBites.DB.Devart\TagBites.DB.Devart.csproj", "{19640F4E-71D3-4AD1-A1B5-E8DE8731B31A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,6 +54,10 @@ Global
 		{8710A285-F269-4F09-B435-D2612DF7522A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8710A285-F269-4F09-B435-D2612DF7522A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8710A285-F269-4F09-B435-D2612DF7522A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{19640F4E-71D3-4AD1-A1B5-E8DE8731B31A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{19640F4E-71D3-4AD1-A1B5-E8DE8731B31A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{19640F4E-71D3-4AD1-A1B5-E8DE8731B31A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{19640F4E-71D3-4AD1-A1B5-E8DE8731B31A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -62,6 +68,7 @@ Global
 		{F5CD7029-EDD9-4D57-9792-6DDE6CF2D3E2} = {89927951-8603-4371-BAE4-AA7BE43AC112}
 		{2EF0AC4C-F108-4CDB-83AE-488E09238126} = {89927951-8603-4371-BAE4-AA7BE43AC112}
 		{8710A285-F269-4F09-B435-D2612DF7522A} = {89927951-8603-4371-BAE4-AA7BE43AC112}
+		{19640F4E-71D3-4AD1-A1B5-E8DE8731B31A} = {89927951-8603-4371-BAE4-AA7BE43AC112}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3950865B-85F5-4D9C-AEDD-F9A848BD9057}

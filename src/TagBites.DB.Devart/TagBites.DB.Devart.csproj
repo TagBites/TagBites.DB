@@ -1,0 +1,47 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Package info -->
+  <PropertyGroup>
+    <PackageId>TagBites.DB.Devart</PackageId>
+    <Product>TagBites.DB.Devart</Product>
+    <Title>TagBites.DB.Devart</Title>
+
+    <Description></Description>
+    <PackageTags></PackageTags>
+
+    <PackageProjectUrl>https://www.tagbites.com/db</PackageProjectUrl>
+    <PackageIconUrl>https://www.tagbites.com/db/icon.png</PackageIconUrl>
+
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageLicenseUrl>https://www.tagbites.com/db/license.txt</PackageLicenseUrl>
+
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/TagBites/TagBites.DB-Docs.git</RepositoryUrl>
+  </PropertyGroup>
+
+  <!-- Targets -->
+  <PropertyGroup>
+    <TargetFrameworks>net462</TargetFrameworks>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <RootNamespace>TagBites.DB.Npgsql</RootNamespace>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="Devart.Data">
+      <HintPath>E:\Devart\dotConnect\PostgreSQL\Devart.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="Devart.Data.PostgreSql">
+      <HintPath>E:\Devart\dotConnect\PostgreSQL\Devart.Data.PostgreSql.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TagBites.DB.Postgres\TagBites.DB.Postgres.csproj" />
+    <ProjectReference Include="..\TagBites.DB\TagBites.DB.csproj" />
+  </ItemGroup>
+
+</Project>
