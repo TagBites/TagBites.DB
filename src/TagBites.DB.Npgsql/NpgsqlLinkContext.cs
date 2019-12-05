@@ -41,27 +41,12 @@ namespace TagBites.DB.Npgsql
             var connection = (NpgsqlConnection)GetConnection();
             connection.Notification += OnNotification;
             connection.Notice += OnNotice;
-
             //connection.Commiting += OnCommiting;
-
-            //try
-            //{
-            //    connection.TypeMapper.AddMapping(new NpgsqlTypeMappingBuilder
-            //    {
-            //        PgTypeName = "mpq",
-            //        ClrTypes = new[] { typeof(Fraction) },
-            //        TypeHandlerFactory = new FractionHandlerFactory()
-            //    }.Build());
-            //}
-            //catch
-            //{
-
-            //}
         }
 
         private void OnNotification(object sender, NpgsqlNotificationEventArgs e)
         {
-            OnNotify(e.PID, e.Condition, e.AdditionalInformation);
+            OnNotify(e.PID, e.Channel, e.Payload);
         }
         private void OnNotice(object sender, NpgsqlNoticeEventArgs e)
         {
@@ -72,10 +57,14 @@ namespace TagBites.DB.Npgsql
             OnTransactionBeforeCommit();
         }
 
-        protected override Task WaitAsync(CancellationToken token)
+        protected override Task StartNotifyListenerTask(CancellationToken token)
         {
-            var connection = (NpgsqlConnection)GetOpenConnection();
-            return connection.WaitAsync(token);
+            return Task.Run(async () =>
+                 {
+                     while (!token.IsCancellationRequested)
+                         await ((NpgsqlConnection)GetOpenConnection()).WaitAsync(token).ConfigureAwait(false);
+                 },
+                 token);
         }
         protected override bool IsConnectionBrokenException(Exception ex)
         {

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -114,14 +113,7 @@ namespace TagBites.DB.Postgres
                 PrepareLink();
 
                 _listenerCancellationToken = new CancellationTokenSource();
-                var token = _listenerCancellationToken.Token;
-
-                _listenerTask = Task.Run(async () =>
-                    {
-                        while (!token.IsCancellationRequested)
-                            await _link.ConnectionContext.WaitAsync(token);
-                    },
-                    token);
+                _listenerTask = _link.ConnectionContext.StartNotifyListenerTask(_listenerCancellationToken.Token);
 
                 _enabled = true;
             }
