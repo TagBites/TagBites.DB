@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -75,7 +72,7 @@ namespace TagBites.DB.Postgres
             ExecuteNonQuery(new Query("UNLISTEN *"));
         }
 
-        protected internal abstract Task WaitAsync(CancellationToken token);
+        protected internal abstract Task StartNotifyListenerTask(CancellationToken token);
         internal IDbLinkTransaction BeginForCursorManager() => Begin(true, false);
 
         protected void OnNotify(int pid, string channel, string message)
