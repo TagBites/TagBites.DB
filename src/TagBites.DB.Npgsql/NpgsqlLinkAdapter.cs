@@ -1,4 +1,5 @@
-﻿using System.Data.Common;
+﻿using System;
+using System.Data.Common;
 using Npgsql;
 using NpgsqlTypes;
 using TagBites.DB.Postgres;
@@ -49,7 +50,7 @@ namespace TagBites.DB.Npgsql
             foreach (var item in query.Parameters)
             {
                 var value = item.Value;
-                cmd.Parameters.Add(new NpgsqlParameter(item.Name, value) { NpgsqlDbType = NpgsqlDbType.Unknown });
+                cmd.Parameters.Add(new NpgsqlParameter(item.Name, value ?? DBNull.Value) { NpgsqlDbType = NpgsqlDbType.Unknown });
             }
 
             return cmd;
