@@ -27,6 +27,7 @@ namespace TagBites.Sql
         private readonly Dictionary<Type, Func<object, object>> _customParameterResolvers = new Dictionary<Type, Func<object, object>>();
 
         public virtual bool SupportReturningClause => true;
+        public bool InlineParameters { get; set; }
 
         protected virtual string TrueLiteral => "true";
         protected virtual string FalseLiteral => "false";
@@ -93,7 +94,7 @@ namespace TagBites.Sql
                 }
                 else
                 {
-                    var text = ToParameterString(parameter, !builder.SupportParameters);
+                    var text = ToParameterString(parameter, !builder.SupportParameters || InlineParameters);
                     if (text == null)
                         builder.AppendParameter(parameter);
                     else
@@ -740,7 +741,7 @@ namespace TagBites.Sql
             switch (code)
             {
                 case TypeCode.Empty:
-                case (TypeCode)2:
+                case TypeCode.DBNull:
                     return NullLiteral;
 
                 case TypeCode.Char:
@@ -758,9 +759,17 @@ namespace TagBites.Sql
                     return ((IFormattable)parameter).ToString(null, CultureInfo.InvariantCulture);
 
                 case TypeCode.String:
-                    return ((string)parameter).Length == 0
-                        ? "''"
-                        : (force ? ToEscapedString((string)parameter) : null);
+                    {
+                        var sValue = (string)parameter;
+
+                        if (sValue.Length == 0)
+                            return "''";
+
+                        if (force)
+                            return ToEscapedString(sValue);
+
+                        return null;
+                    }
 
                 case TypeCode.Object:
                     {
