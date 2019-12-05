@@ -10,7 +10,8 @@
 
   </PropertyGroup>
   <PropertyGroup Condition=" '$(MSBuildProjectName)' == 'TagBites.DB.Npgsql' ">
-
+    <VersionSuffix>preview7</VersionSuffix>
+    <InformationalVersion>1.0.0-preview7 2019-12-05</InformationalVersion>
   </PropertyGroup>
 
 </Project>
