@@ -7,7 +7,12 @@ using System.Text;
 
 namespace TagBites.DB.Postgres
 {
-    public class PgSqlArray : IEnumerable<string>
+    public interface IPgSqlArray : IEnumerable
+    {
+        Type ElementType { get; }
+    }
+
+    public class PgSqlArray : IPgSqlArray, IEnumerable<string>
     {
         private int _startIndex;
         private readonly List<string> _array;
@@ -24,6 +29,7 @@ namespace TagBites.DB.Postgres
             }
         }
         public int Length => _array.Count;
+        public Type ElementType => typeof(string);
 
         public virtual string this[int index]
         {
@@ -130,6 +136,9 @@ namespace TagBites.DB.Postgres
         }
         public override string ToString()
         {
+            if (Length == 0)
+                return "{}";
+
             var sb = new StringBuilder();
             if (_startIndex != 1)
             {
@@ -150,7 +159,7 @@ namespace TagBites.DB.Postgres
 
                 if (item == null)
                     sb.Append("NULL");
-                else if (item.Contains('\\') || item.Contains(' ') || item.Contains('"') || string.Equals(item, "null", StringComparison.OrdinalIgnoreCase))
+                else if (item.Length == 0 || item.Contains('\\') || item.Contains(' ') || item.Contains('"') || string.Equals(item, "null", StringComparison.OrdinalIgnoreCase))
                 {
                     sb.Append('"');
                     sb.Append(item.Replace("\\", "\\\\").Replace("\"", "\\\""));
@@ -164,17 +173,32 @@ namespace TagBites.DB.Postgres
             return sb.ToString();
         }
 
+        public static IPgSqlArray TryCast(Array array)
+        {
+            if (array == null)
+                return null;
+
+            var elementType = array.GetType().GetElementType();
+            if (elementType == null)
+                return null;
+
+            elementType = Nullable.GetUnderlyingType(elementType) ?? elementType;
+
+            if (elementType == typeof(string))
+                return new PgSqlArray((string[])array);
+
+            if (elementType.IsValueType)
+                return (IPgSqlArray)Activator.CreateInstance(typeof(PgSqlArray<>).MakeGenericType(elementType), array);
+
+            return null;
+        }
         public static PgSqlArray TryParseDefault(string arrayString)
         {
-            PgSqlArray array;
-            return TryParse(arrayString, out array) ? array : null;
+            return TryParse(arrayString, out var array) ? array : null;
         }
         public static bool TryParse(string arrayString, out PgSqlArray array)
         {
-            List<string> items;
-            int startIndex;
-
-            if (!string.IsNullOrEmpty(arrayString) && TryParse(arrayString, out items, out startIndex))
+            if (!string.IsNullOrEmpty(arrayString) && TryParse(arrayString, out var items, out var startIndex))
             {
                 array = new PgSqlArray(items, startIndex);
                 return true;
@@ -289,6 +313,7 @@ namespace TagBites.DB.Postgres
             set => _array.StartIndex = value;
         }
         public int Length => _array.Length;
+        public Type ElementType => typeof(T);
 
         public virtual T? this[int index]
         {
@@ -310,7 +335,27 @@ namespace TagBites.DB.Postgres
                 foreach (var item in items)
                     Add(item);
         }
+        public PgSqlArray(params T[] items)
+        {
+            _array = new PgSqlArray();
+
+            if (items == null)
+                Add(null);
+            else
+                foreach (var item in items)
+                    Add(item);
+        }
         public PgSqlArray(IEnumerable<T?> items)
+        {
+            if (items == null)
+                throw new ArgumentNullException(nameof(items));
+
+            _array = new PgSqlArray();
+
+            foreach (var item in items)
+                Add(item);
+        }
+        public PgSqlArray(IEnumerable<T> items)
         {
             if (items == null)
                 throw new ArgumentNullException(nameof(items));
