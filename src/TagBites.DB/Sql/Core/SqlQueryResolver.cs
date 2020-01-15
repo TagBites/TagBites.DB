@@ -5,6 +5,7 @@ using System.Data;
 using System.Globalization;
 using System.Linq;
 using TagBites.DB;
+using TagBites.DB.Configuration;
 using TagBites.Utils;
 
 namespace TagBites.Sql
@@ -94,11 +95,17 @@ namespace TagBites.Sql
                 }
                 else
                 {
-                    var text = ToParameterString(parameter, !builder.SupportParameters || InlineParameters);
-                    if (text == null)
-                        builder.AppendParameter(parameter);
+                    parameter = DbLinkDataConverter.Default.ToDbType(parameter);
+                    if (parameter is SqlExpression)
+                        Visit(parameter, builder);
                     else
-                        builder.Append(text);
+                    {
+                        var text = ToParameterString(parameter, !builder.SupportParameters || InlineParameters);
+                        if (text == null)
+                            builder.AppendParameter(parameter);
+                        else
+                            builder.Append(text);
+                    }
                 }
             }
         }

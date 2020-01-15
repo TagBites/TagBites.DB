@@ -20,6 +20,10 @@ namespace TagBites.DB.Configuration
 
         private class DefaultInstance : IDbLinkDataConverter
         {
+            public object ToDbType(object value)
+            {
+                return value;
+            }
             public object FromDbType(object value)
             {
                 return value is DBNull ? null : value;
