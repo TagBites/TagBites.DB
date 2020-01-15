@@ -2,16 +2,16 @@
   <PropertyGroup>
     <AssemblyVersion>1.0.0</AssemblyVersion>
     <VersionPrefix>1.0.0</VersionPrefix>
-    <VersionSuffix>preview6</VersionSuffix>
-    <InformationalVersion>1.0.0-preview6 2019-12-05</InformationalVersion>
+    <VersionSuffix>preview8</VersionSuffix>
+    <InformationalVersion>1.0.0-preview8 2020-01-14</InformationalVersion>
   </PropertyGroup>
     
   <PropertyGroup Condition=" '$(MSBuildProjectName)' == 'TagBites.DB.Postgres' ">
 
   </PropertyGroup>
   <PropertyGroup Condition=" '$(MSBuildProjectName)' == 'TagBites.DB.Npgsql' ">
-    <VersionSuffix>preview7</VersionSuffix>
-    <InformationalVersion>1.0.0-preview7 2019-12-05</InformationalVersion>
+    <VersionSuffix>preview8</VersionSuffix>
+    <InformationalVersion>1.0.0-preview8 2020-01-09</InformationalVersion>
   </PropertyGroup>
 
 </Project>
