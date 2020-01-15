@@ -41,7 +41,6 @@ namespace TagBites.DB.Npgsql
             var connection = (NpgsqlConnection)GetConnection();
             connection.Notification += OnNotification;
             connection.Notice += OnNotice;
-            //connection.Commiting += OnCommiting;
         }
 
         private void OnNotification(object sender, NpgsqlNotificationEventArgs e)
@@ -51,10 +50,6 @@ namespace TagBites.DB.Npgsql
         private void OnNotice(object sender, NpgsqlNoticeEventArgs e)
         {
             OnInfoMessage(e.Notice.MessageText, e.Notice.Where);
-        }
-        private void OnCommiting(object sender, EventArgs e)
-        {
-            OnTransactionBeforeCommit();
         }
 
         protected override Task StartNotifyListenerTask(CancellationToken token)

@@ -33,7 +33,6 @@ namespace TagBites.DB
         private DbLinkTransactionContext m_transactionContext;
         private int m_connectionRefferenceCount;
         private bool m_suppressTransactionBegin;
-        private bool m_suppressTransactionBeforeCommit;
         private readonly DelayedBatchQueryQueue m_batchQueue;
         private DbLinkBag m_bag;
 
@@ -781,6 +780,7 @@ namespace TagBites.DB
                 m_transactionContext.Attach();
 
                 transaction.TransactionCompleted += SystemTransactionCompleted;
+                transaction.EnlistVolatile(new Enlistment(this), EnlistmentOptions.EnlistDuringPrepareRequired);
                 m_transactionContextBegin?.Invoke(this, EventArgs.Empty);
             }
         }
@@ -793,7 +793,12 @@ namespace TagBites.DB
                     try
                     {
                         var rollback = e.Transaction.TransactionInformation.Status != System.Transactions.TransactionStatus.Committed;
-                        MarkTransaction(rollback, rollback);
+
+                        if (rollback)
+                            m_transactionContext.Status = DbLinkTransactionStatus.RollingBack;
+
+                        // Already called in Enlistment.Commit
+                        // MarkTransaction(rollback, rollback);
                     }
                     finally
                     {
@@ -823,7 +828,33 @@ namespace TagBites.DB
                 {
                     if (m_transactionContext.TransactionRefferenceCountInternal == 1)
                     {
-                        m_batchQueue.Flush();
+                        if (m_transactionContext.Started)
+                            try
+                            {
+                                OnTransactionBeforeCommit();
+                                m_batchQueue.Flush();
+                            }
+                            catch
+                            {
+                                m_transactionContext.Status = DbLinkTransactionStatus.RollingBack;
+                                throw;
+                            }
+
+                        if (m_transactionContext.DbTransactionInternal != null)
+                            try
+                            {
+                                m_transactionContext.DbTransactionInternal.Commit();
+                            }
+                            catch (Exception e)
+                            {
+                                m_transactionContext.Status = DbLinkTransactionStatus.RollingBack;
+
+                                var ex = OnFormatException(e);
+                                if (e == ex)
+                                    throw;
+                                throw ex;
+                            }
+
                         m_transactionContext.Status = DbLinkTransactionStatus.Committing;
                     }
                 }
@@ -882,30 +913,6 @@ namespace TagBites.DB
                     // Db Transaction
                     else if (m_transactionContext.DbTransactionInternal != null)
                     {
-                        // Commit
-                        try
-                        {
-                            if (m_transactionContext.Status == DbLinkTransactionStatus.Committing)
-                            {
-                                OnTransactionBeforeCommit();
-
-                                m_suppressTransactionBeforeCommit = true;
-                                try
-                                {
-                                    m_transactionContext.DbTransactionInternal.Commit();
-                                }
-                                finally { m_suppressTransactionBeforeCommit = false; }
-                            }
-                        }
-                        catch (Exception ex2)
-                        {
-                            // Format Exception
-                            ex2 = OnFormatException(ex2);
-
-                            ex = ToAggregateException("Exception occurred while commiting transaction.", ex, ex2);
-                        }
-
-                        // Dispose
                         try { m_transactionContext.DbTransactionInternal.Dispose(); }
                         catch { /*Ignored*/ }
                         finally { m_transactionContext.DbTransactionInternal = null; }
@@ -1268,11 +1275,7 @@ namespace TagBites.DB
         }
         protected virtual void OnTransactionBeforeCommit()
         {
-            if (!m_suppressTransactionBeforeCommit)
-            {
-                m_transactionBeforeCommit?.Invoke(this, EventArgs.Empty);
-                m_batchQueue.Flush();
-            }
+            m_transactionBeforeCommit?.Invoke(this, EventArgs.Empty);
         }
 
         protected virtual void OnConnectionCreated() { }
@@ -1310,5 +1313,36 @@ namespace TagBites.DB
         void IDisposable.Dispose() => throw new NotSupportedException("Can not call dispose!");
 
         private delegate T ExecuteQueryWithRowCountDelegate<out T>(IQuerySource query, out int rowCount);
+
+        private class Enlistment : IEnlistmentNotification
+        {
+            private readonly DbLinkContext _context;
+
+            public Enlistment(DbLinkContext context)
+            {
+                _context = context;
+            }
+
+
+            public void Prepare(PreparingEnlistment preparingEnlistment)
+            {
+                preparingEnlistment.Prepared();
+            }
+            public void InDoubt(System.Transactions.Enlistment enlistment)
+            {
+                _context.MarkTransaction(true, true);
+                enlistment.Done();
+            }
+            public void Commit(System.Transactions.Enlistment enlistment)
+            {
+                _context.MarkTransaction(false);
+                enlistment.Done();
+            }
+            public void Rollback(System.Transactions.Enlistment enlistment)
+            {
+                _context.MarkTransaction(true, true);
+                enlistment.Done();
+            }
+        }
     }
 }
