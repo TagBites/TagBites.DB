@@ -4,6 +4,7 @@ namespace TagBites.DB.Configuration
 {
     public interface IDbLinkDataConverter
     {
+        object ToDbType(object value);
         object FromDbType(object value);
 
         T ChangeType<T>(object value);
