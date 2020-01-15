@@ -157,32 +157,36 @@ namespace TagBites.DB
                 ++TransactionRefferenceCountInternal;
             }
         }
-        internal bool Release(bool force = false)
+        internal bool BeginRelease()
         {
             lock (m_locker)
             {
                 if (m_context == null) // Disposed
                     return false;
 
-                if (--TransactionRefferenceCountInternal == 0 || force)
-                {
-                    if (m_transactionBeforeBegin != null)
-                        m_context.TransactionBeforeBegin -= m_transactionBeforeBegin;
+                return --TransactionRefferenceCountInternal == 0;
+            }
+        }
+        internal void ForceRelease()
+        {
+            lock (m_locker)
+            {
+                if (m_context == null) // Disposed
+                    return;
 
-                    if (m_transactionBegin != null)
-                        m_context.TransactionBegin -= OnTransactionBegin;
+                if (m_transactionBeforeBegin != null)
+                    m_context.TransactionBeforeBegin -= m_transactionBeforeBegin;
 
-                    if (m_transactionBeforeCommit != null)
-                        m_context.TransactionBeforeCommit -= OnTransactionBeforeCommit;
+                if (m_transactionBegin != null)
+                    m_context.TransactionBegin -= OnTransactionBegin;
 
-                    if (m_transactionClose != null)
-                        m_context.TransactionClose -= OnTransactionClose;
+                if (m_transactionBeforeCommit != null)
+                    m_context.TransactionBeforeCommit -= OnTransactionBeforeCommit;
 
-                    m_context = null;
-                    return true;
-                }
+                if (m_transactionClose != null)
+                    m_context.TransactionClose -= OnTransactionClose;
 
-                return false;
+                m_context = null;
             }
         }
 

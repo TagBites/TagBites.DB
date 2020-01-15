@@ -613,7 +613,7 @@ namespace TagBites.DB
                     }
 
                     m_transactionContext.Status = DbLinkTransactionStatus.None;
-                    m_transactionContext.Release(true);
+                    m_transactionContext.ForceRelease();
                     m_transactionContext = null;
 
                     ex = new InvalidOperationException("Trying to release link before releasing transaction.");
@@ -872,7 +872,7 @@ namespace TagBites.DB
                 }
 
                 var transactionClose = m_transactionClose;
-                if (m_transactionContext.Release())
+                if (m_transactionContext.BeginRelease())
                 {
                     // System Transaction
                     if (m_transactionContext.SystemTransactionInternal != null)
@@ -934,14 +934,13 @@ namespace TagBites.DB
 
                     // Clear Transaction
                     m_transactionContext.Status = DbLinkTransactionStatus.None;
-                    m_transactionContext.Release(true);
+                    m_transactionContext.ForceRelease();
                     m_transactionContext = null;
 
                     // Transaction Closed
                     try
                     {
-                        if (closeTransactionEvent != null)
-                            closeTransactionEvent();
+                        closeTransactionEvent?.Invoke();
                     }
                     catch (Exception ex2)
                     {
@@ -951,8 +950,7 @@ namespace TagBites.DB
                     // Transaction Context Closed
                     try
                     {
-                        if (closeTransactionContextEvent != null)
-                            closeTransactionContextEvent();
+                        closeTransactionContextEvent?.Invoke();
                     }
                     catch (Exception ex2)
                     {
