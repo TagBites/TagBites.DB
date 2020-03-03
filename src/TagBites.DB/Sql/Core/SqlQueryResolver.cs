@@ -798,7 +798,7 @@ namespace TagBites.Sql
         }
         protected virtual string ToTimeSpanParameterString(TimeSpan value)
         {
-            return GetCastString($"{value:o}", GetTypeName(typeof(TimeSpan)));
+            return GetCastString($"{value:c}", GetTypeName(typeof(TimeSpan)));
         }
         protected virtual string ToEscapedString(string value)
         {
