@@ -1,9 +1,9 @@
 ﻿<Project>
   <PropertyGroup>
     <AssemblyVersion>1.0.0</AssemblyVersion>
-    <VersionPrefix>1.0.0</VersionPrefix>
-    <VersionSuffix>preview9</VersionSuffix>
-    <InformationalVersion>1.0.0-preview9 2020-03-02</InformationalVersion>
+    <VersionPrefix>1.0.1</VersionPrefix>
+    <VersionSuffix>preview1</VersionSuffix>
+    <InformationalVersion>1.0.1-preview1 2020-03-12</InformationalVersion>
   </PropertyGroup>
     
   <PropertyGroup Condition=" '$(MSBuildProjectName)' == 'TagBites.DB.Postgres' ">
