@@ -41,6 +41,9 @@ namespace TagBites.DB.Configuration
                 if (DataHelper.IsNull(value))
                     return conversionType.IsValueType ? Activator.CreateInstance(conversionType) : null;
 
+                if (conversionType.IsEnum && TypeUtils.IsIntegerType(value.GetType()))
+                    return Enum.ToObject(conversionType, value);
+
                 return Convert.ChangeType(value, conversionType);
             }
         }

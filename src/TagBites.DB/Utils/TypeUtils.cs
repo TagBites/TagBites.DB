@@ -30,6 +30,11 @@ namespace TagBites.Utils
             return attributes.Any();
         }
 
+        public static bool IsIntegerType(Type type)
+        {
+            var code = DataHelper.GetTypeCode(type);
+            return code >= TypeCode.SByte && code <= TypeCode.UInt64;
+        }
         public static bool IsNumericType(Type type)
         {
             var code = DataHelper.GetTypeCode(type);
