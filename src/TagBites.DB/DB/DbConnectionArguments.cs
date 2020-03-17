@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Linq;
-using System.Text;
 using TagBites.Utils;
 
 namespace TagBites.DB
@@ -78,8 +76,20 @@ namespace TagBites.DB
                 Password = (string)sb["password"];
 
             UsePooling = !sb.ContainsKey("POOLING") || DataHelper.TryChangeTypeDefault(sb["POOLING"], true);
-            MinPoolSize = sb.ContainsKey("MINPOOLSIZE") ? DataHelper.TryChangeTypeDefault(sb["MINPOOLSIZE"], 1) : 1;
-            MaxPoolSize = sb.ContainsKey("MAXPOOLSIZE") ? DataHelper.TryChangeTypeDefault(sb["MAXPOOLSIZE"], 100) : 100;
+
+            if (sb.ContainsKey("MINPOOLSIZE"))
+                MinPoolSize = DataHelper.TryChangeTypeDefault(sb["MINPOOLSIZE"], 1);
+            else if (sb.ContainsKey("MINIMUM POOL SIZE"))
+                MinPoolSize = DataHelper.TryChangeTypeDefault(sb["MINIMUM POOL SIZE"], 1);
+            else
+                MinPoolSize = 1;
+
+            if (sb.ContainsKey("MAXPOOLSIZE"))
+                MaxPoolSize = DataHelper.TryChangeTypeDefault(sb["MAXPOOLSIZE"], 100);
+            else if (sb.ContainsKey("MAXIMUM POOL SIZE"))
+                MaxPoolSize = DataHelper.TryChangeTypeDefault(sb["MAXIMUM POOL SIZE"], 100);
+            else
+                MaxPoolSize = 100;
         }
         public DbConnectionArguments(string host, int port, string database, string username, string password)
             : this()
