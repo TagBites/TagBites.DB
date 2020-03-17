@@ -1080,6 +1080,9 @@ namespace TagBites.DB
                                     // Create Connection
                                     m_connection = m_provider.LinkAdapter.CreateConnection(cs);
                                     OnConnectionCreated();
+
+                                    if (m_connection.State != ConnectionState.Closed)
+                                        throw new Exception("LinkAdapter.CreateConnection(...) returns unclosed connection.");
                                 }
                                 catch
                                 {
@@ -1170,6 +1173,7 @@ namespace TagBites.DB
                             var connectionLost = !isUserException
                                && (m_connection == null
                                    || m_connection.State == ConnectionState.Closed
+                                   || (m_connection.State & ConnectionState.Broken) == ConnectionState.Broken
                                    || IsConnectionBrokenException(e));
 
                             // Format Exception
@@ -1181,6 +1185,9 @@ namespace TagBites.DB
                                 if (m_transactionContext.Exception == null)
                                     m_transactionContext.Exception = ex;
 
+                                if (connectionLost)
+                                    DisposeAndSetNull(ref m_connection);
+
                                 try
                                 {
                                     MarkTransaction(true, true);
@@ -1189,9 +1196,6 @@ namespace TagBites.DB
                                 {
                                     throw ToAggregateException("Exception occurred while executing transaction rollback after another exception.", ex, ex2);
                                 }
-
-                                if (connectionLost)
-                                    DisposeAndSetNull(ref m_connection);
 
                                 if (e == ex)
                                     throw;
