@@ -9,11 +9,11 @@ namespace TagBites.Sql
     public abstract class SqlExpression
     {
         public static readonly SqlExpression Null = new SqlLiteral("null");
-        public static readonly SqlExpression One = Argument(1);
-        public static readonly SqlExpression Zero = Argument(0);
-        public static readonly SqlExpression EmptyString = Argument(string.Empty);
-        public static readonly SqlCondition True = ToCondition(Argument(true));
-        public static readonly SqlCondition False = ToCondition(Argument(false));
+        public static readonly SqlExpression One = new SqlLiteral("1");
+        public static readonly SqlExpression Zero = new SqlLiteral("0");
+        public static readonly SqlExpression EmptyString = new SqlLiteral("''");
+        public static readonly SqlCondition True = ToCondition(new SqlLiteral("true"));
+        public static readonly SqlCondition False = ToCondition(new SqlLiteral("false"));
 
         public SqlExpression this[int index] => new SqlExpressionIndexerOperator(this, Argument(index));
         public SqlExpression this[SqlExpression index] => new SqlExpressionIndexerOperator(this, index ?? throw new ArgumentNullException(nameof(index)));

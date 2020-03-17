@@ -10,6 +10,7 @@ namespace TagBites.Sql
         private StringBuilder m_buffor = new StringBuilder();
         private Stack<StringBuilder> m_buffers;
         private readonly List<QueryParameter> m_parameters = new List<QueryParameter>();
+        private readonly List<object> m_knownParameters = new List<object>();
 
         public bool IsForToString { get; private set; }
         public bool ValidationEnabled { get; set; } = true;
@@ -41,15 +42,23 @@ namespace TagBites.Sql
                     m_buffor.Append(' ');
             }
         }
-        public void AppendParameter(object value)
+        public void AppendParameter(object parameterOwner, object value)
         {
             // ReSharper disable once ForCanBeConvertedToForeach
-            for (var i = 0; i < m_parameters.Count; i++)
-                if (ReferenceEquals(m_parameters[i].Value, value))
-                {
-                    m_buffor.Append(m_parameters[i].Name);
-                    return;
-                }
+            if (parameterOwner == null)
+                m_knownParameters.Add(null);
+            else
+            {
+                for (var i = 0; i < m_knownParameters.Count; i++)
+                    if (ReferenceEquals(m_knownParameters[i], parameterOwner))
+                    {
+                        var knownName = DB.Query.ParameterPrefix + (i + 1);
+                        m_buffor.Append(knownName);
+                        return;
+                    }
+
+                m_knownParameters.Add(parameterOwner);
+            }
 
             var name = DB.Query.ParameterPrefix + (m_parameters.Count + 1);
             m_parameters.Add(new QueryParameter(name, value));
