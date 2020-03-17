@@ -75,11 +75,11 @@ namespace TagBites.Sql
                     builder.Append(')');
                     break;
                 default:
-                    VisitParameter(expression, builder);
+                    VisitParameter(null, expression, builder);
                     break;
             }
         }
-        protected virtual void VisitParameter(object parameter, SqlQueryBuilder builder)
+        protected virtual void VisitParameter(object parameterOwner, object parameter, SqlQueryBuilder builder)
         {
             if (parameter == null)
                 builder.Append(NullLiteral);
@@ -102,7 +102,7 @@ namespace TagBites.Sql
                     {
                         var text = ToParameterString(parameter, !builder.SupportParameters || InlineParameters);
                         if (text == null)
-                            builder.AppendParameter(parameter);
+                            builder.AppendParameter(parameterOwner, parameter);
                         else
                             builder.Append(text);
                     }
@@ -133,7 +133,7 @@ namespace TagBites.Sql
         }
         protected internal virtual void VisitExpression(SqlArgument expression, SqlQueryBuilder builder)
         {
-            Visit(expression.Value, builder);
+            VisitParameter(expression, expression.Value, builder);
         }
         protected internal virtual void VisitExpression(SqlTable expression, SqlQueryBuilder builder)
         {
