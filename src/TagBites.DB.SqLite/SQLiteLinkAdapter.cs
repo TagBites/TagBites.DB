@@ -1,11 +1,23 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data.Common;
-using System.Data.SQLite;
 using System.Linq;
 using System.Text;
 using TagBites.Sql;
 using TagBites.Sql.Sqlite;
+
+#if MONOANDROID10_0
+using Mono.Data.Sqlite;
+using SQLiteConnection = Mono.Data.Sqlite.SqliteConnection;
+using SQLiteConnectionStringBuilder = Mono.Data.Sqlite.SqliteConnectionStringBuilder;
+using SQLiteCommand = Mono.Data.Sqlite.SqliteCommand;
+using SQLiteParameter = Mono.Data.Sqlite.SqliteParameter;
+using SQLiteDataAdapter = Mono.Data.Sqlite.SqliteDataAdapter;
+#else
+using System.Data.SQLite;
+#endif
+
 
 namespace TagBites.DB.SqLite
 {
@@ -25,9 +37,9 @@ namespace TagBites.DB.SqLite
             var sb = new SQLiteConnectionStringBuilder
             {
                 Pooling = false,
-                SyncMode = SynchronizationModes.Full,
-                BusyTimeout = 1000
+                SyncMode = SynchronizationModes.Full
             };
+            sb["busytimeout"] = 1000;
 
             foreach (var key in arguments.Keys)
                 sb[key] = arguments[key];
@@ -45,17 +57,6 @@ namespace TagBites.DB.SqLite
             foreach (var item in query.Parameters)
             {
                 var value = item.Value;
-                //if (value != null)
-                //{
-                //    Type valueType = value.GetType();
-                //    if (valueType.IsClass && valueType != typeof(string) && !valueType.IsArray)
-                //    {
-                //        var args = TBS.Utils.TypeUtils.GetGenericArguments(valueType, typeof(IEnumerable<>));
-                //        if (args != null && args.Length == 1)
-                //            value = ((IEnumerable)value).Cast<object>().ToArray();
-                //    }
-                //}
-
                 cmd.Parameters.Add(new SQLiteParameter(item.Name, value));
             }
 
