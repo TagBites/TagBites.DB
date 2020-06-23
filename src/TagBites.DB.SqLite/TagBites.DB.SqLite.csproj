@@ -21,7 +21,7 @@
 
   <!-- Targets -->
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.0;MonoAndroid10.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;MonoAndroid10.0</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -30,7 +30,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
     <PackageReference Include="System.Data.SQLite" Version="1.0.110" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'MonoAndroid10.0'">
