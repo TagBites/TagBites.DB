@@ -415,11 +415,13 @@ namespace TagBites.DB
 
         private void StartEvaluation()
         {
-            if (TagBites.DB.Licensing.LicenseManager.HasLicense)
-                return;
+            // TODO license for Android/iOS
 
-            if (s_nextEvaluationTime == 0)
-                s_nextEvaluationTime = DateTime.UtcNow.Ticks + TimeSpan.TicksPerMinute * 5;
+            //if (TagBites.DB.Licensing.LicenseManager.HasLicense)
+            //    return;
+
+            //if (s_nextEvaluationTime == 0)
+            //    s_nextEvaluationTime = DateTime.UtcNow.Ticks + TimeSpan.TicksPerMinute * 5;
         }
         private void Evaluate()
         {
