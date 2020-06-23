@@ -7,6 +7,9 @@
       SourceFiles="$(PackageOutputPath)$(PackageId).$(PackageVersion).nupkg"
       DestinationFolder="$(SolutionDir)..\LocalPackages\" 
       ContinueOnError="false" /> 
+      
+    <Message Text="Delete local package folder 'C:\Users\User\.nuget\packages\$(PackageId)\$(PackageVersion)'" Importance="high"/>
+    <RemoveDir Directories="C:\Users\User\.nuget\packages\$(PackageId)\$(PackageVersion)" />
   </Target>
 
 </Project>
