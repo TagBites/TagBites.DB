@@ -17,8 +17,12 @@ namespace TagBites.DB
                 lock (m_locker)
                 {
                     CheckDispose();
+
+                    var attached = m_transactionBeforeBegin != null;
                     m_transactionBeforeBegin += value;
-                    m_context.TransactionBeforeBegin += OnTransactionBeforeBegin;
+
+                    if (!attached && m_transactionBeforeBegin != null)
+                        m_context.TransactionBeforeBegin += OnTransactionBeforeBegin;
                 }
             }
             remove
@@ -26,8 +30,12 @@ namespace TagBites.DB
                 lock (m_locker)
                 {
                     CheckDispose();
+
+                    var attached = m_transactionBeforeBegin != null;
                     m_transactionBeforeBegin -= value;
-                    m_context.TransactionBeforeBegin -= OnTransactionBeforeBegin;
+
+                    if (attached && m_transactionBeforeBegin == null)
+                        m_context.TransactionBeforeBegin -= OnTransactionBeforeBegin;
                 }
             }
         }
@@ -38,8 +46,12 @@ namespace TagBites.DB
                 lock (m_locker)
                 {
                     CheckDispose();
+
+                    var attached = m_transactionBegin != null;
                     m_transactionBegin += value;
-                    m_context.TransactionBegin += OnTransactionBegin;
+
+                    if (!attached && m_transactionBegin != null)
+                        m_context.TransactionBegin += OnTransactionBegin;
                 }
             }
             remove
@@ -47,8 +59,12 @@ namespace TagBites.DB
                 lock (m_locker)
                 {
                     CheckDispose();
+
+                    var attached = m_transactionBegin != null;
                     m_transactionBegin -= value;
-                    m_context.TransactionBegin -= OnTransactionBegin;
+
+                    if (attached && m_transactionBegin == null)
+                        m_context.TransactionBegin -= OnTransactionBegin;
                 }
             }
         }
@@ -59,8 +75,12 @@ namespace TagBites.DB
                 lock (m_locker)
                 {
                     CheckDispose();
+
+                    var attached = m_transactionBeforeCommit != null;
                     m_transactionBeforeCommit += value;
-                    m_context.TransactionBeforeCommit += OnTransactionBeforeCommit;
+
+                    if (!attached && m_transactionBeforeCommit != null)
+                        m_context.TransactionBeforeCommit += OnTransactionBeforeCommit;
                 }
             }
             remove
@@ -68,8 +88,12 @@ namespace TagBites.DB
                 lock (m_locker)
                 {
                     CheckDispose();
+
+                    var attached = m_transactionBeforeCommit != null;
                     m_transactionBeforeCommit -= value;
-                    m_context.TransactionBeforeCommit -= OnTransactionBeforeCommit;
+
+                    if (attached && m_transactionBeforeCommit == null)
+                        m_context.TransactionBeforeCommit -= OnTransactionBeforeCommit;
                 }
             }
         }
@@ -80,8 +104,12 @@ namespace TagBites.DB
                 lock (m_locker)
                 {
                     CheckDispose();
+
+                    var attached = m_transactionClose != null;
                     m_transactionClose += value;
-                    m_context.TransactionClose += OnTransactionClose;
+
+                    if (!attached && m_transactionClose != null)
+                        m_context.TransactionClose += OnTransactionClose;
                 }
             }
             remove
@@ -89,8 +117,12 @@ namespace TagBites.DB
                 lock (m_locker)
                 {
                     CheckDispose();
+
+                    var attached = m_transactionClose != null;
                     m_transactionClose -= value;
-                    m_context.TransactionClose -= OnTransactionClose;
+
+                    if (attached && m_transactionClose == null)
+                        m_context.TransactionClose -= OnTransactionClose;
                 }
             }
         }
@@ -175,7 +207,7 @@ namespace TagBites.DB
                     return;
 
                 if (m_transactionBeforeBegin != null)
-                    m_context.TransactionBeforeBegin -= m_transactionBeforeBegin;
+                    m_context.TransactionBeforeBegin -= OnTransactionBeforeBegin;
 
                 if (m_transactionBegin != null)
                     m_context.TransactionBegin -= OnTransactionBegin;
@@ -196,37 +228,9 @@ namespace TagBites.DB
                 throw new ObjectDisposedException("DbLinkTransactionContext");
         }
 
-        private void OnTransactionBeforeBegin(object sender, EventArgs e)
-        {
-            lock (m_locker)
-            {
-                if (m_transactionBeforeBegin != null)
-                    m_transactionBeforeBegin(this, e);
-            }
-        }
-        private void OnTransactionBegin(object sender, EventArgs e)
-        {
-            lock (m_locker)
-            {
-                if (m_transactionBegin != null)
-                    m_transactionBegin(this, e);
-            }
-        }
-        private void OnTransactionBeforeCommit(object sender, EventArgs e)
-        {
-            lock (m_locker)
-            {
-                if (m_transactionBeforeCommit != null)
-                    m_transactionBeforeCommit(this, e);
-            }
-        }
-        private void OnTransactionClose(object sender, DbLinkTransactionCloseEventArgs e)
-        {
-            lock (m_locker)
-            {
-                if (m_transactionClose != null)
-                    m_transactionClose(this, e);
-            }
-        }
+        private void OnTransactionBeforeBegin(object sender, EventArgs e) => m_transactionBeforeBegin?.Invoke(this, e);
+        private void OnTransactionBegin(object sender, EventArgs e) => m_transactionBegin?.Invoke(this, e);
+        private void OnTransactionBeforeCommit(object sender, EventArgs e) => m_transactionBeforeCommit?.Invoke(this, e);
+        private void OnTransactionClose(object sender, DbLinkTransactionCloseEventArgs e) => m_transactionClose?.Invoke(this, e);
     }
 }
