@@ -7,7 +7,14 @@ using System.Text;
 using TagBites.Sql;
 using TagBites.Sql.Sqlite;
 
-#if MONOANDROID10_0
+#if MONOANDROID10_0 
+using Mono.Data.Sqlite;
+using SQLiteConnection = Mono.Data.Sqlite.SqliteConnection;
+using SQLiteConnectionStringBuilder = Mono.Data.Sqlite.SqliteConnectionStringBuilder;
+using SQLiteCommand = Mono.Data.Sqlite.SqliteCommand;
+using SQLiteParameter = Mono.Data.Sqlite.SqliteParameter;
+using SQLiteDataAdapter = Mono.Data.Sqlite.SqliteDataAdapter;
+#elif !NETCOREAPP3_1
 using Mono.Data.Sqlite;
 using SQLiteConnection = Mono.Data.Sqlite.SqliteConnection;
 using SQLiteConnectionStringBuilder = Mono.Data.Sqlite.SqliteConnectionStringBuilder;

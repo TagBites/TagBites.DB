@@ -21,7 +21,7 @@
 
   <!-- Targets -->
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;MonoAndroid10.0</TargetFrameworks>
+    <TargetFrameworks>netcoreapp3.1;MonoAndroid10.0;Xamarin.iOS10</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -34,6 +34,10 @@
     <PackageReference Include="System.Data.SQLite" Version="1.0.110" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'MonoAndroid10.0'">
+    <Reference Include="System.Data" />
+    <Reference Include="Mono.Data.Sqlite" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'Xamarin.iOS10'">
     <Reference Include="System.Data" />
     <Reference Include="Mono.Data.Sqlite" />
   </ItemGroup>

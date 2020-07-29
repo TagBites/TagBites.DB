@@ -28,6 +28,8 @@ namespace TagBites.DB.SqLite
 
 #if MONOANDROID10_0
                 Mono.Data.Sqlite.SqliteConnection.CreateFile(Database);
+#elif !NETCOREAPP3_1
+                Mono.Data.Sqlite.SqliteConnection.CreateFile(Database);
 #else
                 System.Data.SQLite.SQLiteConnection.CreateFile(Database);
 #endif
