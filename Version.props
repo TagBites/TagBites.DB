@@ -1,23 +1,10 @@
 ﻿<Project>
   <PropertyGroup>
     <VersionPrefix>1.0.4</VersionPrefix>
-    <VersionSuffix>preview1</VersionSuffix>
-    <VersionDate>2020-07-29</VersionDate>
+    <VersionSuffix>preview2</VersionSuffix>
+    <VersionDate>2020-07-30</VersionDate>
   </PropertyGroup>
     
-  <PropertyGroup Condition=" '$(MSBuildProjectName)' == 'TagBites.DB.Postgres' ">
-    <VersionSuffix>preview1</VersionSuffix>
-    <VersionDate>2020-07-29</VersionDate>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(MSBuildProjectName)' == 'TagBites.DB.Npgsql' ">
-    <VersionSuffix>preview1</VersionSuffix>
-    <VersionDate>2020-07-29</VersionDate>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(MSBuildProjectName)' == 'TagBites.DB.Sqlite' ">
-    <VersionSuffix>preview1</VersionSuffix>
-    <VersionDate>2020-07-29</VersionDate>
-  </PropertyGroup>
-
   <PropertyGroup>
     <InformationalVersion Condition=" '$(VersionSuffix)' == '' ">$(VersionPrefix) $(VersionDate)</InformationalVersion>
     <InformationalVersion Condition=" '$(VersionSuffix)' != '' ">$(VersionPrefix)-$(VersionSuffix) $(VersionDate)</InformationalVersion>
