@@ -14,6 +14,7 @@ namespace TagBites.DB
     {
         private readonly object m_synchRoot;
         private readonly DbLinkContextSwitchMode m_mode;
+        private DbLinkProvider m_provider;
         private DbLinkContext m_context;
         private DbLinkContextKey m_oldContextKey;
         private bool m_attached;
@@ -59,6 +60,54 @@ namespace TagBites.DB
 
                         context.Provider.CurrentContextKey = null;
                     }
+                }
+            }
+
+            return;
+            //lock (m_synchRoot)
+            //{
+            //    var oldKey = GetContextKey(context.Provider, out m_oldAsyncEnabled);
+
+            //    if (mode == DbLinkContextSwitchMode.Activate)
+            //    {
+            //        if (oldKey != context.Key || m_oldAsyncEnabled != (flowOption == DbLinkAsyncFlowOption.Enabled))
+            //        {
+            //            m_context = context;
+            //            m_oldContext = oldKey;
+
+            //            context.AttachInternal();
+            //            SetContextKey(context, flowOption == DbLinkAsyncFlowOption.Enabled);
+            //        }
+            //    }
+            //    else
+            //    {
+            //        if (oldKey != null)
+            //        {
+            //            m_context = context;
+            //            m_oldContext = oldKey;
+
+            //            ClearContextKey(m_context.Provider);
+            //        }
+            //    }
+            //}
+        }
+        internal DbLinkContextSwitch(DbLinkProvider provider)
+        {
+            Guard.ArgumentNotNull(provider, nameof(provider));
+
+            m_synchRoot = new object();
+            m_mode = DbLinkContextSwitchMode.Suppress;
+
+            lock (m_synchRoot)
+            {
+                var oldContextKey = provider.CurrentContextKey;
+
+                if (oldContextKey != null)
+                {
+                    m_provider = provider;
+                    m_oldContextKey = oldContextKey;
+
+                    provider.CurrentContextKey = null;
                 }
             }
 
@@ -141,11 +190,31 @@ namespace TagBites.DB
                         m_oldContextKey = null;
                     }
                 }
-            }
 
+                if (m_provider != null)
+                {
+                    try
+                    {
+                        m_provider.CurrentContextKey = m_oldContextKey;
+                    }
+                    catch (Exception e)
+                    {
+                        ex = ex == null
+                            ? e
+                            : new AggregateException(ex, e);
+                    }
+                    finally
+                    {
+                        m_provider = null;
+                        m_oldContextKey = null;
+                    }
+                }
+            }
 
             if (ex != null)
                 throw new Exception("Exception occurred while disposing.", ex);
         }
+
+        public static DbLinkContextSwitch SuppressCurrentConnection(DbLinkProvider provider) => new DbLinkContextSwitch(provider);
     }
 }
