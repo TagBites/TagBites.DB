@@ -44,6 +44,7 @@ namespace TagBites.DB.Configuration
                 if (conversionType.IsEnum && TypeUtils.IsIntegerType(value.GetType()))
                     return Enum.ToObject(conversionType, value);
 
+                conversionType = Nullable.GetUnderlyingType(conversionType) ?? conversionType;
                 return Convert.ChangeType(value, conversionType);
             }
         }
