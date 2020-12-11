@@ -112,5 +112,46 @@ namespace TagBites.DB.Tests.DB.PostgreSql
             var mpq = link.ExecuteScalar("SELECT '1/2'::mpq");
             Assert.Equal("1/2", mpq);
         }
+
+        [Fact]
+        public void NullableTypeTest()
+        {
+            var q = "SELECT 1 AS NullableInt";
+            using var link = NpgsqlProvider.CreateLink();
+            var result = link.Execute<Model>(q);
+
+            Assert.Single(result);
+
+            Assert.Equal(1, result[0].NullableInt);
+        }
+
+        [Fact]
+        public void ArrayTest()
+        {
+            var q = "SELECT Array[1,2]::int[] AS A, Array['x','y']::text[] AS B";
+            using var link = NpgsqlProvider.CreateLink();
+            var result = link.Execute<Model>(q);
+
+            Assert.Single(result);
+
+            // A
+            Assert.Equal(3, result[0].A.Length);
+            Assert.Equal(0, result[0].A[0]);
+            Assert.Equal(1, result[0].A[1]);
+            Assert.Equal(2, result[0].A[2]);
+
+            // B
+            Assert.Equal(3, result[0].B.Length);
+            Assert.Null(result[0].B[0]);
+            Assert.Equal("x", result[0].B[1]);
+            Assert.Equal("y", result[0].B[2]);
+        }
+
+        private class Model
+        {
+            public int? NullableInt { get; set; }
+            public int[] A { get; set; }
+            public string[] B { get; set; }
+        }
     }
 }
