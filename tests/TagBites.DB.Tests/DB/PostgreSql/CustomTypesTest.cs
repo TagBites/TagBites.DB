@@ -43,8 +43,8 @@ namespace TagBites.DB.Tests.DB.PostgreSql
         {
             using var link = NpgsqlProvider.CreateLink();
 
-            // {ala,NULL," ma ","NULL","null"}
-            Compare(new PgSqlArray("ala", null, " ma ", "NULL", "null"));
+            // {ala,NULL," ma ","NULL","null","{","{},"}"}
+            Compare(new PgSqlArray("ala", null, " ma ", "NULL", "null", "{", "{}", "}"));
 
             // {1,NULL,3}
             CompareT<int>(new PgSqlArray<int>(1, null, 3));

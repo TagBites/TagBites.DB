@@ -159,7 +159,13 @@ namespace TagBites.DB.Postgres
 
                 if (item == null)
                     sb.Append("NULL");
-                else if (item.Length == 0 || item.Contains('\\') || item.Contains(' ') || item.Contains('"') || string.Equals(item, "null", StringComparison.OrdinalIgnoreCase))
+                else if (item.Length == 0
+                         || item.Contains('\\')
+                         || item.Contains(' ')
+                         || item.Contains('"')
+                         || item.Contains('{')
+                         || item.Contains('}')
+                         || string.Equals(item, "null", StringComparison.OrdinalIgnoreCase))
                 {
                     sb.Append('"');
                     sb.Append(item.Replace("\\", "\\\\").Replace("\"", "\\\""));
