@@ -8,9 +8,9 @@ namespace TagBites.DB.Tests.DB.PostgreSql
     public class DbLinkConnectionLostTest : DbTestBase
     {
         [Fact]
-        public void ReconnectAfterBreakWithAttempsTest()
+        public void ReconnectAfterBreakWithAttemptsTest()
         {
-            var onConnectionLost = (DbLinkConnectionLostEventHandler)((s, e) =>
+            var onConnectionLost = (EventHandler<DbLinkConnectionLostEventArgs>)((s, e) =>
             {
                 if (e.ReconnectAttempts < 6)
                 {
@@ -37,9 +37,9 @@ namespace TagBites.DB.Tests.DB.PostgreSql
 
             using (var link = NpgsqlProvider.CreateLink())
             {
-                link.ConnectionContext.ConnectionOpen += (s, e) => ++openCount;
+                link.ConnectionContext.ConnectionOpened += (s, e) => ++openCount;
                 link.ConnectionContext.ConnectionLost += (s, e) => { if (lostCount == 0) e.Reconnect = true; ++lostCount; };
-                link.ConnectionContext.ConnectionClose += (s, e) => ++closeCount;
+                link.ConnectionContext.ConnectionClosed += (s, e) => ++closeCount;
                 link.ConnectionContext.Bag["a"] = 1;
 
                 Assert.Equal(1, link.ExecuteScalar<int>("SELECT 1"));

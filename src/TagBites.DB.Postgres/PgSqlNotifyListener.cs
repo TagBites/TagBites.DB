@@ -149,12 +149,12 @@ namespace TagBites.DB.Postgres
                 CheckDispose();
 
                 _link = _linkProvider.CreateExclusiveNotifyLink();
-                _link.ConnectionContext.ConnectionOpen += Link_ConnectionOpen;
+                _link.ConnectionContext.ConnectionOpened += LinkConnectionOpened;
                 _link.ConnectionContext.ConnectionLost += Link_ConnectionLost;
                 _link.ConnectionContext.Notification += Link_Notification;
             }
         }
-        private void Link_ConnectionOpen(object sender, EventArgs e)
+        private void LinkConnectionOpened(object sender, EventArgs e)
         {
             string[] channels;
 

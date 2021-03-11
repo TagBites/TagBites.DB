@@ -1,11 +1,12 @@
-﻿using TagBites.DB.Configuration;
+﻿using System;
+using TagBites.DB.Configuration;
 using TagBites.Sql;
 
 namespace TagBites.DB
 {
     public interface IDbLinkProvider
     {
-        event DbLinkContextEventHandler ContextCreated;
+        event EventHandler<DbLinkContextEventArgs> ContextCreated;
 
         int ActiveConnectionsCount { get; }
         DbLinkConfiguration Configuration { get; }

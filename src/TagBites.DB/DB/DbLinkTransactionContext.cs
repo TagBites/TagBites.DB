@@ -13,8 +13,8 @@ namespace TagBites.DB
         private EventHandler _transactionBeginning;
         private EventHandler _transactionBegan;
         private EventHandler _transactionCommiting;
-        private DbLinkTransactionCloseEventHandler _transactionClosed;
-        private DbLinkTransactionContextCloseEventHandler _transactionContextClosed;
+        private EventHandler<DbLinkTransactionCloseEventArgs> _transactionClosed;
+        private EventHandler<DbLinkTransactionContextCloseEventArgs> _transactionContextClosed;
 
         public event EventHandler TransactionBeginning
         {
@@ -26,7 +26,7 @@ namespace TagBites.DB
                     _transactionBeginning += value;
 
                     if (!attached && _transactionBeginning != null && !_disposed)
-                        _context.TransactionBeforeBegin += OnTransactionBeginning;
+                        _context.TransactionBeginning += OnTransactionBeginning;
                 }
             }
             remove
@@ -37,7 +37,7 @@ namespace TagBites.DB
                     _transactionBeginning -= value;
 
                     if (attached && _transactionBeginning == null && !_disposed)
-                        _context.TransactionBeforeBegin -= OnTransactionBeginning;
+                        _context.TransactionBeginning -= OnTransactionBeginning;
                 }
             }
         }
@@ -51,7 +51,7 @@ namespace TagBites.DB
                     _transactionBegan += value;
 
                     if (!attached && _transactionBegan != null && !_disposed)
-                        _context.TransactionBegin += OnTransactionBegan;
+                        _context.TransactionBegan += OnTransactionBegan;
                 }
             }
             remove
@@ -62,7 +62,7 @@ namespace TagBites.DB
                     _transactionBegan -= value;
 
                     if (attached && _transactionBegan == null && !_disposed)
-                        _context.TransactionBegin -= OnTransactionBegan;
+                        _context.TransactionBegan -= OnTransactionBegan;
                 }
             }
         }
@@ -91,7 +91,7 @@ namespace TagBites.DB
                 }
             }
         }
-        public event DbLinkTransactionCloseEventHandler TransactionClosed
+        public event EventHandler<DbLinkTransactionCloseEventArgs> TransactionClosed
         {
             add
             {
@@ -101,7 +101,7 @@ namespace TagBites.DB
                     _transactionClosed += value;
 
                     if (!attached && _transactionClosed != null && !_disposed)
-                        _context.TransactionClose += OnTransactionClosed;
+                        _context.TransactionClosed += OnTransactionClosed;
                 }
             }
             remove
@@ -112,11 +112,11 @@ namespace TagBites.DB
                     _transactionClosed -= value;
 
                     if (attached && _transactionClosed == null && !_disposed)
-                        _context.TransactionClose -= OnTransactionClosed;
+                        _context.TransactionClosed -= OnTransactionClosed;
                 }
             }
         }
-        public event DbLinkTransactionContextCloseEventHandler TransactionContextClosed
+        public event EventHandler<DbLinkTransactionContextCloseEventArgs> TransactionContextClosed
         {
             add
             {
@@ -126,7 +126,7 @@ namespace TagBites.DB
                     _transactionContextClosed += value;
 
                     if (!attached && _transactionContextClosed != null && !_disposed)
-                        _context.TransactionContextClose += OnTransactionContextClosed;
+                        _context.TransactionContextClosed += OnTransactionContextClosed;
                 }
             }
             remove
@@ -137,7 +137,7 @@ namespace TagBites.DB
                     _transactionContextClosed -= value;
 
                     if (attached && _transactionContextClosed == null && !_disposed)
-                        _context.TransactionContextClose -= OnTransactionContextClosed;
+                        _context.TransactionContextClosed -= OnTransactionContextClosed;
                 }
             }
         }
@@ -193,19 +193,19 @@ namespace TagBites.DB
                     return;
 
                 if (_transactionBeginning != null)
-                    _context.TransactionBeforeBegin -= OnTransactionBeginning;
+                    _context.TransactionBeginning -= OnTransactionBeginning;
 
                 if (_transactionBegan != null)
-                    _context.TransactionBegin -= OnTransactionBegan;
+                    _context.TransactionBegan -= OnTransactionBegan;
 
                 if (_transactionCommiting != null)
                     _context.TransactionCommiting -= OnTransactionCommiting;
 
                 if (_transactionClosed != null)
-                    _context.TransactionClose -= OnTransactionClosed;
+                    _context.TransactionClosed -= OnTransactionClosed;
 
                 if (_transactionContextClosed != null)
-                    _context.TransactionContextClose -= OnTransactionContextClosed;
+                    _context.TransactionContextClosed -= OnTransactionContextClosed;
 
                 _disposed = true;
             }

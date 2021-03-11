@@ -24,9 +24,9 @@ namespace TagBites.DB.Tests.DB
             NpgsqlProvider.ContextCreated += (sender, args) =>
             {
                 //args.LinkContext.Force();
-                args.LinkContext.TransactionContextBegin += (s, e) => transactionSemaphore.WaitOne();
-                args.LinkContext.TransactionContextClose += (s, e) => transactionSemaphore.Release(1);
-                args.LinkContext.TransactionBegin += (s, e) =>
+                args.LinkContext.TransactionContextBegan += (s, e) => transactionSemaphore.WaitOne();
+                args.LinkContext.TransactionContextClosed += (s, e) => transactionSemaphore.Release(1);
+                args.LinkContext.TransactionBegan += (s, e) =>
                 {
                     var context = s as PgSqlLinkContext;
                     if (context != null)
@@ -34,7 +34,7 @@ namespace TagBites.DB.Tests.DB
                         context.Listen("a");
                     }
                 };
-                args.LinkContext.TransactionClose += (s, e) =>
+                args.LinkContext.TransactionClosed += (s, e) =>
                 {
                     var context = s as PgSqlLinkContext;
                     if (context != null)

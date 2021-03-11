@@ -12,38 +12,38 @@ namespace TagBites.DB
 {
     public class DbLinkContext : IDbLinkContext
     {
-        private EventHandler m_connectionOpen;
-        private EventHandler m_connectionClose;
-        private DbLinkConnectionLostEventHandler m_connectionLost;
-        private EventHandler m_transactionContextBegin;
-        private DbLinkTransactionContextCloseEventHandler m_transactionContextClose;
-        private EventHandler m_transactionBeforeBegin;
-        private EventHandler m_transactionBegin;
-        private EventHandler m_transactionBeforeCommit;
-        private DbLinkTransactionCloseEventHandler m_transactionClose;
-        private DbLinkInfoMessageEventHandler m_infoMessage;
-        private DbExceptionFormatEventHandler m_exceptionFormat;
-        private DbLinkQueryEventHandler m_query;
-        private EventHandler<DbLinkQueryExecutedEventArgs> m_queryExecuted;
-
         internal readonly DbLinkContextKey Key = new DbLinkContextKey();
         public object SynchRoot { get; } = new object();
-        private DbLinkProvider m_provider;
-        private DbConnection m_connection;
-        private DbLinkTransactionContext m_transactionContext;
-        private int m_connectionRefferenceCount;
-        private bool m_suppressTransactionBegin;
-        private readonly DelayedBatchQueryQueue m_batchQueue;
-        private DbLinkBag m_bag;
+        private DbLinkProvider _provider;
+        private DbConnection _connection;
+        private DbLinkTransactionContext _transactionContext;
+        private int _connectionReferenceCount;
+        private bool _suppressTransactionBegin;
+        private readonly DelayedBatchQueryQueue _batchQueue;
+        private DbLinkBag _bag;
 
-        public event EventHandler ConnectionOpen
+        private EventHandler _connectionOpened;
+        private EventHandler _connectionClosed;
+        private EventHandler<DbLinkConnectionLostEventArgs> _connectionLost;
+        private EventHandler _transactionContextBegan;
+        private EventHandler _transactionBeginning;
+        private EventHandler _transactionBegan;
+        private EventHandler _transactionCommiting;
+        private EventHandler<DbLinkTransactionCloseEventArgs> _transactionClosed;
+        private EventHandler<DbLinkTransactionContextCloseEventArgs> _transactionContextClosed;
+        private EventHandler<DbLinkInfoMessageEventArgs> _infoMessageReceived;
+        private EventHandler<DbExceptionFormatEventArgs> _exceptionFormatting;
+        private EventHandler<DbLinkQueryExecutingEventArgs> _queryExecuting;
+        private EventHandler<DbLinkQueryExecutedEventArgs> _queryExecuted;
+
+        public event EventHandler ConnectionOpened
         {
             add
             {
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_connectionOpen = (EventHandler)Delegate.Combine(m_connectionOpen, value);
+                    _connectionOpened = (EventHandler)Delegate.Combine(_connectionOpened, value);
                 }
             }
             remove
@@ -51,18 +51,18 @@ namespace TagBites.DB
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_connectionOpen = (EventHandler)Delegate.Remove(m_connectionOpen, value);
+                    _connectionOpened = (EventHandler)Delegate.Remove(_connectionOpened, value);
                 }
             }
         }
-        public event EventHandler ConnectionClose
+        public event EventHandler ConnectionClosed
         {
             add
             {
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_connectionClose = (EventHandler)Delegate.Combine(value, m_connectionClose);
+                    _connectionClosed = (EventHandler)Delegate.Combine(value, _connectionClosed);
                 }
             }
             remove
@@ -70,18 +70,18 @@ namespace TagBites.DB
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_connectionClose = (EventHandler)Delegate.Remove(m_connectionClose, value);
+                    _connectionClosed = (EventHandler)Delegate.Remove(_connectionClosed, value);
                 }
             }
         }
-        public event DbLinkConnectionLostEventHandler ConnectionLost
+        public event EventHandler<DbLinkConnectionLostEventArgs> ConnectionLost
         {
             add
             {
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_connectionLost = (DbLinkConnectionLostEventHandler)Delegate.Combine(value, m_connectionLost);
+                    _connectionLost = (EventHandler<DbLinkConnectionLostEventArgs>)Delegate.Combine(value, _connectionLost);
                 }
             }
             remove
@@ -89,18 +89,18 @@ namespace TagBites.DB
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_connectionLost = (DbLinkConnectionLostEventHandler)Delegate.Remove(m_connectionLost, value);
+                    _connectionLost = (EventHandler<DbLinkConnectionLostEventArgs>)Delegate.Remove(_connectionLost, value);
                 }
             }
         }
-        public event EventHandler TransactionContextBegin
+        public event EventHandler TransactionContextBegan
         {
             add
             {
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_transactionContextBegin = (EventHandler)Delegate.Combine(m_transactionContextBegin, value);
+                    _transactionContextBegan = (EventHandler)Delegate.Combine(_transactionContextBegan, value);
                 }
             }
             remove
@@ -108,18 +108,18 @@ namespace TagBites.DB
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_transactionContextBegin = (EventHandler)Delegate.Remove(m_transactionContextBegin, value);
+                    _transactionContextBegan = (EventHandler)Delegate.Remove(_transactionContextBegan, value);
                 }
             }
         }
-        public event DbLinkTransactionContextCloseEventHandler TransactionContextClose
+        public event EventHandler TransactionBeginning
         {
             add
             {
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_transactionContextClose = (DbLinkTransactionContextCloseEventHandler)Delegate.Combine(value, m_transactionContextClose);
+                    _transactionBeginning = (EventHandler)Delegate.Combine(_transactionBeginning, value);
                 }
             }
             remove
@@ -127,18 +127,18 @@ namespace TagBites.DB
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_transactionContextClose = (DbLinkTransactionContextCloseEventHandler)Delegate.Remove(m_transactionContextClose, value);
+                    _transactionBeginning = (EventHandler)Delegate.Remove(_transactionBeginning, value);
                 }
             }
         }
-        public event EventHandler TransactionBeforeBegin
+        public event EventHandler TransactionBegan
         {
             add
             {
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_transactionBeforeBegin = (EventHandler)Delegate.Combine(m_transactionBeforeBegin, value);
+                    _transactionBegan = (EventHandler)Delegate.Combine(_transactionBegan, value);
                 }
             }
             remove
@@ -146,26 +146,7 @@ namespace TagBites.DB
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_transactionBeforeBegin = (EventHandler)Delegate.Remove(m_transactionBeforeBegin, value);
-                }
-            }
-        }
-        public event EventHandler TransactionBegin
-        {
-            add
-            {
-                lock (SynchRoot)
-                {
-                    CheckDispose();
-                    m_transactionBegin = (EventHandler)Delegate.Combine(m_transactionBegin, value);
-                }
-            }
-            remove
-            {
-                lock (SynchRoot)
-                {
-                    CheckDispose();
-                    m_transactionBegin = (EventHandler)Delegate.Remove(m_transactionBegin, value);
+                    _transactionBegan = (EventHandler)Delegate.Remove(_transactionBegan, value);
                 }
             }
         }
@@ -176,7 +157,7 @@ namespace TagBites.DB
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_transactionBeforeCommit = (EventHandler)Delegate.Combine(m_transactionBeforeCommit, value);
+                    _transactionCommiting = (EventHandler)Delegate.Combine(_transactionCommiting, value);
                 }
             }
             remove
@@ -184,18 +165,18 @@ namespace TagBites.DB
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_transactionBeforeCommit = (EventHandler)Delegate.Remove(m_transactionBeforeCommit, value);
+                    _transactionCommiting = (EventHandler)Delegate.Remove(_transactionCommiting, value);
                 }
             }
         }
-        public event DbLinkTransactionCloseEventHandler TransactionClose
+        public event EventHandler<DbLinkTransactionCloseEventArgs> TransactionClosed
         {
             add
             {
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_transactionClose = (DbLinkTransactionCloseEventHandler)Delegate.Combine(value, m_transactionClose);
+                    _transactionClosed = (EventHandler<DbLinkTransactionCloseEventArgs>)Delegate.Combine(value, _transactionClosed);
                 }
             }
             remove
@@ -203,18 +184,18 @@ namespace TagBites.DB
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_transactionClose = (DbLinkTransactionCloseEventHandler)Delegate.Remove(m_transactionClose, value);
+                    _transactionClosed = (EventHandler<DbLinkTransactionCloseEventArgs>)Delegate.Remove(_transactionClosed, value);
                 }
             }
         }
-        public event DbLinkInfoMessageEventHandler InfoMessage
+        public event EventHandler<DbLinkTransactionContextCloseEventArgs> TransactionContextClosed
         {
             add
             {
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_infoMessage = (DbLinkInfoMessageEventHandler)Delegate.Combine(m_infoMessage, value);
+                    _transactionContextClosed = (EventHandler<DbLinkTransactionContextCloseEventArgs>)Delegate.Combine(value, _transactionContextClosed);
                 }
             }
             remove
@@ -222,18 +203,18 @@ namespace TagBites.DB
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_infoMessage = (DbLinkInfoMessageEventHandler)Delegate.Remove(m_infoMessage, value);
+                    _transactionContextClosed = (EventHandler<DbLinkTransactionContextCloseEventArgs>)Delegate.Remove(_transactionContextClosed, value);
                 }
             }
         }
-        public event DbExceptionFormatEventHandler ExceptionFormat
+        public event EventHandler<DbLinkInfoMessageEventArgs> InfoMessageReceived
         {
             add
             {
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_exceptionFormat = (DbExceptionFormatEventHandler)Delegate.Combine(m_exceptionFormat, value);
+                    _infoMessageReceived = (EventHandler<DbLinkInfoMessageEventArgs>)Delegate.Combine(_infoMessageReceived, value);
                 }
             }
             remove
@@ -241,18 +222,18 @@ namespace TagBites.DB
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_exceptionFormat = (DbExceptionFormatEventHandler)Delegate.Remove(m_exceptionFormat, value);
+                    _infoMessageReceived = (EventHandler<DbLinkInfoMessageEventArgs>)Delegate.Remove(_infoMessageReceived, value);
                 }
             }
         }
-        public event DbLinkQueryEventHandler Query
+        public event EventHandler<DbExceptionFormatEventArgs> ExceptionFormatting
         {
             add
             {
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_query = (DbLinkQueryEventHandler)Delegate.Combine(m_query, value);
+                    _exceptionFormatting = (EventHandler<DbExceptionFormatEventArgs>)Delegate.Combine(_exceptionFormatting, value);
                 }
             }
             remove
@@ -260,7 +241,26 @@ namespace TagBites.DB
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_query = (DbLinkQueryEventHandler)Delegate.Remove(m_query, value);
+                    _exceptionFormatting = (EventHandler<DbExceptionFormatEventArgs>)Delegate.Remove(_exceptionFormatting, value);
+                }
+            }
+        }
+        public event EventHandler<DbLinkQueryExecutingEventArgs> QueryExecuting
+        {
+            add
+            {
+                lock (SynchRoot)
+                {
+                    CheckDispose();
+                    _queryExecuting = (EventHandler<DbLinkQueryExecutingEventArgs>)Delegate.Combine(_queryExecuting, value);
+                }
+            }
+            remove
+            {
+                lock (SynchRoot)
+                {
+                    CheckDispose();
+                    _queryExecuting = (EventHandler<DbLinkQueryExecutingEventArgs>)Delegate.Remove(_queryExecuting, value);
                 }
             }
         }
@@ -271,7 +271,7 @@ namespace TagBites.DB
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_queryExecuted = (EventHandler<DbLinkQueryExecutedEventArgs>)Delegate.Combine(m_queryExecuted, value);
+                    _queryExecuted = (EventHandler<DbLinkQueryExecutedEventArgs>)Delegate.Combine(_queryExecuted, value);
                 }
             }
             remove
@@ -279,41 +279,41 @@ namespace TagBites.DB
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    m_queryExecuted = (EventHandler<DbLinkQueryExecutedEventArgs>)Delegate.Remove(m_queryExecuted, value);
+                    _queryExecuted = (EventHandler<DbLinkQueryExecutedEventArgs>)Delegate.Remove(_queryExecuted, value);
                 }
             }
         }
 
         public DbLinkProvider Provider
         {
-            get => m_provider;
+            get => _provider;
             internal set
             {
-                if (m_provider != null)
+                if (_provider != null)
                     throw new InvalidOperationException();
 
-                m_provider = value ?? throw new ArgumentNullException(nameof(value));
+                _provider = value ?? throw new ArgumentNullException(nameof(value));
             }
         }
-        IDbLinkProvider IDbLinkContext.Provider => m_provider;
+        IDbLinkProvider IDbLinkContext.Provider => _provider;
 
-        internal DbLinkTransactionContext TransactionContextInternal => m_transactionContext;
-        private DbTransaction TransactionInternal => m_transactionContext?.DbTransactionInternal;
+        internal DbLinkTransactionContext TransactionContextInternal => _transactionContext;
+        private DbTransaction TransactionInternal => _transactionContext?.DbTransactionInternal;
         private DbLinkTransactionStatus TransactionStatusInternal
         {
             get
             {
-                if (m_transactionContext == null)
+                if (_transactionContext == null)
                     return DbLinkTransactionStatus.None;
 
-                return m_transactionContext.Status;
+                return _transactionContext.Status;
             }
         }
 
         internal Action<DbConnectionArguments> ConnectionStringAdapter { get; set; }
 
-        public bool IsDisposed => m_provider == null;
-        public bool IsActive => m_connection != null;
+        public bool IsDisposed => _provider == null;
+        public bool IsActive => _connection != null;
         public bool IsExecuting { get; private set; }
         public DateTime LastExecuted { get; private set; }
 
@@ -325,8 +325,8 @@ namespace TagBites.DB
                 {
                     CheckDispose();
 
-                    var c = m_connection;
-                    return c != null ? c.Database : m_provider.Database;
+                    var c = _connection;
+                    return c != null ? c.Database : _provider.Database;
                 }
             }
             set
@@ -342,7 +342,7 @@ namespace TagBites.DB
 
                     ExecuteInner(() =>
                     {
-                        m_connection.ChangeDatabase(value);
+                        _connection.ChangeDatabase(value);
                         return 0;
                     });
                 }
@@ -357,7 +357,7 @@ namespace TagBites.DB
                 lock (SynchRoot)
                 {
                     CheckDispose();
-                    return m_transactionContext;
+                    return _transactionContext;
                 }
             }
         }
@@ -378,17 +378,17 @@ namespace TagBites.DB
             {
                 lock (SynchRoot)
                 {
-                    if (m_bag == null)
-                        m_bag = new DbLinkBag(SynchRoot);
+                    if (_bag == null)
+                        _bag = new DbLinkBag(SynchRoot);
 
-                    return m_bag;
+                    return _bag;
                 }
             }
         }
 
         protected internal DbLinkContext()
         {
-            m_batchQueue = new DelayedBatchQueryQueue(this);
+            _batchQueue = new DelayedBatchQueryQueue(this);
         }
 
 
@@ -403,7 +403,7 @@ namespace TagBites.DB
             lock (SynchRoot)
             {
                 CheckDispose();
-                return m_connection;
+                return _connection;
             }
         }
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -413,7 +413,7 @@ namespace TagBites.DB
             {
                 CheckDispose();
                 ExecuteInner(() => 0);
-                return m_connection;
+                return _connection;
             }
         }
 
@@ -423,7 +423,7 @@ namespace TagBites.DB
             lock (SynchRoot)
             {
                 CheckDispose();
-                return m_provider.CreateLinkForContextInternal(this);
+                return _provider.CreateLinkForContextInternal(this);
             }
         }
 
@@ -433,7 +433,7 @@ namespace TagBites.DB
 
             return ExecuteInner(query, q =>
             {
-                using (var command = m_provider.LinkAdapter.CreateCommand(m_connection, TransactionInternal, q))
+                using (var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q))
                     return command.ExecuteNonQuery();
             });
         }
@@ -442,7 +442,7 @@ namespace TagBites.DB
         {
             lock (SynchRoot)
             {
-                if (!m_batchQueue.IsEmpty && Provider.Configuration.MergeNextQueryWithDelayedBatchQuery)
+                if (!_batchQueue.IsEmpty && Provider.Configuration.MergeNextQueryWithDelayedBatchQuery)
                 {
                     var result = DelayedBatchExecute(query);
                     return result.Result;
@@ -450,8 +450,8 @@ namespace TagBites.DB
 
                 return ExecuteInner(query, (IQuerySource q, out int rowCount) =>
                 {
-                    using (var command = m_provider.LinkAdapter.CreateCommand(m_connection, TransactionInternal, q))
-                    using (var adapter = m_provider.LinkAdapter.CreateDataAdapter(command))
+                    using (var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q))
+                    using (var adapter = _provider.LinkAdapter.CreateDataAdapter(command))
                     {
                         var dt = new DataTable();
                         adapter.Fill(dt);
@@ -468,7 +468,7 @@ namespace TagBites.DB
 
             lock (SynchRoot)
             {
-                if (!m_batchQueue.IsEmpty && Provider.Configuration.MergeNextQueryWithDelayedBatchQuery)
+                if (!_batchQueue.IsEmpty && Provider.Configuration.MergeNextQueryWithDelayedBatchQuery)
                 {
                     var result = DelayedBatchExecute(query);
                     return result.Result.ToScalar();
@@ -476,7 +476,7 @@ namespace TagBites.DB
 
                 return ExecuteInner(query, q =>
                 {
-                    using (var command = m_provider.LinkAdapter.CreateCommand(m_connection, TransactionInternal, q))
+                    using (var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q))
                         return command.ExecuteScalar();
                 });
             }
@@ -486,7 +486,7 @@ namespace TagBites.DB
         {
             lock (SynchRoot)
             {
-                if (!m_batchQueue.IsEmpty && Provider.Configuration.MergeNextQueryWithDelayedBatchQuery)
+                if (!_batchQueue.IsEmpty && Provider.Configuration.MergeNextQueryWithDelayedBatchQuery)
                 {
                     var result = DelayedBatchExecute(query);
                     return result.Results.ToArray();
@@ -499,8 +499,8 @@ namespace TagBites.DB
         {
             return ExecuteInner(query, (IQuerySource q, out int rowCount) =>
             {
-                using (var command = m_provider.LinkAdapter.CreateCommand(m_connection, TransactionInternal, q))
-                using (var adapter = m_provider.LinkAdapter.CreateDataAdapter(command))
+                using (var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q))
+                using (var adapter = _provider.LinkAdapter.CreateDataAdapter(command))
                 {
                     using (var set = new DataSet())
                     {
@@ -532,7 +532,7 @@ namespace TagBites.DB
                 if (status == DbLinkTransactionStatus.Pending)
                     Force();
 
-                return m_batchQueue.Add(query);
+                return _batchQueue.Add(query);
             }
         }
 
@@ -543,8 +543,8 @@ namespace TagBites.DB
 
             return ExecuteInner(query, q =>
             {
-                using (var command = m_provider.LinkAdapter.CreateCommand(m_connection, TransactionInternal, q))
-                using (var adapter = m_provider.LinkAdapter.CreateDataAdapter(command))
+                using (var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q))
+                using (var adapter = _provider.LinkAdapter.CreateDataAdapter(command))
                     return executor(adapter);
             });
         }
@@ -555,7 +555,7 @@ namespace TagBites.DB
 
             return ExecuteInner(query, q =>
             {
-                using (var command = m_provider.LinkAdapter.CreateCommand(m_connection, TransactionInternal, q))
+                using (var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q))
                 using (var reader = command.ExecuteReader(CommandBehavior.SequentialAccess))
                     return executor(reader);
             });
@@ -563,16 +563,16 @@ namespace TagBites.DB
 
         internal void OnQuery(string query)
         {
-            if (m_query != null && !string.IsNullOrWhiteSpace(query))
+            if (_queryExecuting != null && !string.IsNullOrWhiteSpace(query))
             {
-                var e = new DbLinkQueryEventArgs(new Query(query));
-                m_query(this, e);
+                var e = new DbLinkQueryExecutingEventArgs(new Query(query));
+                _queryExecuting(this, e);
             }
         }
 
         internal void AttachInternal()
         {
-            ++m_connectionRefferenceCount;
+            ++_connectionReferenceCount;
         }
         internal void Release()
         {
@@ -583,53 +583,53 @@ namespace TagBites.DB
             {
                 CheckDispose();
 
-                if (--m_connectionRefferenceCount != 0)
+                if (--_connectionReferenceCount != 0)
                     return;
-                m_connectionRefferenceCount = int.MinValue;
+                _connectionReferenceCount = int.MinValue;
 
                 // Batch execution
-                if (m_transactionContext == null)
+                if (_transactionContext == null)
                 {
                     try
                     {
-                        m_batchQueue.Flush();
+                        _batchQueue.Flush();
                     }
                     catch (Exception e)
                     {
                         ex = e;
                     }
                 }
-                m_connectionRefferenceCount = 0;
+                _connectionReferenceCount = 0;
 
                 // Dispose transaction
-                if (m_transactionContext != null)
+                if (_transactionContext != null)
                 {
-                    if (m_transactionContext.DbTransactionInternal != null)
+                    if (_transactionContext.DbTransactionInternal != null)
                     {
-                        try { m_transactionContext.DbTransactionInternal.Dispose(); }
+                        try { _transactionContext.DbTransactionInternal.Dispose(); }
                         catch {/* Ignored*/}
-                        finally { m_transactionContext.DbTransactionInternal = null; }
+                        finally { _transactionContext.DbTransactionInternal = null; }
                     }
 
-                    m_transactionContext.Status = DbLinkTransactionStatus.None;
-                    m_transactionContext.ForceRelease();
-                    m_transactionContext = null;
+                    _transactionContext.Status = DbLinkTransactionStatus.None;
+                    _transactionContext.ForceRelease();
+                    _transactionContext = null;
 
                     ex = new InvalidOperationException("Trying to release link before releasing transaction.");
 
-                    m_batchQueue.Cancel();
+                    _batchQueue.Cancel();
                 }
 
                 // Release Context
-                if (m_provider.TryReleaseContext(this))
+                if (_provider.TryReleaseContext(this))
                 {
                     try
                     {
-                        if (m_connection != null)
+                        if (_connection != null)
                         {
-                            DisposeAndSetNull(ref m_connection);
+                            DisposeAndSetNull(ref _connection);
 
-                            var connectionClose = m_connectionClose;
+                            var connectionClose = _connectionClosed;
                             if (connectionClose != null)
                                 connectionCloseEvent = () => connectionClose(this, EventArgs.Empty);
                         }
@@ -637,7 +637,7 @@ namespace TagBites.DB
                     finally
                     {
                         // Finall Dispose
-                        m_provider = null;
+                        _provider = null;
                     }
                 }
             }
@@ -716,11 +716,11 @@ namespace TagBites.DB
         }
         private IDbLinkTransaction CreateTransaction(bool createTransactionScopeIfNotExists)
         {
-            if (m_transactionContext == null)
+            if (_transactionContext == null)
             {
-                m_batchQueue.Flush();
+                _batchQueue.Flush();
 
-                if (m_provider.Configuration.UseSystemTransactions)
+                if (_provider.Configuration.UseSystemTransactions)
                 {
                     var transaction = Transaction.Current;
 
@@ -736,19 +736,19 @@ namespace TagBites.DB
                     }
                     else
                     {
-                        m_transactionContext = new DbLinkTransactionContext(this, DbLinkTransactionStatus.Pending, false);
-                        m_transactionContextBegin?.Invoke(this, EventArgs.Empty);
+                        _transactionContext = new DbLinkTransactionContext(this, DbLinkTransactionStatus.Pending, false);
+                        _transactionContextBegan?.Invoke(this, EventArgs.Empty);
                     }
                 }
                 else
                 {
-                    m_transactionContext = new DbLinkTransactionContext(this, DbLinkTransactionStatus.Pending, false);
-                    m_transactionContextBegin?.Invoke(this, EventArgs.Empty);
+                    _transactionContext = new DbLinkTransactionContext(this, DbLinkTransactionStatus.Pending, false);
+                    _transactionContextBegan?.Invoke(this, EventArgs.Empty);
                 }
             }
-            else if (m_transactionContext.Status == DbLinkTransactionStatus.RollingBack)
+            else if (_transactionContext.Status == DbLinkTransactionStatus.RollingBack)
                 ThrowRollingBack();
-            else if (m_transactionContext.Status == DbLinkTransactionStatus.Committing)
+            else if (_transactionContext.Status == DbLinkTransactionStatus.Committing)
                 ThrowCommitting();
 
             return new DbLinkTransaction(this);
@@ -759,7 +759,7 @@ namespace TagBites.DB
             {
                 CheckDispose();
 
-                if (m_transactionContext != null)
+                if (_transactionContext != null)
                     if (ignoreIfHasTransactionContext)
                         return;
                     else
@@ -768,20 +768,20 @@ namespace TagBites.DB
                 if (transaction.TransactionInformation.Status == System.Transactions.TransactionStatus.Aborted)
                     throw new InvalidOperationException("Can not perform this operation because transaction is in aborted state.");
 
-                if (!m_provider.Configuration.UseSystemTransactions)
+                if (!_provider.Configuration.UseSystemTransactions)
                     throw new Exception("Try to use system transaction while Configuration.UseSystemTransactions=false.");
 
-                m_batchQueue.Flush();
+                _batchQueue.Flush();
 
                 AttachInternal(); // Transaction could be outside of DbLinkContext. Release in SystemTransaction_Completed.
 
-                m_transactionContext = new DbLinkTransactionContext(this, DbLinkTransactionStatus.Pending, true);
-                m_transactionContext.SystemTransactionInternal = transaction;
-                m_transactionContext.Attach();
+                _transactionContext = new DbLinkTransactionContext(this, DbLinkTransactionStatus.Pending, true);
+                _transactionContext.SystemTransactionInternal = transaction;
+                _transactionContext.Attach();
 
                 transaction.TransactionCompleted += SystemTransactionCompleted;
                 transaction.EnlistVolatile(new Enlistment(this), EnlistmentOptions.EnlistDuringPrepareRequired);
-                m_transactionContextBegin?.Invoke(this, EventArgs.Empty);
+                _transactionContextBegan?.Invoke(this, EventArgs.Empty);
             }
         }
         private void SystemTransactionCompleted(object sender, TransactionEventArgs e)
@@ -795,7 +795,7 @@ namespace TagBites.DB
                         var rollback = e.Transaction.TransactionInformation.Status != System.Transactions.TransactionStatus.Committed;
 
                         if (rollback)
-                            m_transactionContext.Status = DbLinkTransactionStatus.RollingBack;
+                            _transactionContext.Status = DbLinkTransactionStatus.RollingBack;
 
                         // Already called in Enlistment.Commit
                         // MarkTransaction(rollback, rollback);
@@ -820,34 +820,34 @@ namespace TagBites.DB
                 if (TransactionStatusInternal == DbLinkTransactionStatus.None)
                     throw new InvalidOperationException("There is no transaction!");
 
-                if (m_transactionContext.Status == DbLinkTransactionStatus.RollingBack && !rollback)
+                if (_transactionContext.Status == DbLinkTransactionStatus.RollingBack && !rollback)
                     throw new InvalidOperationException("Can not commit already rollback transaction.");
 
                 // Commit
                 if (!rollback)
                 {
-                    if (m_transactionContext.TransactionReferenceCountInternal == 1)
+                    if (_transactionContext.TransactionReferenceCountInternal == 1)
                     {
-                        if (m_transactionContext.Started)
+                        if (_transactionContext.Started)
                             try
                             {
                                 OnTransactionBeforeCommit();
-                                m_batchQueue.Flush();
+                                _batchQueue.Flush();
                             }
                             catch
                             {
-                                m_transactionContext.Status = DbLinkTransactionStatus.RollingBack;
+                                _transactionContext.Status = DbLinkTransactionStatus.RollingBack;
                                 throw;
                             }
 
-                        if (m_transactionContext.DbTransactionInternal != null)
+                        if (_transactionContext.DbTransactionInternal != null)
                             try
                             {
-                                m_transactionContext.DbTransactionInternal.Commit();
+                                _transactionContext.DbTransactionInternal.Commit();
                             }
                             catch (Exception e)
                             {
-                                m_transactionContext.Status = DbLinkTransactionStatus.RollingBack;
+                                _transactionContext.Status = DbLinkTransactionStatus.RollingBack;
 
                                 var ex = OnFormatException(e);
                                 if (e == ex)
@@ -855,28 +855,28 @@ namespace TagBites.DB
                                 throw ex;
                             }
 
-                        m_transactionContext.Status = DbLinkTransactionStatus.Committing;
+                        _transactionContext.Status = DbLinkTransactionStatus.Committing;
                     }
                 }
                 // Rollback
                 else
                 {
-                    if (m_transactionContext.Status != DbLinkTransactionStatus.RollingBack)
+                    if (_transactionContext.Status != DbLinkTransactionStatus.RollingBack)
                     {
-                        m_transactionContext.Status = DbLinkTransactionStatus.RollingBack;
+                        _transactionContext.Status = DbLinkTransactionStatus.RollingBack;
 
                         // System Transaction
-                        if (m_transactionContext.SystemTransactionInternal != null)
+                        if (_transactionContext.SystemTransactionInternal != null)
                         {
-                            var state = m_transactionContext.SystemTransactionInternal.TransactionInformation.Status;
+                            var state = _transactionContext.SystemTransactionInternal.TransactionInformation.Status;
                             if (!rollbackCalled || (state != System.Transactions.TransactionStatus.Aborted && state != System.Transactions.TransactionStatus.InDoubt))
-                                m_transactionContext.SystemTransactionInternal.Rollback();
+                                _transactionContext.SystemTransactionInternal.Rollback();
                         }
                         // Db Transaction
-                        else if (m_transactionContext.DbTransactionInternal != null)
+                        else if (_transactionContext.DbTransactionInternal != null)
                         {
                             if (!rollbackCalled)
-                                m_transactionContext.DbTransactionInternal.Rollback();
+                                _transactionContext.DbTransactionInternal.Rollback();
                         }
                     }
                 }
@@ -894,7 +894,7 @@ namespace TagBites.DB
                     ex = new InvalidOperationException("There is no transaction.");
                 else if (level != 0)
                 {
-                    var expectedLevel = TransactionStatusInternal == DbLinkTransactionStatus.RollingBack && m_transactionContext.IsSystemTransaction
+                    var expectedLevel = TransactionStatusInternal == DbLinkTransactionStatus.RollingBack && _transactionContext.IsSystemTransaction
                         ? TransactionContextInternal.Level + 1
                         : TransactionContextInternal.Level;
 
@@ -902,49 +902,49 @@ namespace TagBites.DB
                         ex = new InvalidOperationException("Transaction nested incorrectly.");
                 }
 
-                var transactionClose = m_transactionClose;
-                var transactionContextClose = m_transactionContextClose;
+                var transactionClose = _transactionClosed;
+                var transactionContextClose = _transactionContextClosed;
 
-                if (m_transactionContext.BeginRelease())
+                if (_transactionContext.BeginRelease())
                 {
                     // System Transaction
-                    if (m_transactionContext.SystemTransactionInternal != null)
+                    if (_transactionContext.SystemTransactionInternal != null)
                     {
-                        m_transactionContext.SystemTransactionInternal = null;
+                        _transactionContext.SystemTransactionInternal = null;
                     }
                     // Db Transaction
-                    else if (m_transactionContext.DbTransactionInternal != null)
+                    else if (_transactionContext.DbTransactionInternal != null)
                     {
-                        try { m_transactionContext.DbTransactionInternal.Dispose(); }
+                        try { _transactionContext.DbTransactionInternal.Dispose(); }
                         catch { /*Ignored*/ }
-                        finally { m_transactionContext.DbTransactionInternal = null; }
+                        finally { _transactionContext.DbTransactionInternal = null; }
                     }
 
                     // Close Event
                     var reason = ex != null
                         ? DbLinkTransactionCloseReason.Exception
-                        : (m_transactionContext.Status == DbLinkTransactionStatus.RollingBack ? DbLinkTransactionCloseReason.Rollback : DbLinkTransactionCloseReason.Commit);
-                    var bag = m_transactionContext.Bag;
+                        : (_transactionContext.Status == DbLinkTransactionStatus.RollingBack ? DbLinkTransactionCloseReason.Rollback : DbLinkTransactionCloseReason.Commit);
+                    var bag = _transactionContext.Bag;
 
-                    if (m_transactionContext.Started && transactionClose != null)
+                    if (_transactionContext.Started && transactionClose != null)
                     {
                         var cea = new DbLinkTransactionCloseEventArgs(reason, bag, ex);
                         closeTransactionEvent = () => transactionClose(this, cea);
                     }
                     if (transactionContextClose != null)
                     {
-                        var cea = new DbLinkTransactionContextCloseEventArgs(reason, bag, ex, m_transactionContext.Started);
+                        var cea = new DbLinkTransactionContextCloseEventArgs(reason, bag, ex, _transactionContext.Started);
                         closeTransactionContextEvent = () => transactionContextClose(this, cea);
                     }
 
                     // Cancel batch execution
-                    if (m_transactionContext.Status != DbLinkTransactionStatus.Committing)
-                        m_batchQueue.Cancel();
+                    if (_transactionContext.Status != DbLinkTransactionStatus.Committing)
+                        _batchQueue.Cancel();
 
                     // Clear Transaction
-                    m_transactionContext.Status = DbLinkTransactionStatus.None;
-                    m_transactionContext.ForceRelease();
-                    m_transactionContext = null;
+                    _transactionContext.Status = DbLinkTransactionStatus.None;
+                    _transactionContext.ForceRelease();
+                    _transactionContext = null;
 
                     // Transaction Closed
                     try
@@ -977,14 +977,14 @@ namespace TagBites.DB
         {
             return ExecuteInner(() =>
             {
-                if (m_query != null)
+                if (_queryExecuting != null)
                 {
-                    var e = new DbLinkQueryEventArgs(source);
-                    m_query(this, e);
+                    var e = new DbLinkQueryExecutingEventArgs(source);
+                    _queryExecuting(this, e);
                     source = e.Query;
                 }
 
-                if (m_queryExecuted == null)
+                if (_queryExecuted == null)
                     return action(source);
 
                 var time = DateTime.UtcNow;
@@ -1001,7 +1001,7 @@ namespace TagBites.DB
                 }
                 finally
                 {
-                    m_queryExecuted(this, new DbLinkQueryExecutedEventArgs(source, DateTime.UtcNow - time, ex));
+                    _queryExecuted(this, new DbLinkQueryExecutedEventArgs(source, DateTime.UtcNow - time, ex));
                 }
             });
         }
@@ -1009,14 +1009,14 @@ namespace TagBites.DB
         {
             return ExecuteInner(() =>
             {
-                if (m_query != null)
+                if (_queryExecuting != null)
                 {
-                    var e = new DbLinkQueryEventArgs(source);
-                    m_query(this, e);
+                    var e = new DbLinkQueryExecutingEventArgs(source);
+                    _queryExecuting(this, e);
                     source = e.Query;
                 }
 
-                if (m_queryExecuted == null)
+                if (_queryExecuted == null)
                     return action(source, out _);
 
                 var time = DateTime.UtcNow;
@@ -1034,7 +1034,7 @@ namespace TagBites.DB
                 }
                 finally
                 {
-                    m_queryExecuted(this, new DbLinkQueryExecutedEventArgs(source, DateTime.UtcNow - time, ex, ex != null ? (int?)null : rowCount));
+                    _queryExecuted(this, new DbLinkQueryExecutedEventArgs(source, DateTime.UtcNow - time, ex, ex != null ? (int?)null : rowCount));
                 }
             });
         }
@@ -1060,15 +1060,15 @@ namespace TagBites.DB
                         try
                         {
                             // Check connection
-                            if (m_connection == null)
+                            if (_connection == null)
                             {
-                                if (m_transactionContext != null && m_transactionContext.Started)
+                                if (_transactionContext != null && _transactionContext.Started)
                                     throw new Exception("Connection was lost after starting a transaction.");
 
                                 try
                                 {
                                     // Connection String Adapter
-                                    var cs = m_provider.ConnectionString;
+                                    var cs = _provider.ConnectionString;
                                     var adapter = ConnectionStringAdapter;
 
                                     if (adapter != null)
@@ -1076,58 +1076,58 @@ namespace TagBites.DB
                                         var arguments = new DbConnectionArguments(cs);
                                         adapter(arguments);
 
-                                        cs = m_provider.LinkAdapter.CreateConnectionString(arguments);
+                                        cs = _provider.LinkAdapter.CreateConnectionString(arguments);
                                     }
 
                                     // Create Connection
-                                    m_connection = m_provider.LinkAdapter.CreateConnection(cs);
+                                    _connection = _provider.LinkAdapter.CreateConnection(cs);
                                     OnConnectionCreated();
 
-                                    if (m_connection.State != ConnectionState.Closed)
+                                    if (_connection.State != ConnectionState.Closed)
                                         throw new Exception("LinkAdapter.CreateConnection(...) returns unclosed connection.");
                                 }
                                 catch
                                 {
-                                    DisposeAndSetNull(ref m_connection);
+                                    DisposeAndSetNull(ref _connection);
                                     throw;
                                 }
                             }
 
                             // Open Connection
-                            if (m_connection.State != ConnectionState.Open)
+                            if (_connection.State != ConnectionState.Open)
                             {
-                                if (m_transactionContext != null && m_transactionContext.Started)
+                                if (_transactionContext != null && _transactionContext.Started)
                                     throw new Exception("Connection was lost after starting a transaction.");
 
                                 try
                                 {
-                                    m_connection.OpenAsync().GetAwaiter().GetResult();
+                                    _connection.OpenAsync().GetAwaiter().GetResult();
                                     OnConnectionOpen();
 
-                                    if (m_connectionOpen != null)
+                                    if (_connectionOpened != null)
                                     {
                                         isUserException = true;
-                                        m_suppressTransactionBegin = Provider.Configuration.PostponeTransactionBeginOnConnectionOpenEvent;
-                                        m_connectionOpen(this, EventArgs.Empty);
+                                        _suppressTransactionBegin = Provider.Configuration.PostponeTransactionBeginOnConnectionOpenEvent;
+                                        _connectionOpened(this, EventArgs.Empty);
                                         isUserException = false;
                                     }
                                 }
                                 catch
                                 {
-                                    DisposeAndSetNull(ref m_connection);
+                                    DisposeAndSetNull(ref _connection);
                                     throw;
                                 }
                                 finally
                                 {
-                                    m_suppressTransactionBegin = false;
+                                    _suppressTransactionBegin = false;
                                 }
                             }
 
                             // Transaction
-                            if (!m_suppressTransactionBegin)
+                            if (!_suppressTransactionBegin)
                             {
                                 // Enlist transaction
-                                if (m_transactionContext == null && m_provider.Configuration.UseSystemTransactions)
+                                if (_transactionContext == null && _provider.Configuration.UseSystemTransactions)
                                 {
                                     var transaction = System.Transactions.Transaction.Current;
                                     if (transaction != null)
@@ -1135,37 +1135,37 @@ namespace TagBites.DB
                                 }
 
                                 // Start transaction
-                                if (m_transactionContext != null && m_transactionContext.Status == DbLinkTransactionStatus.Pending)
+                                if (_transactionContext != null && _transactionContext.Status == DbLinkTransactionStatus.Pending)
                                 {
                                     // Before Begin
-                                    if (m_transactionBeforeBegin != null)
+                                    if (_transactionBeginning != null)
                                     {
                                         isUserException = true;
-                                        m_transactionBeforeBegin(this, EventArgs.Empty);
+                                        _transactionBeginning(this, EventArgs.Empty);
                                         isUserException = false;
                                     }
 
                                     // Begin
-                                    if (m_transactionContext.SystemTransactionInternal != null)
-                                        m_connection.EnlistTransaction(m_transactionContext.SystemTransactionInternal);
+                                    if (_transactionContext.SystemTransactionInternal != null)
+                                        _connection.EnlistTransaction(_transactionContext.SystemTransactionInternal);
                                     else
-                                        m_transactionContext.DbTransactionInternal = m_connection.BeginTransaction();
+                                        _transactionContext.DbTransactionInternal = _connection.BeginTransaction();
 
-                                    m_transactionContext.Started = true;
-                                    m_transactionContext.Status = DbLinkTransactionStatus.Open;
+                                    _transactionContext.Started = true;
+                                    _transactionContext.Status = DbLinkTransactionStatus.Open;
 
                                     // After Begin
-                                    if (m_transactionBegin != null)
+                                    if (_transactionBegan != null)
                                     {
                                         isUserException = true;
-                                        m_transactionBegin(this, EventArgs.Empty);
+                                        _transactionBegan(this, EventArgs.Empty);
                                         isUserException = false;
                                     }
                                 }
                             }
 
                             // Execute delayed batch
-                            m_batchQueue.Flush();
+                            _batchQueue.Flush();
 
                             // Execute action
                             return action();
@@ -1173,9 +1173,9 @@ namespace TagBites.DB
                         catch (Exception e)
                         {
                             var connectionLost = !isUserException
-                               && (m_connection == null
-                                   || m_connection.State == ConnectionState.Closed
-                                   || (m_connection.State & ConnectionState.Broken) == ConnectionState.Broken
+                               && (_connection == null
+                                   || _connection.State == ConnectionState.Closed
+                                   || (_connection.State & ConnectionState.Broken) == ConnectionState.Broken
                                    || IsConnectionBrokenException(e));
 
                             // Format Exception
@@ -1184,11 +1184,11 @@ namespace TagBites.DB
                             // Clear current transaction
                             if (TransactionStatusInternal != DbLinkTransactionStatus.None)
                             {
-                                if (m_transactionContext.Exception == null)
-                                    m_transactionContext.Exception = ex;
+                                if (_transactionContext.Exception == null)
+                                    _transactionContext.Exception = ex;
 
                                 if (connectionLost)
-                                    DisposeAndSetNull(ref m_connection);
+                                    DisposeAndSetNull(ref _connection);
 
                                 try
                                 {
@@ -1212,10 +1212,10 @@ namespace TagBites.DB
                                 throw ex;
                             }
 
-                            DisposeAndSetNull(ref m_connection);
+                            DisposeAndSetNull(ref _connection);
 
                             // Connection Reconnect
-                            if (m_connectionLost == null)
+                            if (_connectionLost == null)
                             {
                                 if (e == ex)
                                     throw;
@@ -1223,7 +1223,7 @@ namespace TagBites.DB
                             }
 
                             var ea = new DbLinkConnectionLostEventArgs(reconnectAttempts);
-                            m_connectionLost(this, ea);
+                            _connectionLost(this, ea);
 
                             if (!ea.Reconnect)
                             {
@@ -1258,17 +1258,17 @@ namespace TagBites.DB
 
         protected void OnInfoMessage(string message, string source)
         {
-            if (m_infoMessage != null)
-                m_infoMessage(this, new DbLinkInfoMessageEventArgs(message, source));
+            if (_infoMessageReceived != null)
+                _infoMessageReceived(this, new DbLinkInfoMessageEventArgs(message, source));
         }
         protected virtual Exception OnFormatException(Exception e)
         {
-            if (m_exceptionFormat != null && e is DbException)
+            if (_exceptionFormatting != null && e is DbException)
             {
                 var args = new DbExceptionFormatEventArgs(e);
                 try
                 {
-                    m_exceptionFormat(this, args);
+                    _exceptionFormatting(this, args);
                     e = args.Exception;
                 }
                 catch (Exception e2)
@@ -1281,7 +1281,7 @@ namespace TagBites.DB
         }
         protected virtual void OnTransactionBeforeCommit()
         {
-            m_transactionBeforeCommit?.Invoke(this, EventArgs.Empty);
+            _transactionCommiting?.Invoke(this, EventArgs.Empty);
         }
 
         protected virtual void OnConnectionCreated() { }
@@ -1289,7 +1289,7 @@ namespace TagBites.DB
 
         protected void CheckDispose()
         {
-            if (m_provider == null)
+            if (_provider == null)
                 throw new ObjectDisposedException("DbLinkContext");
         }
         private static void ThrowRollingBack()

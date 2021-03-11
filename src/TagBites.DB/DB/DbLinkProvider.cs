@@ -27,7 +27,7 @@ namespace TagBites.DB
 
         #region Events
 
-        public event DbLinkContextEventHandler ContextCreated;
+        public event EventHandler<DbLinkContextEventArgs> ContextCreated;
 
         #endregion
 
