@@ -55,7 +55,7 @@ namespace TagBites.DB.Tests.DB.Common
             {
                 link.Execute("SELECT 1");
 
-                transaction.ConnectionContext.TransactionContextClose += (s, e) =>
+                transaction.ConnectionContext.TransactionContextClosed += (s, e) =>
                 {
                     // ReSharper disable once AccessToDisposedClosure
                     link.Execute("SELECT 1");

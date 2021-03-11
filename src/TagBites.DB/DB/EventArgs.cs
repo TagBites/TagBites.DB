@@ -14,7 +14,6 @@ namespace TagBites.DB
             ReconnectAttempts = reconnectAttempts;
         }
     }
-    public delegate void DbLinkConnectionLostEventHandler(object sender, DbLinkConnectionLostEventArgs e);
 
     public class DbLinkTransactionContextCloseEventArgs : EventArgs
     {
@@ -33,7 +32,6 @@ namespace TagBites.DB
             Started = started;
         }
     }
-    public delegate void DbLinkTransactionContextCloseEventHandler(object sender, DbLinkTransactionContextCloseEventArgs e);
 
     public enum DbLinkTransactionCloseReason : byte
     {
@@ -56,7 +54,6 @@ namespace TagBites.DB
             Exception = exception;
         }
     }
-    public delegate void DbLinkTransactionCloseEventHandler(object sender, DbLinkTransactionCloseEventArgs e);
 
     public class DbLinkContextEventArgs
     {
@@ -67,7 +64,6 @@ namespace TagBites.DB
             LinkContext = linkContext;
         }
     }
-    public delegate void DbLinkContextEventHandler(object sender, DbLinkContextEventArgs e);
 
     public class DbLinkInfoMessageEventArgs : EventArgs
     {
@@ -80,7 +76,6 @@ namespace TagBites.DB
             Source = source;
         }
     }
-    public delegate void DbLinkInfoMessageEventHandler(object sender, DbLinkInfoMessageEventArgs e);
 
     public class DbExceptionFormatEventArgs
     {
@@ -102,9 +97,8 @@ namespace TagBites.DB
             _exception = exception;
         }
     }
-    public delegate void DbExceptionFormatEventHandler(object sender, DbExceptionFormatEventArgs e);
 
-    public class DbLinkQueryEventArgs
+    public class DbLinkQueryExecutingEventArgs
     {
         private IQuerySource _query;
 
@@ -118,12 +112,11 @@ namespace TagBites.DB
             }
         }
 
-        public DbLinkQueryEventArgs(IQuerySource query)
+        public DbLinkQueryExecutingEventArgs(IQuerySource query)
         {
             _query = query;
         }
     }
-    public delegate void DbLinkQueryEventHandler(object sender, DbLinkQueryEventArgs e);
 
     public class DbLinkQueryExecutedEventArgs
     {

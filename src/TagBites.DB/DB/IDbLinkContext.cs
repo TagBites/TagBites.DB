@@ -4,19 +4,19 @@ namespace TagBites.DB
 {
     public interface IDbLinkContext : IDbLink
     {
-        event EventHandler ConnectionClose;
-        event DbLinkConnectionLostEventHandler ConnectionLost;
-        event EventHandler ConnectionOpen;
-        event DbExceptionFormatEventHandler ExceptionFormat;
-        event DbLinkInfoMessageEventHandler InfoMessage;
-        event DbLinkQueryEventHandler Query;
+        event EventHandler ConnectionClosed;
+        event EventHandler<DbLinkConnectionLostEventArgs> ConnectionLost;
+        event EventHandler ConnectionOpened;
+        event EventHandler<DbExceptionFormatEventArgs> ExceptionFormatting;
+        event EventHandler<DbLinkInfoMessageEventArgs> InfoMessageReceived;
+        event EventHandler<DbLinkQueryExecutingEventArgs> QueryExecuting;
         event EventHandler<DbLinkQueryExecutedEventArgs> QueryExecuted;
-        event EventHandler TransactionBeforeBegin;
-        event EventHandler TransactionBegin;
+        event EventHandler TransactionBeginning;
+        event EventHandler TransactionBegan;
         event EventHandler TransactionCommiting;
-        event DbLinkTransactionCloseEventHandler TransactionClose;
-        event EventHandler TransactionContextBegin;
-        event DbLinkTransactionContextCloseEventHandler TransactionContextClose;
+        event EventHandler<DbLinkTransactionCloseEventArgs> TransactionClosed;
+        event EventHandler TransactionContextBegan;
+        event EventHandler<DbLinkTransactionContextCloseEventArgs> TransactionContextClosed;
 
         IDbLinkProvider Provider { get; }
         DbLinkBag Bag { get; }

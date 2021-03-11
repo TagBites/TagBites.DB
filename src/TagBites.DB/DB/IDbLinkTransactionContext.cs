@@ -15,8 +15,8 @@ namespace TagBites.DB
         event EventHandler TransactionBeginning;
         event EventHandler TransactionBegan;
         event EventHandler TransactionCommiting;
-        event DbLinkTransactionCloseEventHandler TransactionClosed;
-        event DbLinkTransactionContextCloseEventHandler TransactionContextClosed;
+        event EventHandler<DbLinkTransactionCloseEventArgs> TransactionClosed;
+        event EventHandler<DbLinkTransactionContextCloseEventArgs> TransactionContextClosed;
 
 
         void Terminate();

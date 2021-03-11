@@ -262,20 +262,20 @@ namespace TagBites.DB.Tests.DB
 
             using (var link = NpgsqlProvider.CreateExclusiveLink())
             {
-                link.ConnectionContext.ConnectionOpen += (s, e) => { Assert.False(firstOpen); firstOpen = true; };
-                link.ConnectionContext.ConnectionOpen += (s, e) => { Assert.True(firstOpen); };
+                link.ConnectionContext.ConnectionOpened += (s, e) => { Assert.False(firstOpen); firstOpen = true; };
+                link.ConnectionContext.ConnectionOpened += (s, e) => { Assert.True(firstOpen); };
 
-                link.ConnectionContext.ConnectionClose += (s, e) => { Assert.True(firstClose); };
-                link.ConnectionContext.ConnectionClose += (s, e) => { Assert.False(firstClose); firstClose = true; };
+                link.ConnectionContext.ConnectionClosed += (s, e) => { Assert.True(firstClose); };
+                link.ConnectionContext.ConnectionClosed += (s, e) => { Assert.False(firstClose); firstClose = true; };
 
-                link.ConnectionContext.TransactionBeforeBegin += (s, e) => { Assert.False(firstBeforeBeginTransaction); firstBeforeBeginTransaction = true; };
-                link.ConnectionContext.TransactionBeforeBegin += (s, e) => { Assert.True(firstBeforeBeginTransaction); };
+                link.ConnectionContext.TransactionBeginning += (s, e) => { Assert.False(firstBeforeBeginTransaction); firstBeforeBeginTransaction = true; };
+                link.ConnectionContext.TransactionBeginning += (s, e) => { Assert.True(firstBeforeBeginTransaction); };
 
-                link.ConnectionContext.TransactionBegin += (s, e) => { Assert.False(firstBeginTransaction); firstBeginTransaction = true; };
-                link.ConnectionContext.TransactionBegin += (s, e) => { Assert.True(firstBeginTransaction); };
+                link.ConnectionContext.TransactionBegan += (s, e) => { Assert.False(firstBeginTransaction); firstBeginTransaction = true; };
+                link.ConnectionContext.TransactionBegan += (s, e) => { Assert.True(firstBeginTransaction); };
 
-                link.ConnectionContext.TransactionClose += (s, e) => { Assert.True(firstCloseTransaction); };
-                link.ConnectionContext.TransactionClose += (s, e) => { Assert.False(firstCloseTransaction); firstCloseTransaction = true; };
+                link.ConnectionContext.TransactionClosed += (s, e) => { Assert.True(firstCloseTransaction); };
+                link.ConnectionContext.TransactionClosed += (s, e) => { Assert.False(firstCloseTransaction); firstCloseTransaction = true; };
             }
         }
 
@@ -295,17 +295,17 @@ namespace TagBites.DB.Tests.DB
 
             using (var link = cp.CreateLink())
             {
-                link.ConnectionContext.ConnectionOpen += (s, e) => { ++openCounter; };
-                link.ConnectionContext.ConnectionClose += (s, e) => { ++closeCounter; };
-                link.ConnectionContext.TransactionContextBegin += (s, e) => { ++beginTransactionContextCounter; };
-                link.ConnectionContext.TransactionContextClose += (s, e) => { ++closeTransactionContextCounter; };
+                link.ConnectionContext.ConnectionOpened += (s, e) => { ++openCounter; };
+                link.ConnectionContext.ConnectionClosed += (s, e) => { ++closeCounter; };
+                link.ConnectionContext.TransactionContextBegan += (s, e) => { ++beginTransactionContextCounter; };
+                link.ConnectionContext.TransactionContextClosed += (s, e) => { ++closeTransactionContextCounter; };
                 link.Force();
 
                 using (var link2 = cp.CreateLink())
                 {
-                    link2.ConnectionContext.ConnectionOpen += (s, e) => { Assert.True(false); };
-                    link2.ConnectionContext.TransactionBegin += (s, e) => { ++beginTransactionCounter; };
-                    link2.ConnectionContext.TransactionClose += (s, e) =>
+                    link2.ConnectionContext.ConnectionOpened += (s, e) => { Assert.True(false); };
+                    link2.ConnectionContext.TransactionBegan += (s, e) => { ++beginTransactionCounter; };
+                    link2.ConnectionContext.TransactionClosed += (s, e) =>
                     {
                         ++closeTransactionCounter;
                         if (e.CloseReason != DbLinkTransactionCloseReason.Rollback)
@@ -346,7 +346,7 @@ namespace TagBites.DB.Tests.DB
                 using (var link = NpgsqlProvider.CreateExclusiveLink())
                 using (var transaction = link.Begin())
                 {
-                    link.ConnectionContext.ConnectionOpen += (s, e) =>
+                    link.ConnectionContext.ConnectionOpened += (s, e) =>
                     {
                         Assert.Equal(DbLinkTransactionStatus.Pending, link.TransactionStatus);
                         order.Append(link.ConnectionContext.ExecuteScalar<int>(new Query("Select 1")));
