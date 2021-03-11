@@ -169,7 +169,7 @@ namespace TagBites.DB
                 }
             }
         }
-        public event EventHandler TransactionBeforeCommit
+        public event EventHandler TransactionCommiting
         {
             add
             {
@@ -826,7 +826,7 @@ namespace TagBites.DB
                 // Commit
                 if (!rollback)
                 {
-                    if (m_transactionContext.TransactionRefferenceCountInternal == 1)
+                    if (m_transactionContext.TransactionReferenceCountInternal == 1)
                     {
                         if (m_transactionContext.Started)
                             try
@@ -903,6 +903,8 @@ namespace TagBites.DB
                 }
 
                 var transactionClose = m_transactionClose;
+                var transactionContextClose = m_transactionContextClose;
+
                 if (m_transactionContext.BeginRelease())
                 {
                     // System Transaction
@@ -929,10 +931,10 @@ namespace TagBites.DB
                         var cea = new DbLinkTransactionCloseEventArgs(reason, bag, ex);
                         closeTransactionEvent = () => transactionClose(this, cea);
                     }
-                    if (m_transactionContextClose != null)
+                    if (transactionContextClose != null)
                     {
                         var cea = new DbLinkTransactionContextCloseEventArgs(reason, bag, ex, m_transactionContext.Started);
-                        closeTransactionContextEvent = () => m_transactionContextClose(this, cea);
+                        closeTransactionContextEvent = () => transactionContextClose(this, cea);
                     }
 
                     // Cancel batch execution

@@ -11,7 +11,7 @@ namespace TagBites.DB.Tests.DB.Core
             var arguments = new DbConnectionArguments()
             {
                 Host = "localhost",
-                Port = 5432,
+                Port = 5434,
                 Database = "newrr",
                 Username = "postgres",
                 Password = "postgres",

@@ -13,7 +13,7 @@ namespace TagBites.DB
         event EventHandler<DbLinkQueryExecutedEventArgs> QueryExecuted;
         event EventHandler TransactionBeforeBegin;
         event EventHandler TransactionBegin;
-        event EventHandler TransactionBeforeCommit;
+        event EventHandler TransactionCommiting;
         event DbLinkTransactionCloseEventHandler TransactionClose;
         event EventHandler TransactionContextBegin;
         event DbLinkTransactionContextCloseEventHandler TransactionContextClose;

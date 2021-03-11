@@ -1,4 +1,5 @@
 ﻿using Npgsql;
+using Npgsql.Logging;
 using TagBites.DB.Postgres;
 
 namespace TagBites.DB.Npgsql
@@ -10,7 +11,11 @@ namespace TagBites.DB.Npgsql
         { }
         public NpgsqlLinkProvider(DbConnectionArguments arguments)
             : base(new NpgsqlLinkAdapter(), arguments)
-        { }
+        {
+#if DEBUG
+            NpgsqlLogManager.Provider = new ConsoleLoggingProvider(NpgsqlLogLevel.Debug, true, true);
+#endif
+        }
 
 
         protected override PgSqlLink CreateExclusiveNotifyLink()
