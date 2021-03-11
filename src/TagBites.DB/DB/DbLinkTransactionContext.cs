@@ -5,232 +5,222 @@ namespace TagBites.DB
 {
     public class DbLinkTransactionContext : IDbLinkTransactionContext
     {
-        private EventHandler m_transactionBeforeBegin;
-        private EventHandler m_transactionBegin;
-        private EventHandler m_transactionBeforeCommit;
-        private DbLinkTransactionCloseEventHandler m_transactionClose;
+        private readonly object _locker;
+        private readonly DbLinkContext _context;
+        private DbLinkBag _bag;
+        private bool _disposed;
 
-        public event EventHandler TransactionBeforeBegin
+        private EventHandler _transactionBeginning;
+        private EventHandler _transactionBegan;
+        private EventHandler _transactionCommiting;
+        private DbLinkTransactionCloseEventHandler _transactionClosed;
+        private DbLinkTransactionContextCloseEventHandler _transactionContextClosed;
+
+        public event EventHandler TransactionBeginning
         {
             add
             {
-                lock (m_locker)
+                lock (_locker)
                 {
-                    CheckDispose();
+                    var attached = _transactionBeginning != null;
+                    _transactionBeginning += value;
 
-                    var attached = m_transactionBeforeBegin != null;
-                    m_transactionBeforeBegin += value;
-
-                    if (!attached && m_transactionBeforeBegin != null)
-                        m_context.TransactionBeforeBegin += OnTransactionBeforeBegin;
+                    if (!attached && _transactionBeginning != null && !_disposed)
+                        _context.TransactionBeforeBegin += OnTransactionBeginning;
                 }
             }
             remove
             {
-                lock (m_locker)
+                lock (_locker)
                 {
-                    CheckDispose();
+                    var attached = _transactionBeginning != null;
+                    _transactionBeginning -= value;
 
-                    var attached = m_transactionBeforeBegin != null;
-                    m_transactionBeforeBegin -= value;
-
-                    if (attached && m_transactionBeforeBegin == null)
-                        m_context.TransactionBeforeBegin -= OnTransactionBeforeBegin;
+                    if (attached && _transactionBeginning == null && !_disposed)
+                        _context.TransactionBeforeBegin -= OnTransactionBeginning;
                 }
             }
         }
-        public event EventHandler TransactionBegin
+        public event EventHandler TransactionBegan
         {
             add
             {
-                lock (m_locker)
+                lock (_locker)
                 {
-                    CheckDispose();
+                    var attached = _transactionBegan != null;
+                    _transactionBegan += value;
 
-                    var attached = m_transactionBegin != null;
-                    m_transactionBegin += value;
-
-                    if (!attached && m_transactionBegin != null)
-                        m_context.TransactionBegin += OnTransactionBegin;
+                    if (!attached && _transactionBegan != null && !_disposed)
+                        _context.TransactionBegin += OnTransactionBegan;
                 }
             }
             remove
             {
-                lock (m_locker)
+                lock (_locker)
                 {
-                    CheckDispose();
+                    var attached = _transactionBegan != null;
+                    _transactionBegan -= value;
 
-                    var attached = m_transactionBegin != null;
-                    m_transactionBegin -= value;
-
-                    if (attached && m_transactionBegin == null)
-                        m_context.TransactionBegin -= OnTransactionBegin;
+                    if (attached && _transactionBegan == null && !_disposed)
+                        _context.TransactionBegin -= OnTransactionBegan;
                 }
             }
         }
-        public event EventHandler TransactionBeforeCommit
+        public event EventHandler TransactionCommiting
         {
             add
             {
-                lock (m_locker)
+                lock (_locker)
                 {
-                    CheckDispose();
+                    var attached = _transactionCommiting != null;
+                    _transactionCommiting += value;
 
-                    var attached = m_transactionBeforeCommit != null;
-                    m_transactionBeforeCommit += value;
-
-                    if (!attached && m_transactionBeforeCommit != null)
-                        m_context.TransactionBeforeCommit += OnTransactionBeforeCommit;
+                    if (!attached && _transactionCommiting != null && !_disposed)
+                        _context.TransactionCommiting += OnTransactionCommiting;
                 }
             }
             remove
             {
-                lock (m_locker)
+                lock (_locker)
                 {
-                    CheckDispose();
+                    var attached = _transactionCommiting != null;
+                    _transactionCommiting -= value;
 
-                    var attached = m_transactionBeforeCommit != null;
-                    m_transactionBeforeCommit -= value;
-
-                    if (attached && m_transactionBeforeCommit == null)
-                        m_context.TransactionBeforeCommit -= OnTransactionBeforeCommit;
+                    if (attached && _transactionCommiting == null && !_disposed)
+                        _context.TransactionCommiting -= OnTransactionCommiting;
                 }
             }
         }
-        public event DbLinkTransactionCloseEventHandler TransactionClose
+        public event DbLinkTransactionCloseEventHandler TransactionClosed
         {
             add
             {
-                lock (m_locker)
+                lock (_locker)
                 {
-                    CheckDispose();
+                    var attached = _transactionClosed != null;
+                    _transactionClosed += value;
 
-                    var attached = m_transactionClose != null;
-                    m_transactionClose += value;
-
-                    if (!attached && m_transactionClose != null)
-                        m_context.TransactionClose += OnTransactionClose;
+                    if (!attached && _transactionClosed != null && !_disposed)
+                        _context.TransactionClose += OnTransactionClosed;
                 }
             }
             remove
             {
-                lock (m_locker)
+                lock (_locker)
                 {
-                    CheckDispose();
+                    var attached = _transactionClosed != null;
+                    _transactionClosed -= value;
 
-                    var attached = m_transactionClose != null;
-                    m_transactionClose -= value;
-
-                    if (attached && m_transactionClose == null)
-                        m_context.TransactionClose -= OnTransactionClose;
+                    if (attached && _transactionClosed == null && !_disposed)
+                        _context.TransactionClose -= OnTransactionClosed;
                 }
             }
         }
-
-        private readonly object m_locker;
-        private DbLinkContext m_context;
-        private DbLinkBag m_bag;
-
-        public DbLinkContext ConnectionContext
+        public event DbLinkTransactionContextCloseEventHandler TransactionContextClosed
         {
-            get
+            add
             {
-                lock (m_locker)
+                lock (_locker)
                 {
-                    CheckDispose();
-                    return m_context;
+                    var attached = _transactionContextClosed != null;
+                    _transactionContextClosed += value;
+
+                    if (!attached && _transactionContextClosed != null && !_disposed)
+                        _context.TransactionContextClose += OnTransactionContextClosed;
+                }
+            }
+            remove
+            {
+                lock (_locker)
+                {
+                    var attached = _transactionContextClosed != null;
+                    _transactionContextClosed -= value;
+
+                    if (attached && _transactionContextClosed == null && !_disposed)
+                        _context.TransactionContextClose -= OnTransactionContextClosed;
                 }
             }
         }
+
+        public DbLinkContext ConnectionContext => _context;
         IDbLinkContext IDbLinkTransactionContext.ConnectionContext => ConnectionContext;
-        public DbLinkBag Bag
-        {
-            get
-            {
-                lock (m_locker)
-                {
-                    if (m_bag == null)
-                        m_bag = new DbLinkBag(m_locker);
-
-                    return m_bag;
-                }
-            }
-        }
+        public DbLinkBag Bag => _bag ??= new DbLinkBag(_locker);
 
         public bool Started { get; internal set; }
         public Exception Exception { get; internal set; }
-        public int Level => TransactionRefferenceCountInternal;
+        public int Level => TransactionReferenceCountInternal;
         public bool IsSystemTransaction { get; internal set; }
         public DbLinkTransactionStatus Status { get; internal set; }
 
         internal System.Transactions.Transaction SystemTransactionInternal { get; set; }
         internal DbTransaction DbTransactionInternal { get; set; }
-        internal int TransactionRefferenceCountInternal { get; private set; }
+        internal int TransactionReferenceCountInternal { get; private set; }
 
         internal DbLinkTransactionContext(DbLinkContext context, DbLinkTransactionStatus status, bool isSystemTransaction)
         {
-            m_context = context;
-            m_locker = context.SynchRoot;
+            _context = context;
+            _locker = context.SynchRoot;
             Status = status;
             IsSystemTransaction = isSystemTransaction;
         }
 
 
-        public void Terminate()
-        {
-            m_context.MarkTransaction(true);
-        }
+        public void Terminate() => _context.MarkTransaction(true);
 
         internal void Attach()
         {
-            lock (m_locker)
+            lock (_locker)
             {
                 CheckDispose();
-                ++TransactionRefferenceCountInternal;
+                ++TransactionReferenceCountInternal;
             }
         }
         internal bool BeginRelease()
         {
-            lock (m_locker)
+            lock (_locker)
             {
-                if (m_context == null) // Disposed
+                if (_disposed)
                     return false;
 
-                return --TransactionRefferenceCountInternal == 0;
+                return --TransactionReferenceCountInternal == 0;
             }
         }
         internal void ForceRelease()
         {
-            lock (m_locker)
+            lock (_locker)
             {
-                if (m_context == null) // Disposed
+                if (_disposed)
                     return;
 
-                if (m_transactionBeforeBegin != null)
-                    m_context.TransactionBeforeBegin -= OnTransactionBeforeBegin;
+                if (_transactionBeginning != null)
+                    _context.TransactionBeforeBegin -= OnTransactionBeginning;
 
-                if (m_transactionBegin != null)
-                    m_context.TransactionBegin -= OnTransactionBegin;
+                if (_transactionBegan != null)
+                    _context.TransactionBegin -= OnTransactionBegan;
 
-                if (m_transactionBeforeCommit != null)
-                    m_context.TransactionBeforeCommit -= OnTransactionBeforeCommit;
+                if (_transactionCommiting != null)
+                    _context.TransactionCommiting -= OnTransactionCommiting;
 
-                if (m_transactionClose != null)
-                    m_context.TransactionClose -= OnTransactionClose;
+                if (_transactionClosed != null)
+                    _context.TransactionClose -= OnTransactionClosed;
 
-                m_context = null;
+                if (_transactionContextClosed != null)
+                    _context.TransactionContextClose -= OnTransactionContextClosed;
+
+                _disposed = true;
             }
         }
 
         protected void CheckDispose()
         {
-            if (m_context == null)
+            if (_disposed)
                 throw new ObjectDisposedException("DbLinkTransactionContext");
         }
 
-        private void OnTransactionBeforeBegin(object sender, EventArgs e) => m_transactionBeforeBegin?.Invoke(this, e);
-        private void OnTransactionBegin(object sender, EventArgs e) => m_transactionBegin?.Invoke(this, e);
-        private void OnTransactionBeforeCommit(object sender, EventArgs e) => m_transactionBeforeCommit?.Invoke(this, e);
-        private void OnTransactionClose(object sender, DbLinkTransactionCloseEventArgs e) => m_transactionClose?.Invoke(this, e);
+        private void OnTransactionBeginning(object sender, EventArgs e) => _transactionBeginning?.Invoke(this, e);
+        private void OnTransactionBegan(object sender, EventArgs e) => _transactionBegan?.Invoke(this, e);
+        private void OnTransactionCommiting(object sender, EventArgs e) => _transactionCommiting?.Invoke(this, e);
+        private void OnTransactionClosed(object sender, DbLinkTransactionCloseEventArgs e) => _transactionClosed?.Invoke(this, e);
+        private void OnTransactionContextClosed(object sender, DbLinkTransactionContextCloseEventArgs e) => _transactionContextClosed?.Invoke(this, e);
     }
 }

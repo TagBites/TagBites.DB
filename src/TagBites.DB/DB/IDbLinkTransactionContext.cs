@@ -12,10 +12,11 @@ namespace TagBites.DB
         bool IsSystemTransaction { get; }
         DbLinkTransactionStatus Status { get; }
 
-        event EventHandler TransactionBeforeBegin;
-        event EventHandler TransactionBegin;
-        event EventHandler TransactionBeforeCommit;
-        event DbLinkTransactionCloseEventHandler TransactionClose;
+        event EventHandler TransactionBeginning;
+        event EventHandler TransactionBegan;
+        event EventHandler TransactionCommiting;
+        event DbLinkTransactionCloseEventHandler TransactionClosed;
+        event DbLinkTransactionContextCloseEventHandler TransactionContextClosed;
 
 
         void Terminate();

@@ -6,24 +6,23 @@ namespace TagBites.DB
 {
     public class DbLinkTransaction : IDbLinkTransaction
     {
-        private DbLinkContext m_context;
-        private bool m_executed;
-        private readonly object m_locker;
-        private readonly int m_nestingLevel;
+        private readonly DbLinkContext _context;
+        private readonly object _locker;
+        private readonly int _nestingLevel;
+        private bool _executed;
+        private bool _disposed;
 
-        public IDbLinkContext ConnectionContext => m_context;
-        public IDbLinkTransactionContext Context => m_context.TransactionContext;
-        public DbLinkTransactionStatus Status => m_context.TransactionContext.Status;
+        public IDbLinkContext ConnectionContext => _context;
+        public IDbLinkTransactionContext Context => _context.TransactionContext;
+        public DbLinkTransactionStatus Status => _context.TransactionContext.Status;
 
         internal DbLinkTransaction(DbLinkContext context)
         {
-            Guard.ArgumentNotNull(context, "context");
-
-            m_context = context;
-            m_locker = m_context.SynchRoot;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _locker = _context.SynchRoot;
 
             context.TransactionContextInternal.Attach();
-            m_nestingLevel = context.TransactionContext.Level;
+            _nestingLevel = context.TransactionContext.Level;
         }
         ~DbLinkTransaction()
         {
@@ -32,62 +31,56 @@ namespace TagBites.DB
         }
 
 
-        public void Commit()
-        {
-            CloseTransaction(false);
-        }
-        public void Rollback()
-        {
-            CloseTransaction(true);
-        }
+        public void Commit() => CloseTransaction(false);
+        public void Rollback() => CloseTransaction(true);
         private void CloseTransaction(bool rollback)
         {
-            lock (m_locker)
+            lock (_locker)
             {
-                if (m_context == null)
+                if (_disposed)
                     throw new ObjectDisposedException("DbLinkTransactionWithScope");
 
-                if (m_executed)
+                if (_executed)
                     throw new InvalidOperationException("Commit/Rollback was already executed.");
 
                 try
                 {
-                    m_context.MarkTransaction(rollback);
+                    _context.MarkTransaction(rollback);
                 }
                 finally
                 {
-                    m_executed = true;
+                    _executed = true;
                 }
             }
         }
 
         public void Dispose()
         {
-            lock (m_locker)
+            GC.SuppressFinalize(this);
+
+            lock (_locker)
             {
-                if (m_context != null)
+                if (!_disposed)
                 {
                     try
                     {
-                        if (!m_context.IsDisposed)
+                        if (!_context.IsDisposed)
                             try
                             {
-                                if (!m_executed)
+                                if (!_executed)
                                     Rollback();
                             }
                             finally
                             {
-                                m_context.CloseTransaction(m_nestingLevel);
+                                _context.CloseTransaction(_nestingLevel);
                             }
                     }
                     finally
                     {
-                        m_context = null;
+                        _disposed = true;
                     }
                 }
             }
-
-            GC.SuppressFinalize(this);
         }
     }
 }

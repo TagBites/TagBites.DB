@@ -10,11 +10,11 @@ namespace TagBites.DB.Tests.DB.Core
         {
             var arguments = new DbConnectionArguments()
             {
-                Host = "192.168.50.1",
-                Port = 5432,
+                Host = "192.168.33.110",
+                Port = 5434,
                 Database = "newrr",
-                Username = "tomasz",
-                Password = "tomasz",
+                Username = "axuser",
+                Password = "abaxpmags",
 
                 UsePooling = pooling,
                 MinPoolSize = minPoolSize,
