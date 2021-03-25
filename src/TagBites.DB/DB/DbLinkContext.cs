@@ -628,6 +628,7 @@ namespace TagBites.DB
                         if (_connection != null)
                         {
                             DisposeAndSetNull(ref _connection);
+                            OnConnectionDisposed();
 
                             var connectionClose = _connectionClosed;
                             if (connectionClose != null)
@@ -1088,7 +1089,12 @@ namespace TagBites.DB
                                 }
                                 catch
                                 {
-                                    DisposeAndSetNull(ref _connection);
+                                    if (_connection != null)
+                                    {
+                                        DisposeAndSetNull(ref _connection);
+                                        OnConnectionDisposed();
+                                    }
+
                                     throw;
                                 }
                             }
@@ -1114,7 +1120,12 @@ namespace TagBites.DB
                                 }
                                 catch
                                 {
-                                    DisposeAndSetNull(ref _connection);
+                                    if (_connection != null)
+                                    {
+                                        DisposeAndSetNull(ref _connection);
+                                        OnConnectionDisposed();
+                                    }
+
                                     throw;
                                 }
                                 finally
@@ -1187,8 +1198,11 @@ namespace TagBites.DB
                                 if (_transactionContext.Exception == null)
                                     _transactionContext.Exception = ex;
 
-                                if (connectionLost)
+                                if (connectionLost && _connection != null)
+                                {
                                     DisposeAndSetNull(ref _connection);
+                                    OnConnectionDisposed();
+                                }
 
                                 try
                                 {
@@ -1212,7 +1226,11 @@ namespace TagBites.DB
                                 throw ex;
                             }
 
-                            DisposeAndSetNull(ref _connection);
+                            if (_connection != null)
+                            {
+                                DisposeAndSetNull(ref _connection);
+                                OnConnectionDisposed();
+                            }
 
                             // Connection Reconnect
                             if (_connectionLost == null)
@@ -1286,6 +1304,7 @@ namespace TagBites.DB
 
         protected virtual void OnConnectionCreated() { }
         protected virtual void OnConnectionOpen() { }
+        protected virtual void OnConnectionDisposed() { }
 
         protected void CheckDispose()
         {
