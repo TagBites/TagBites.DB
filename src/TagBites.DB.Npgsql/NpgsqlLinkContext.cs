@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 using Npgsql;
@@ -9,26 +8,9 @@ namespace TagBites.DB.Npgsql
 {
     public class NpgsqlLinkContext : PgSqlLinkContext
     {
-        public override int? ProcessId
-        {
-            get
-            {
-                lock (SynchRoot)
-                {
-                    if (GetConnection() is NpgsqlConnection connection)
-                    {
-                        if ((connection.State & ConnectionState.Open) != 0)
-                            return connection.ProcessID;
+        private int? _processId;
 
-                        var status = TransactionStatus;
-                        if (status == DbLinkTransactionStatus.None || status == DbLinkTransactionStatus.Open || status == DbLinkTransactionStatus.Pending)
-                            return ExecuteInner(() => ((NpgsqlConnection)GetConnection()).ProcessID);
-                    }
-
-                    return null;
-                }
-            }
-        }
+        public override int? ProcessId => _processId;
 
         protected internal NpgsqlLinkContext()
         { }
@@ -41,6 +23,16 @@ namespace TagBites.DB.Npgsql
             var connection = (NpgsqlConnection)GetConnection();
             connection.Notification += OnNotification;
             connection.Notice += OnNotice;
+        }
+        protected override void OnConnectionOpen()
+        {
+            base.OnConnectionOpen();
+            _processId = ((NpgsqlConnection)GetConnection()).ProcessID;
+        }
+        protected override void OnConnectionDisposed()
+        {
+            base.OnConnectionDisposed();
+            _processId = null;
         }
 
         private void OnNotification(object sender, NpgsqlNotificationEventArgs e)
