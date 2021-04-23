@@ -1221,6 +1221,14 @@ namespace TagBites.DB
                             // Is Connection Lost
                             if (!connectionLost)
                             {
+                                // WORKAROUND Npgsql connection is broken after this exception
+                                if (e.Message.StartsWith("Unknown message code"))
+                                {
+                                    DisposeAndSetNull(ref _connection);
+                                    OnConnectionDisposed();
+                                }
+                                // --
+
                                 if (e == ex)
                                     throw;
                                 throw ex;
