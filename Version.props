@@ -1,8 +1,8 @@
 ﻿<Project>
   <PropertyGroup>
     <VersionPrefix>1.0.4</VersionPrefix>
-    <VersionSuffix>preview4</VersionSuffix>
-    <VersionDate>2021-03-11</VersionDate>
+    <VersionSuffix>preview5</VersionSuffix>
+    <VersionDate>2021-04-23</VersionDate>
   </PropertyGroup>
     
   <PropertyGroup>
