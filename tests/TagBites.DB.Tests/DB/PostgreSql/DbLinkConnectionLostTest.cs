@@ -22,9 +22,12 @@ namespace TagBites.DB.Tests.DB.PostgreSql
             using (var link = NpgsqlProvider.CreateLink())
             {
                 link.ConnectionContext.ConnectionLost += onConnectionLost;
-                var result = link.ExecuteScalar<bool>("SELECT (CASE WHEN now() < {0} THEN pg_terminate_backend(pg_backend_pid()) ELSE FALSE END)",
+                var result = link.ExecuteScalar<bool>("SELECT (CASE WHEN now() < {0} THEN pg_terminate_backend(pg_backend_pid()) = FALSE ELSE FALSE END)",
                     DateTime.Now.AddSeconds(1));
                 Assert.False(result);
+
+                result = link.ExecuteScalar<bool>("SELECT TRUE");
+                Assert.True(result);
             }
         }
 
