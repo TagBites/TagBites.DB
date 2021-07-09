@@ -10,6 +10,31 @@ namespace TagBites.DB.Tests.DB.PostgreSql
     public class CustomTypesTest : DbTestBase
     {
         [Fact]
+        public void LargeDecimalTest()
+        {
+            using var link = NpgsqlProvider.CreateLink();
+            try
+            {
+                var r = link.DelayedBatchExecute("SELECT 7354153637825415363782515415363782515415363782515100568052832642.5000");
+            }
+            catch (Exception e)
+            {
+
+            }
+
+            try
+            {
+                link.ExecuteScalar<decimal>("SELECT 1");
+            }
+            catch (Exception e)
+            {
+
+            }
+            var r2 = link.ExecuteScalar<decimal>("SELECT 1");
+
+        }
+
+        [Fact]
         public void AutoDetectParameterTypeTest()
         {
             using var link = NpgsqlProvider.CreateLink();
@@ -32,10 +57,10 @@ namespace TagBites.DB.Tests.DB.PostgreSql
         public void ArrayBoundsAlwaysFromZeroTest()
         {
             using var link = NpgsqlProvider.CreateLink();
-            var result = (int[])link.ExecuteScalar("SELECT '[5:6]={5,6}'::int[]");
+            var result = (int[])link.ExecuteScalar("SELECT '[4:6]={5,null,6}'::int[]");
 
             Assert.Equal(7, result.Length);
-            Assert.Equal(new[] { 0, 0, 0, 0, 0, 5, 6 }, result);
+            Assert.Equal(new[] { 0, 0, 0, 0, 5, 0, 6 }, result);
         }
 
         [Fact]
