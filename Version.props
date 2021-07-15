@@ -1,13 +1,29 @@
 ﻿<Project>
-  <PropertyGroup>
-    <VersionPrefix>1.0.4</VersionPrefix>
-    <VersionSuffix>preview6</VersionSuffix>
-    <VersionDate>2021-07-09</VersionDate>
-  </PropertyGroup>
-    
-  <PropertyGroup>
-    <InformationalVersion Condition=" '$(VersionSuffix)' == '' ">$(VersionPrefix) $(VersionDate)</InformationalVersion>
-    <InformationalVersion Condition=" '$(VersionSuffix)' != '' ">$(VersionPrefix)-$(VersionSuffix) $(VersionDate)</InformationalVersion>
-    <AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <MinVerDefaultPreReleasePhase>preview</MinVerDefaultPreReleasePhase>
+    </PropertyGroup>
+
+    <Target Name="VersionFromGit-Pre" AfterTargets="GitInfo">
+        <PropertyGroup>
+            <VersionDate>$([System.DateTime]::Parse($(GitCommitDate)).ToString(`yyyy-MM-dd`))</VersionDate>
+        </PropertyGroup>
+    </Target>
+
+    <Target Name="VersionFromGit" AfterTargets="MinVer">
+        <PropertyGroup>
+            <VersionPrefix>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</VersionPrefix>
+            <VersionSuffix>$(MinVerPreRelease)</VersionSuffix>
+            <VersionFull Condition=" '$(VersionSuffix)' == '' ">$(VersionPrefix)</VersionFull>
+            <VersionFull Condition=" '$(VersionSuffix)' != '' ">$(VersionPrefix)-$(VersionSuffix)</VersionFull>
+
+            <Version>$(VersionFull)</Version>
+            <PackageVersion>$(VersionFull)</PackageVersion>
+            <AssemblyVersion>$(VersionPrefix).0</AssemblyVersion>
+            <AssemblyFileVersion>$(VersionPrefix).0</AssemblyFileVersion>
+            <InformationalVersion>$(VersionFull) $(VersionDate)</InformationalVersion>
+        </PropertyGroup>
+        
+        <Message Importance="High" Text="InformationalVersion: $(InformationalVersion)"/>
+    </Target>
+
 </Project>
