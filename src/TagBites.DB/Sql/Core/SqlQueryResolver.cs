@@ -29,6 +29,10 @@ namespace TagBites.Sql
 
         public virtual bool SupportReturningClause => true;
         public bool InlineParameters { get; set; }
+        /// <summary>
+        /// Number of values sets to include names to.
+        /// </summary>
+        public int NamedValuesNumber { get; set; }
 
         protected virtual string TrueLiteral => "true";
         protected virtual string FalseLiteral => "false";
@@ -324,6 +328,8 @@ namespace TagBites.Sql
             if (builder.ValidationEnabled && query.Select.Count == 0)
                 throw new Exception("Select clause does not contain any column.");
 
+            VisitQueryTrackingComment(query, builder);
+
             VisitClause(query.With, "WITH", builder);
 
             builder.AppendKeyword("SELECT");
@@ -344,13 +350,17 @@ namespace TagBites.Sql
             if (builder.ValidationEnabled && query.Values.Count == 0)
                 throw new Exception("Values clause does not contain any values.");
 
-            VisitClause(query.Values, "VALUES", builder);
+            VisitQueryTrackingComment(query, builder);
+
+            VisitClause(query.Values, "VALUES", builder, null);
             VisitClause(query.OrderBy, "ORDER BY", builder);
             VisitClause(query.Union, builder);
             VisitLimitOffset(query.Limit, query.Offset, builder);
         }
         protected internal virtual void VisitQuery(SqlQueryInsertBase query, SqlQueryBuilder builder)
         {
+            VisitQueryTrackingComment(query, builder);
+
             VisitClause(query.With, "WITH", builder);
             VisitTableClause(query.Into, "INSERT INTO", builder);
             VisitClause(query.Columns, builder);
@@ -361,7 +371,7 @@ namespace TagBites.Sql
                 VisitQuery(select.Select, builder);
             }
             else
-                VisitClause(((SqlQueryInsertValues)query).Values, "VALUES", builder);
+                VisitClause(((SqlQueryInsertValues)query).Values, "VALUES", builder, query.Columns);
 
             VisitClause(query.Returning, "RETURNING", builder);
         }
@@ -369,6 +379,8 @@ namespace TagBites.Sql
         {
             if (query.Set.Count == 0)
                 throw new Exception("Set clause does not contain any column.");
+
+            VisitQueryTrackingComment(query, builder);
 
             VisitClause(query.With, "WITH", builder);
             VisitTableClause(query.Table, "UPDATE", builder);
@@ -380,12 +392,24 @@ namespace TagBites.Sql
         }
         protected internal virtual void VisitQuery(SqlQueryDelete query, SqlQueryBuilder builder)
         {
+            VisitQueryTrackingComment(query, builder);
+
             VisitClause(query.With, "WITH", builder);
             VisitTableClause(query.From, "DELETE FROM", builder);
             VisitClause(query.Using, "USING", builder);
             VisitClause(query.Join, builder);
             VisitClause(query.Where, "WHERE", builder);
             VisitClause(query.Returning, "RETURNING", builder);
+        }
+        private void VisitQueryTrackingComment(SqlQueryBase query, SqlQueryBuilder builder)
+        {
+            if (!string.IsNullOrWhiteSpace(query.TrackingComment))
+            {
+                if (!builder.IsEmpty)
+                    builder.Append(' ');
+
+                builder.Append($"/* {query.TrackingComment.Trim()} */ ");
+            }
         }
 
         protected internal virtual void VisitClause(SqlClauseWith clause, string keyword, SqlQueryBuilder builder)
@@ -422,7 +446,7 @@ namespace TagBites.Sql
                 VisitExpressionWithAlias(builder, clause[i]);
             }
         }
-        protected internal virtual void VisitClause(SqlClauseValues clause, string keyword, SqlQueryBuilder builder)
+        protected internal virtual void VisitClause(SqlClauseValues clause, string keyword, SqlQueryBuilder builder, SqlClauseColumns columns)
         {
             for (var i = 0; i < clause.Count; i++)
             {
@@ -431,7 +455,7 @@ namespace TagBites.Sql
                 else if (keyword != null)
                     builder.AppendKeyword(keyword);
 
-                VisitClauseEntry(clause[i], builder);
+                VisitClauseEntry(clause[i], builder, NamedValuesNumber == -1 || i < NamedValuesNumber ? columns : null);
             }
         }
         protected internal virtual void VisitClause(SqlClauseFrom clause, string keyword, SqlQueryBuilder builder)
@@ -584,13 +608,16 @@ namespace TagBites.Sql
             if (!(entry.Query is SqlQueryBase) && !(entry.Query is SqlExpressionQuery) || entry.RecursiveQuery != null)
                 builder.Append(" )");
         }
-        protected internal virtual void VisitClauseEntry(SqlClauseValuesEntry entry, SqlQueryBuilder builder)
+        protected internal virtual void VisitClauseEntry(SqlClauseValuesEntry entry, SqlQueryBuilder builder, SqlClauseColumns columns)
         {
             builder.Append('(');
             for (var j = 0; j < entry.Values.Count; j++)
             {
                 if (j > 0)
                     builder.Append(", ");
+
+                if (columns != null && j < columns.Count)
+                    builder.Append($"/*{columns[j]}*/ ");
 
                 Visit(entry.Values[j], builder);
             }
