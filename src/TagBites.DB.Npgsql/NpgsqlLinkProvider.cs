@@ -6,6 +6,10 @@ namespace TagBites.DB.Npgsql
 {
     public class NpgsqlLinkProvider : PgSqlLinkProvider
     {
+#if DEBUG
+        private static readonly object s_npgsqlLogManagerSynchRoot = new();
+#endif
+
         public NpgsqlLinkProvider(string connectionString)
             : this(new DbConnectionArguments(connectionString))
         { }
@@ -13,7 +17,8 @@ namespace TagBites.DB.Npgsql
             : base(new NpgsqlLinkAdapter(), arguments)
         {
 #if DEBUG
-            NpgsqlLogManager.Provider = new ConsoleLoggingProvider(NpgsqlLogLevel.Debug, true, true);
+            lock (s_npgsqlLogManagerSynchRoot)
+                NpgsqlLogManager.Provider ??= new ConsoleLoggingProvider(NpgsqlLogLevel.Debug, true, true);
 #endif
         }
 

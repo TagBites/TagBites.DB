@@ -299,16 +299,7 @@ namespace TagBites.DB
 
         internal DbLinkTransactionContext TransactionContextInternal => _transactionContext;
         private DbTransaction TransactionInternal => _transactionContext?.DbTransactionInternal;
-        private DbLinkTransactionStatus TransactionStatusInternal
-        {
-            get
-            {
-                if (_transactionContext == null)
-                    return DbLinkTransactionStatus.None;
-
-                return _transactionContext.Status;
-            }
-        }
+        private DbLinkTransactionStatus TransactionStatusInternal => _transactionContext?.Status ?? DbLinkTransactionStatus.None;
 
         internal Action<DbConnectionArguments> ConnectionStringAdapter { get; set; }
 
@@ -350,39 +341,17 @@ namespace TagBites.DB
         }
 
         IDbLinkContext IDbLink.ConnectionContext => this;
-        public IDbLinkTransactionContext TransactionContext
-        {
-            get
-            {
-                lock (SynchRoot)
-                {
-                    CheckDispose();
-                    return _transactionContext;
-                }
-            }
-        }
-        public DbLinkTransactionStatus TransactionStatus
-        {
-            get
-            {
-                lock (SynchRoot)
-                {
-                    CheckDispose();
-                    return TransactionStatusInternal;
-                }
-            }
-        }
+        public IDbLinkTransactionContext TransactionContext => _transactionContext;
+        public DbLinkTransactionStatus TransactionStatus => TransactionStatusInternal;
         public DbLinkBag Bag
         {
             get
             {
-                lock (SynchRoot)
-                {
-                    if (_bag == null)
-                        _bag = new DbLinkBag(SynchRoot);
+                if (_bag == null)
+                    lock (SynchRoot)
+                        _bag ??= new DbLinkBag(SynchRoot);
 
-                    return _bag;
-                }
+                return _bag;
             }
         }
 

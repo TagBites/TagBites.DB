@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using TagBites.DB.Postgres;
 using TagBites.DB.Tests.DB.Core;
@@ -6,6 +7,7 @@ using Xunit;
 
 namespace TagBites.DB.Tests.DB.PostgreSql
 {
+    [Collection("Cursors")]
     public class DbLinkCursorTest : DbTestBase
     {
         private class Model
@@ -158,6 +160,43 @@ namespace TagBites.DB.Tests.DB.PostgreSql
 
             Assert.Equal(2, beforeHitCount);
             Assert.Equal(2, afterHitCount);
+        }
+
+        [Fact]
+        public async Task ConcurrentCursorsTestAsync()
+        {
+            if (!NpgsqlProvider.IsCursorSupported)
+                return;
+
+            var provider = DbManager.CreateNpgsqlProvider(true, 1, 6);
+            var q = new Query("SELECT 1");
+
+            using (var cursorManager = provider.CreateCursorManager())
+            {
+                cursorManager.TransactionTimeout = 1000 * 2;
+                cursorManager.ActiveTransactionLimit = 3;
+
+                var ts = new List<Task>();
+                var r = new Random();
+
+                for (var i = 0; i < 100; i++)
+                {
+                    var t = Task.Run(async () =>
+                    {
+                        // ReSharper disable once AccessToDisposedClosure
+                        using (var cursor = cursorManager.CreateCursor(q))
+                        {
+                            await Task.Delay(r.Next(1, 100));
+                            Assert.True(cursor.RecordCount > 0);
+                        }
+                    });
+                    ts.Add(t);
+                }
+
+                await Task.WhenAll(ts);
+
+                Assert.Equal(0, cursorManager.CursorCount);
+            }
         }
     }
 }
