@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace TagBites.DB.Postgres
 {
     public sealed class PgSqlCursorManager : IDbCursorManager
     {
+        internal readonly object PoolSynchRoot = new();
+
         private readonly List<PgSqlCursorConnectionContext> _connections = new List<PgSqlCursorConnectionContext>();
 
         public IDbLinkProvider LinkProvider { get; }
@@ -43,6 +44,15 @@ namespace TagBites.DB.Postgres
         /// Default 0 - no timeout. 
         /// </summary>
         public int TransactionTimeout { get; set; }
+
+        /// <summary>
+        /// Limit for active transactions.
+        /// If <see cref="TransactionTimeout"/> is set and half of it time has passed then transaction is considered as inactive, cause it can not create new cursor and is marked for dispose.
+        /// Therefore number of open transaction can be greater then <see cref="ActiveTransactionLimit"/>.
+        /// <see cref="ActiveTransactionLimit"/> should be at least 2 times lower then link provider max pool size to avoid waiting for new connection.
+        /// Default 0 - no limit. 
+        /// </summary>
+        public int ActiveTransactionLimit { get; set; }
 
         internal PgSqlCursorManager(PgSqlLinkProvider connectionProvider)
         {
@@ -85,43 +95,97 @@ namespace TagBites.DB.Postgres
                 throw new ArgumentNullException(nameof(querySource));
 
             var timeout = TransactionTimeout;
-            List<PgSqlCursorConnectionContext> connections;
 
-            lock (_connections)
-                connections = _connections.ToList();
+            var maxConnections = ActiveTransactionLimit > 0 ? Math.Min(ActiveTransactionLimit, LinkProvider.MaxPoolSize) : LinkProvider.MaxPoolSize;
+            if (timeout > 0 && maxConnections * 2 > LinkProvider.MaxPoolSize)
+                maxConnections = Math.Max(1, maxConnections / 2);
 
-            foreach (var connection in connections)
+            // Create context
+            PgSqlCursorConnectionContext context = null;
+            var isNew = false;
+
+            lock (PoolSynchRoot)
             {
-                lock (connection.SynchRoot)
-                {
-                    if (!connection.IsActive)
-                        continue;
+                // Existing context
+                List<PgSqlCursorConnectionContext> connections;
 
-                    // ReSharper disable once PossibleLossOfFraction
-                    if (timeout == 0 || connection.StartDateTime.AddMilliseconds(timeout / 2) > DateTime.Now)
+                lock (_connections)
+                    connections = _connections.ToList();
+
+                if (connections.Count > 0)
+                {
+                    if (connections.Count > 1)
+                        Shuffle(connections);
+
+                    // First free
+                    for (var i = connections.Count - 1; i >= 0; i--)
                     {
-                        return connection.CreateCursor(querySource, searchColumn, searchId, beforeCreateAction, cleanUpAction);
+                        var connection = connections[i];
+
+                        // Inactive or waiting for timeout
+                        if (!connection.IsActive || timeout > 0 && connection.StartDateTime.AddMilliseconds(timeout / 2d) <= DateTime.Now)
+                        {
+                            connections.RemoveAt(i);
+                            continue;
+                        }
+
+                        // Free
+                        if (!connection.IsExecuting)
+                        {
+                            context = connection;
+                            break;
+                        }
                     }
+
+                    // First active
+                    if (context == null && maxConnections > 0 && connections.Count >= maxConnections)
+                        context = connections.FirstOrDefault();
                 }
-            }
 
-            var context = new PgSqlCursorConnectionContext(this);
-
-            lock (_connections)
-                _connections.Add(context);
-
-            var cursor = context.CreateCursor(querySource, searchColumn, searchId, beforeCreateAction, cleanUpAction);
-
-            if (timeout > 0)
-            {
-                Task.Run(async () =>
+                // Default context
+                if (context == null)
                 {
-                    await Task.Delay(timeout).ConfigureAwait(false);
-                    context.Dispose();
-                });
+                    context = new PgSqlCursorConnectionContext(this);
+                    isNew = true;
+
+                    lock (_connections)
+                        _connections.Add(context);
+                }
+
+                // Pending
+                ++context.PendingCreateCursor;
             }
 
-            return cursor;
+            // Execute
+            lock (context.SynchRoot)
+            {
+                // Create connection outside of PoolSynchRoot to await deadlock when connection pool is exceeded in link provider
+                context.TryCreateConnectionInternal();
+
+                var cursor = context.CreateCursor(querySource, searchColumn, searchId, beforeCreateAction, cleanUpAction);
+
+                if (timeout > 0 && isNew)
+                {
+                    Task.Run(async () =>
+                    {
+                        waiting:
+                        await Task.Delay(timeout).ConfigureAwait(false);
+                        timeout = Math.Min(timeout, Math.Max(timeout / 10, 1000));
+
+                        lock (PoolSynchRoot)
+                        {
+                            while (context.PendingCreateCursor > 0)
+                                goto waiting; // workaround for awaiting in lock
+
+                            context.PendingDisposeInternal();
+                        }
+
+                        context.Dispose();
+                    });
+                }
+
+                return cursor;
+            }
         }
 
         public void Clear()
@@ -151,6 +215,20 @@ namespace TagBites.DB.Postgres
         private void Dispose(bool disposing)
         {
             Clear();
+        }
+
+        private static void Shuffle<T>(IList<T> items)
+        {
+            var random = new Random();
+            var n = items.Count;
+
+            for (var i = 0; i < (n - 1); i++)
+            {
+                var r = i + random.Next(n - i);
+                T t = items[r];
+                items[r] = items[i];
+                items[i] = t;
+            }
         }
     }
 }
