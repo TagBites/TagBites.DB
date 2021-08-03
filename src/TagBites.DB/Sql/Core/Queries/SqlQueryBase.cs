@@ -1,13 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using TagBites.DB;
 
 namespace TagBites.Sql
 {
     public abstract class SqlQueryBase : IQuerySource
     {
+        public string TrackingComment { get; set; }
+
+
         protected internal abstract void Accept(SqlQueryResolver resolver, SqlQueryBuilder builder);
 
         Query IQuerySource.CreateQuery(SqlQueryResolver resolver, SqlQueryBuilder builder)
@@ -16,11 +16,14 @@ namespace TagBites.Sql
             return new Query(builder.Query, builder.Parameters);
         }
 
-
-        public override string ToString()
+        public override string ToString() => ToString(SqlQueryResolver.DefaultToStringResolver);
+        public string ToString(SqlQueryResolver queryResolver)
         {
+            if (queryResolver == null)
+                throw new ArgumentNullException(nameof(queryResolver));
+
             var builder = SqlQueryBuilder.CreateToStringBuilder();
-            Accept(SqlQueryResolver.DefaultToStringResolver, builder);
+            Accept(queryResolver, builder);
             return builder.Query;
         }
     }

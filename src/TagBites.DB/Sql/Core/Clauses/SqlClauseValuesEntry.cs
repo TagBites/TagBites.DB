@@ -16,7 +16,7 @@ namespace TagBites.Sql
 
         protected override void Accept(SqlQueryResolver resolver, SqlQueryBuilder builder)
         {
-            resolver.VisitClauseEntry(this, builder);
+            resolver.VisitClauseEntry(this, builder, null);
         }
     }
 }
