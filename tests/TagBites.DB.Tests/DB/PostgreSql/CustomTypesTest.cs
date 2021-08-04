@@ -13,25 +13,18 @@ namespace TagBites.DB.Tests.DB.PostgreSql
         public void LargeDecimalTest()
         {
             using var link = NpgsqlProvider.CreateLink();
-            try
-            {
-                var r = link.DelayedBatchExecute("SELECT 7354153637825415363782515415363782515415363782515100568052832642.5000");
-            }
-            catch (Exception e)
-            {
 
-            }
+            var v = link.ExecuteScalar<decimal>("SELECT 7354153637825415363782515415363782515415363782515100568052832642.5000");
+            Assert.Equal(decimal.MaxValue, v);
 
-            try
+            v = link.ExecuteScalar<decimal>("SELECT 0.7354153637825415363782515415363782515415363782515100568052832642");
+            Assert.True(v > 0.7354153m);
+
+            for (var i = 0; i < 40; i++)
             {
-                link.ExecuteScalar<decimal>("SELECT 1");
+                v = link.ExecuteScalar<decimal>($"SELECT 0.{new string('0', i)}1");
+                Assert.True(v <= 0.1m);
             }
-            catch (Exception e)
-            {
-
-            }
-            var r2 = link.ExecuteScalar<decimal>("SELECT 1");
-
         }
 
         [Fact]
