@@ -649,6 +649,12 @@ namespace TagBites.Sql
 
             if (entry.OrderType == SqlClauseOrderByEntryType.Descending)
                 builder.Append(" DESC");
+
+            if (entry.NullsOrderType == SqlClauseOrderByEntryNullsOrderType.NullsFirst)
+                builder.Append(" NULLS FIRST");
+            else if (entry.NullsOrderType == SqlClauseOrderByEntryNullsOrderType.NullsLast)
+                builder.Append(" NULLS LAST");
+
         }
         protected internal virtual void VisitClauseEntry(SqlClauseSetEntry entry, SqlQueryBuilder builder)
         {
