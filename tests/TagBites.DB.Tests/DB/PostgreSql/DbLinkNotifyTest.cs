@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using TagBites.DB.Postgres;
 using TagBites.DB.Tests.DB.Core;
 using Xunit;
@@ -12,23 +13,23 @@ namespace TagBites.DB.Tests.DB.PostgreSql
         {
             using (var link = NpgsqlProvider.CreateExclusiveLink())
             {
-                var hitCount = 0;
-                link.ConnectionContext.Notification += (s, e) => { ++hitCount; };
+                var x0 = 0;
+                link.ConnectionContext.Notification += (s, e) => { ++x0; };
 
                 link.Listen("x0");
 
                 link.Notify("x0", "1");
                 link.ExecuteNonQuery("SELECT 1");
-                Assert.Equal(1, hitCount);
+                Assert.Equal(1, x0);
 
                 link.Notify("x0", "2");
                 link.ExecuteNonQuery("SELECT 1");
-                Assert.Equal(2, hitCount);
+                Assert.Equal(2, x0);
 
                 link.Unlisten("x0");
                 link.Notify("x0", "4");
                 link.ExecuteNonQuery("SELECT 1");
-                Assert.Equal(2, hitCount);
+                Assert.Equal(2, x0);
             }
         }
 
@@ -38,8 +39,8 @@ namespace TagBites.DB.Tests.DB.PostgreSql
             using (var sender = NpgsqlProvider.CreateExclusiveLink())
             using (var receiver = NpgsqlProvider.CreateExclusiveLink())
             {
-                var hitCount = 0;
-                receiver.ConnectionContext.Notification += (s, e) => { ++hitCount; };
+                var x1 = 0;
+                receiver.ConnectionContext.Notification += (s, e) => { ++x1; };
 
                 receiver.Listen("x1");
 
@@ -47,19 +48,19 @@ namespace TagBites.DB.Tests.DB.PostgreSql
                 sender.Notify("x1", "2");
 
                 receiver.ExecuteNonQuery("SELECT 1");
-                Assert.Equal(2, hitCount);
+                Assert.Equal(2, x1);
             }
         }
 
         [Fact]
         public void NotifyAtTheEndOfTransaction()
         {
-            var hitCount = 0;
+            var x2 = 0;
 
             using (var link = NpgsqlProvider.CreateExclusiveLink())
             using (var transaction = link.Begin())
             {
-                link.ConnectionContext.Notification += (s, e) => { ++hitCount; };
+                link.ConnectionContext.Notification += (s, e) => { ++x2; };
                 link.Listen("x2");
 
                 link.Notify("x2", "1");
@@ -69,7 +70,7 @@ namespace TagBites.DB.Tests.DB.PostgreSql
                 transaction.Commit();
             }
 
-            Assert.Equal(3, hitCount);
+            Assert.Equal(3, x2);
         }
 
         [Fact]
@@ -77,30 +78,30 @@ namespace TagBites.DB.Tests.DB.PostgreSql
         {
             NpgsqlProvider.Configuration.ImplicitCreateTransactionScopeIfNotExists = false;
 
-            var hitCount = 0;
+            var x3 = 0;
 
             using (var sender = NpgsqlProvider.CreateExclusiveLink())
             using (var receiver = NpgsqlProvider.CreateExclusiveLink())
             {
-                receiver.ConnectionContext.Notification += (s, e) => { ++hitCount; };
+                receiver.ConnectionContext.Notification += (s, e) => { ++x3; };
                 receiver.Listen("x3");
 
                 using (var transaction = sender.Begin())
                 {
                     sender.Notify("x3", "1");
-                    Assert.Equal(0, hitCount);
+                    Assert.Equal(0, x3);
 
                     sender.Notify("x3", "2");
-                    Assert.Equal(0, hitCount);
+                    Assert.Equal(0, x3);
 
                     receiver.ExecuteNonQuery("SELECT 1");
-                    Assert.Equal(0, hitCount);
+                    Assert.Equal(0, x3);
 
                     transaction.Commit();
                 }
 
                 receiver.ExecuteNonQuery("SELECT 1");
-                Assert.Equal(2, hitCount);
+                Assert.Equal(2, x3);
             }
         }
 
@@ -109,8 +110,8 @@ namespace TagBites.DB.Tests.DB.PostgreSql
         {
             using (var notifyManager = new PgSqlNotifyListener(NpgsqlProvider))
             {
-                var hitD1 = 0;
-                var hitD2 = 0;
+                var x4 = 0;
+                var y4 = 0;
 
                 notifyManager.Notification += (s, e) =>
                 {
@@ -119,20 +120,20 @@ namespace TagBites.DB.Tests.DB.PostgreSql
                         case "a4":
                         case "x4":
                             Assert.Equal("1", e.Message);
-                            ++hitD1;
+                            ++x4;
                             break;
                         case "b4":
                         case "y4":
                             Assert.Equal("2", e.Message);
-                            ++hitD2;
+                            ++y4;
                             break;
                     }
                 };
 
                 await notifyManager.ListenAsync("a4").ConfigureAwait(false);
                 await notifyManager.ListenAsync("b4").ConfigureAwait(false);
-                Assert.Equal(0, hitD1);
-                Assert.Equal(0, hitD2);
+                Assert.Equal(0, x4);
+                Assert.Equal(0, y4);
 
                 using (var link = NpgsqlProvider.CreateExclusiveLink())
                 {
@@ -144,8 +145,8 @@ namespace TagBites.DB.Tests.DB.PostgreSql
                     await notifyManager.ListenAsync("x4", "y4").ConfigureAwait(false);
                     await notifyManager.UnlistenAsync("a4", "b4").ConfigureAwait(false);
                     await Task.Delay(1000);
-                    Assert.Equal(2, hitD1);
-                    Assert.Equal(2, hitD2);
+                    Assert.Equal(2, x4);
+                    Assert.Equal(2, y4);
 
                     link.Notify("x4", "1");
                     link.Notify("y4", "2");
@@ -153,20 +154,22 @@ namespace TagBites.DB.Tests.DB.PostgreSql
                     link.Notify("y4", "2");
                 }
 
-                var checks = 0;
-                while ((hitD1 < 4 || hitD2 < 4) && ++checks < 200)
-                    await Task.Delay(10);
+                await WaitForCounter(4, () => x4);
+                await WaitForCounter(4, () => y4);
 
-                Assert.Equal(4, hitD1);
-                Assert.Equal(4, hitD2);
+                Assert.Equal(4, x4);
+                Assert.Equal(4, y4);
             }
         }
 
         [Fact]
         public async Task NotifyManagerWithTransaction()
         {
-            var hitD1 = 0;
-            var hitD2 = 0;
+            var expectedX5 = 20;
+            var expectedY5 = 100;
+
+            var x5 = 0;
+            var y5 = 0;
 
             using (var notifyManager = new PgSqlNotifyListener(NpgsqlProvider))
             {
@@ -174,37 +177,107 @@ namespace TagBites.DB.Tests.DB.PostgreSql
                 {
                     switch (e.Channel)
                     {
-                        case "a5": ++hitD1; break;
-                        case "b5": ++hitD2; break;
+                        case "x5": ++x5; break;
+                        case "y5": ++y5; break;
                     }
                 };
 
-                await notifyManager.ListenAsync("a5");
-                await notifyManager.ListenAsync("b5");
+                await notifyManager.ListenAsync("x5");
+                await notifyManager.ListenAsync("y5");
 
                 using (var link = NpgsqlProvider.CreateLink())
                 using (var transaction = link.Begin())
                 {
-                    link.Notify("a5", "1");
-                    link.Notify("a5", "2");
-                    link.Notify("a5", "3");
+                    for (var i = 0; i < expectedX5; i++)
+                        link.Notify("x5", i.ToString());
 
-                    link.Notify("b5", "4");
-                    link.Notify("b5", "5");
-                    link.Notify("b5", "6");
-                    link.Notify("b5", "7");
-                    link.Notify("b5", "7"); // Postgres ignores duplicates
+                    for (var i = 0; i < expectedY5; i++)
+                        link.Notify("y5", i.ToString());
+                    link.Notify("y5", "0"); // Postgres ignores duplicates
 
                     transaction.Commit();
                 }
 
-                var checks = 0;
-                while ((hitD1 < 3 || hitD2 < 4) && ++checks < 200)
-                    await Task.Delay(10);
+                await WaitForCounter(expectedX5, () => x5);
+                await WaitForCounter(expectedY5, () => y5);
 
-                Assert.Equal(3, hitD1);
-                Assert.Equal(4, hitD2);
+                Assert.Equal(expectedX5, x5);
+                Assert.Equal(expectedY5, y5);
             }
+        }
+
+        [Fact]
+        public async Task NotifyManagerConnectionLost()
+        {
+            var x6 = 0;
+            var x7 = 0;
+            var has3 = false;
+            var has4 = false;
+            var has5 = false;
+
+            using var notifyManager = new PgSqlNotifyListener(NpgsqlProvider);
+            notifyManager.Notification += (s, e) =>
+            {
+                switch (e.Channel)
+                {
+                    case "x6":
+                        {
+                            ++x6;
+                            switch (e.Message)
+                            {
+                                case "3": has3 = true; break;
+                                case "4": has4 = true; break;
+                                case "5": has5 = true; break;
+                            }
+                            break;
+                        }
+                    case "x7":
+                        ++x7;
+                        break;
+                }
+            };
+            await notifyManager.ListenAsync("fake").ConfigureAwait(false);
+            await notifyManager.ListenAsync("x6").ConfigureAwait(false);
+
+            using (var link = NpgsqlProvider.CreateExclusiveLink())
+            {
+                var p1 = notifyManager.ProcessId;
+                Assert.NotNull(p1);
+
+                link.Notify("x6", "1");
+                link.Notify("x6", "2");
+
+                await WaitForCounter(2, () => x6);
+                Assert.Equal(2, x6);
+
+                link.Notify("x6", "3");
+                link.ExecuteNonQuery(@"SELECT pg_terminate_backend({0})", notifyManager.ProcessId);
+
+                link.Notify("x6", "4");
+                await WaitForCounter(4, () => x6);  // 3 and 4 can be lost, usually only 3 is lost
+
+                link.Notify("x6", "5");
+                await WaitForCounter(5, () => x6);
+
+                Assert.True(has5 && (x6 < 4 || has3 || has4)); // 3 and 4 can be lost
+
+                var p2 = notifyManager.ProcessId;
+                Assert.NotNull(p2);
+                Assert.NotEqual(p1, p2);
+
+                await notifyManager.ListenAsync("x7").ConfigureAwait(false);
+
+                link.Notify("x7", "1");
+                await WaitForCounter(1, () => x7);
+
+                Assert.Equal(1, x7);
+            }
+        }
+
+        private static async Task WaitForCounter(int counterExpected, Func<int> counterActual, int times = 100)
+        {
+            for (var checks = 0; counterActual() < counterExpected && checks < times; ++checks)
+                await Task.Delay(10).ConfigureAwait(false);
         }
     }
 }

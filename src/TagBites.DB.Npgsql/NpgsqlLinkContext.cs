@@ -46,12 +46,17 @@ namespace TagBites.DB.Npgsql
 
         protected override Task StartNotifyListenerTask(CancellationToken token)
         {
-            return Task.Run(async () =>
-                 {
-                     while (!token.IsCancellationRequested)
-                         await ((NpgsqlConnection)GetOpenConnection()).WaitAsync(token).ConfigureAwait(false);
-                 },
-                 token);
+            // ReSharper disable once MethodSupportsCancellation
+            return Task.Run(() =>
+            {
+                ExecuteOnOpenConnection(connection =>
+                {
+                    var npgsqlConnection = (NpgsqlConnection)connection;
+
+                    while (!token.IsCancellationRequested)
+                        npgsqlConnection.Wait(50);
+                });
+            });
         }
         protected override bool IsConnectionBrokenException(Exception ex)
         {

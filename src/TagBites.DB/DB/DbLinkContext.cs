@@ -530,6 +530,15 @@ namespace TagBites.DB
             });
         }
 
+        protected void ExecuteOnOpenConnection(Action<DbConnection> connectionProvider)
+        {
+            ExecuteInner(() =>
+            {
+                connectionProvider(_connection);
+                return 0;
+            });
+        }
+
         internal void OnQuery(string query)
         {
             if (_queryExecuting != null && !string.IsNullOrWhiteSpace(query))
