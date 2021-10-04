@@ -11,14 +11,16 @@ namespace TagBites.DB.Postgres
     {
         private PgSqlLinkProvider _linkProvider;
         private PgSqlLink _link;
-        private readonly HashSet<string> _channels = new HashSet<string>();
+        private readonly HashSet<string> _channels = new();
 
-        private readonly SemaphoreSlim _listenerSemaphore = new SemaphoreSlim(1);
+        private readonly SemaphoreSlim _listenerSemaphore = new(1);
         private Task _listenerTask;
         private CancellationTokenSource _listenerCancellationToken;
         private bool _enabled;
 
         public event EventHandler<PgSqlNotificationEventArgs> Notification;
+
+        public int? ProcessId => _link?.ConnectionContext.ProcessId;
 
         public PgSqlNotifyListener(PgSqlLinkProvider linkProvider)
         {
@@ -31,101 +33,91 @@ namespace TagBites.DB.Postgres
         }
 
 
-        public async Task<bool> ListenAsync(string channel)
-        {
-            lock (_channels)
-                if (!_channels.Add(channel))
-                    return false;
-
-            PrepareLink();
-            await ListenCore(new[] { channel }).ConfigureAwait(false);
-
-            return true;
-        }
+        public Task<bool> ListenAsync(string channel) => ListenAsync(new[] { channel });
         public async Task<bool> ListenAsync(params string[] channels)
         {
-            string[] changes;
+            CheckDispose();
 
-            lock (_channels)
-                changes = channels.Where(_channels.Add).ToArray();
-
-            if (changes.Length == 0)
-                return false;
-
-            PrepareLink();
-            await ListenCore(changes.ToArray()).ConfigureAwait(false);
-
-            return true;
-        }
-        public async Task<bool> UnlistenAsync(string channel)
-        {
-            lock (_channels)
-                if (!_channels.Remove(channel))
+            await _listenerSemaphore.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                var changes = channels.Where(x => !_channels.Contains(x)).ToArray();
+                if (changes.Length == 0)
                     return false;
 
-            await UnlistenCore(new[] { channel }).ConfigureAwait(false);
-            return true;
+                await StopListenerAsync().ConfigureAwait(false);
+                {
+                    PrepareLink();
+                    _link.Listen(changes);
+                }
+                StartListener();
+
+                foreach (var change in changes)
+                    _channels.Add(change);
+
+                return true;
+            }
+            finally
+            {
+                _listenerSemaphore.Release();
+            }
         }
+
+        public Task<bool> UnlistenAsync(string channel) => UnlistenAsync(new[] { channel });
         public async Task<bool> UnlistenAsync(params string[] channels)
         {
-            string[] changes;
+            CheckDispose();
 
-            lock (_channels)
-                changes = channels.Where(_channels.Remove).ToArray();
-
-            if (changes.Length == 0)
-                return false;
-
-            await UnlistenCore(changes).ConfigureAwait(false);
-            return true;
-        }
-
-        private async Task ListenCore(string[] channels)
-        {
             await _listenerSemaphore.WaitAsync().ConfigureAwait(false);
+            try
             {
-                await StopListener().ConfigureAwait(false);
+                var changes = channels.Where(_channels.Remove).ToArray();
+                if (changes.Length == 0)
+                    return false;
 
-                _link.Listen(channels);
+                await StopListenerAsync().ConfigureAwait(false);
+                {
+                    _link.Unlisten(changes);
+                }
+                if (_channels.Count > 0)
+                    StartListener();
 
-                StartListener();
+                return true;
             }
-            _listenerSemaphore.Release();
-        }
-        private async Task UnlistenCore(string[] channels)
-        {
-            await _listenerSemaphore.WaitAsync().ConfigureAwait(false);
+            finally
             {
-                await StopListener().ConfigureAwait(false);
-
-                _link.Unlisten(channels);
-
-                lock (_channels)
-                    if (_channels.Count > 0)
-                        StartListener();
+                _listenerSemaphore.Release();
             }
-            _listenerSemaphore.Release();
         }
+
         private void StartListener()
         {
             if (!_enabled)
             {
-                PrepareLink();
-
-                _listenerCancellationToken = new CancellationTokenSource();
-                _listenerTask = _link.ConnectionContext.StartNotifyListenerTask(_listenerCancellationToken.Token);
-
-                _enabled = true;
+                try
+                {
+                    _enabled = true;
+                    _listenerCancellationToken = new CancellationTokenSource();
+                    _listenerTask = _link.ConnectionContext.StartNotifyListenerTask(_listenerCancellationToken.Token);
+                }
+                catch
+                {
+                    DisposeListener();
+                    throw;
+                }
             }
         }
-        private async Task StopListener()
+        private async Task StopListenerAsync()
         {
             if (_enabled)
             {
                 try
                 {
-                    _listenerCancellationToken.Cancel();
-                    await _listenerTask.ConfigureAwait(false);
+                    _listenerCancellationToken?.Cancel();
+                    _listenerCancellationToken?.Dispose();
+
+                    if (_listenerTask != null)
+                        await _listenerTask.ConfigureAwait(false);
                 }
                 catch
                 {
@@ -133,8 +125,6 @@ namespace TagBites.DB.Postgres
                 }
                 finally
                 {
-                    _listenerCancellationToken.Dispose();
-
                     _listenerCancellationToken = null;
                     _listenerTask = null;
                     _enabled = false;
@@ -146,8 +136,6 @@ namespace TagBites.DB.Postgres
         {
             if (_link == null)
             {
-                CheckDispose();
-
                 _link = _linkProvider.CreateExclusiveNotifyLink();
                 _link.ConnectionContext.ConnectionOpened += LinkConnectionOpened;
                 _link.ConnectionContext.ConnectionLost += Link_ConnectionLost;
@@ -156,19 +144,50 @@ namespace TagBites.DB.Postgres
         }
         private void LinkConnectionOpened(object sender, EventArgs e)
         {
-            string[] channels;
-
-            lock (_channels)
-                channels = _channels.ToArray();
-
-            foreach (var chanelName in channels)
-                _link.Listen(chanelName);
+            if (_channels.Count > 0)
+                _link.Listen(_channels.ToArray());
         }
         private void Link_ConnectionLost(object sender, DbLinkConnectionLostEventArgs e)
         {
+            if (!e.Reconnect)
+            {
+                Thread.Sleep(1000);
+                e.Reconnect = true;
+            }
+        }
+        private void Link_Notification(object sender, PgSqlNotificationEventArgs e)
+        {
+            if (_enabled)
+                Notification?.Invoke(this, e);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+        private void Dispose(bool _)
+        {
+            if (_linkProvider == null)
+                return;
+
+            DisposeListener();
+
+            if (_link != null)
+            {
+                try { _link.Dispose(); }
+                finally { _link = null; }
+            }
+
+            _linkProvider = null;
+            _listenerSemaphore.Dispose();
+        }
+        private void DisposeListener()
+        {
             try
             {
-                _listenerCancellationToken.Dispose();
+                _listenerCancellationToken?.Cancel();
+                _listenerCancellationToken?.Dispose();
             }
             catch
             {
@@ -180,43 +199,6 @@ namespace TagBites.DB.Postgres
                 _listenerTask = null;
                 _enabled = false;
             }
-
-            if (!e.Reconnect)
-            {
-                Thread.Sleep(1000);
-                e.Reconnect = true;
-            }
-        }
-        private void Link_Notification(object sender, PgSqlNotificationEventArgs e)
-        {
-            var eh = Notification;
-            if (eh == null)
-                return;
-
-            Task.Run(() => eh.Invoke(this, e));
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        private async void Dispose(bool disposing)
-        {
-            if (_linkProvider == null)
-                return;
-
-            _linkProvider = null;
-
-            if (_link != null)
-            {
-                await StopListener().ConfigureAwait(false);
-
-                try { _link.Dispose(); }
-                finally { _link = null; }
-            }
-
-            _listenerSemaphore.Dispose();
         }
 
         private void CheckDispose()
