@@ -51,8 +51,17 @@ namespace TagBites.DB.Npgsql
             {
                 ExecuteOnOpenConnection(connection =>
                 {
-                    var npgsqlConnection = (NpgsqlConnection)connection;
-                    npgsqlConnection.WaitAsync(token).Wait(token);
+                    try
+                    {
+                        var npgsqlConnection = (NpgsqlConnection)connection;
+
+                        while (!token.IsCancellationRequested)
+                            npgsqlConnection.WaitAsync(token).Wait(token);
+                    }
+                    catch when (token.IsCancellationRequested)
+                    {
+                        // ignored
+                    }
                 });
             });
         }
