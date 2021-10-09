@@ -2,7 +2,6 @@
 using TagBites.DB.Postgres;
 using TagBites.DB.SqLite;
 using TagBites.Sql;
-using Xunit; //using TagBites.DB.SqLite;
 
 namespace TagBites
 {
@@ -24,7 +23,6 @@ namespace TagBites
                         InitializeConnectionProvider(m_npgsqlProvider);
                     }
 
-                    SqlQueryResolver.DefaultToStringResolver = m_npgsqlProvider.QueryResolver;
                     return m_npgsqlProvider;
                 }
             }
@@ -38,17 +36,11 @@ namespace TagBites
                     if (_mSqliteProvider == null)
                         _mSqliteProvider = DbManager.CreateSQLiteProvider();
 
-                    SqlQueryResolver.DefaultToStringResolver = _mSqliteProvider.QueryResolver;
                     return _mSqliteProvider;
                 }
             }
         }
         public DbLinkProvider DefaultProvider => NpgsqlProvider;
-
-        public DbTests()
-        {
-            Assert.Null(DefaultProvider.CurrentConnectionContext);
-        }
 
 
         protected virtual void InitializeConnectionProvider(PgSqlLinkProvider connectionProvider) { }

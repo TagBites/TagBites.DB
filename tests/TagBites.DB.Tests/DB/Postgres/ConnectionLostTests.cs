@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using Xunit;
 
 namespace TagBites.DB.Postgres
@@ -9,24 +8,22 @@ namespace TagBites.DB.Postgres
         [Fact]
         public void ReconnectAfterBreakWithAttemptsTest()
         {
-            var onConnectionLost = (EventHandler<DbLinkConnectionLostEventArgs>)((s, e) =>
-            {
-                if (e.ReconnectAttempts < 6)
-                {
-                    Thread.Sleep(2000);
-                    e.Reconnect = true;
-                }
-            });
-
             using (var link = NpgsqlProvider.CreateLink())
             {
-                link.ConnectionContext.ConnectionLost += onConnectionLost;
-                var result = link.ExecuteScalar<bool>("SELECT (CASE WHEN now() < {0} THEN pg_terminate_backend(pg_backend_pid()) = FALSE ELSE FALSE END)",
-                    DateTime.Now.AddSeconds(1));
+                link.Force();
+                link.ConnectionContext.ConnectionLost += ConnectionContextOnConnectionLost;
+
+                var result = link.ExecuteScalar<bool>($"SELECT pg_terminate_backend({link.ConnectionContext.ProcessId})");
                 Assert.False(result);
 
                 result = link.ExecuteScalar<bool>("SELECT TRUE");
                 Assert.True(result);
+            }
+
+            void ConnectionContextOnConnectionLost(object sender, DbLinkConnectionLostEventArgs e)
+            {
+                if (e.ReconnectAttempts < 1)
+                    e.Reconnect = true;
             }
         }
 

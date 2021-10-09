@@ -48,16 +48,16 @@ namespace TagBites.DB
         }
 
         [Fact]
-        public async Task NoDeadlockTest()
+        public Task NoDeadlockTest()
         {
-            var tasks = Enumerable.Range(1, 30).Select(x => Task.Run(async () =>
+            var tasks = Enumerable.Range(1, 10).Select(x => Task.Run(async () =>
             {
-                for (var i = 0; i < 50; i++)
+                for (var i = 0; i < 10; i++)
                 {
-                    using (var link2 = CreateLink())
-                    {
-                        await Task.Delay(1);
+                    await Task.Delay(1).ConfigureAwait(false);
 
+                    using (CreateLink())
+                    {
                         using (var link = CreateLink())
                         using (var transaction = link.Begin())
                         {
@@ -68,7 +68,7 @@ namespace TagBites.DB
                     }
                 }
             }));
-            await Task.WhenAll(tasks.ToArray());
+            return Task.WhenAll(tasks);
         }
     }
 }
