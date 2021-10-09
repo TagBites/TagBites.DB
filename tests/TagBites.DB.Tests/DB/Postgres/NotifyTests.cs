@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
-using TagBites.DB.Postgres;
-using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TagBites.DB.Tests.DB.PostgreSql
+namespace TagBites.DB.Postgres
 {
-    public class DbLinkNotifyTest : DbTestBase
+    public class NotifyTests : DbTests
     {
         [Fact]
         public void NotifyWithSingleLink()

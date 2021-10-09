@@ -1,9 +1,8 @@
-﻿using TagBites.DB.Tests.DB.Core;
-using Xunit;
+﻿using Xunit;
 
-namespace TagBites.DB.Tests.DB.Common
+namespace TagBites.DB
 {
-    public class DbLinkBufferedQueriesTest : DbTestBase
+    public class DelayedBatchTests : DbTests
     {
         [Fact]
         public void CancelTest()

@@ -1,21 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using TagBites.DB.Postgres;
-using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TagBites.DB.Tests.DB.PostgreSql
+namespace TagBites.DB.Postgres
 {
     [Collection("Cursors")]
-    public class DbLinkCursorTest : DbTestBase
+    public class CursorTests : DbTests
     {
-        private class Model
-        {
-            public double Number { get; set; }
-            public string Text { get; set; }
-        }
-
         [Fact]
         public async Task CursorSwitchTest()
         {
@@ -107,7 +99,7 @@ namespace TagBites.DB.Tests.DB.PostgreSql
             if (!NpgsqlProvider.IsCursorSupported)
                 return;
 
-            var q = new Query("WITH RECURSIVE t(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM t) SELECT n AS Number, 'This is text.' AS Text FROM t LIMIT 100");
+            var q = new Query("WITH RECURSIVE t(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM t) SELECT n AS Double, 'This is text.' AS Text FROM t LIMIT 100");
 
             using (var cursorManager = NpgsqlProvider.CreateCursorManager())
             using (var cursor = cursorManager.CreateCursor(q))
@@ -117,7 +109,7 @@ namespace TagBites.DB.Tests.DB.PostgreSql
                 var i = 0;
                 foreach (var item in cursor.AsList<Model>())
                 {
-                    Assert.Equal(item.Number, ++i);
+                    Assert.Equal(item.Double, ++i);
                     Assert.Equal("This is text.", item.Text);
                 }
             }
@@ -150,7 +142,7 @@ namespace TagBites.DB.Tests.DB.PostgreSql
             {
                 Assert.Equal(0, cursorManager.CursorCount);
 
-                for (int i = 0; i < 2; i++)
+                for (var i = 0; i < 2; i++)
                     using (var cursor = cursorManager.CreateCursor(q, null, "id", 3, before, after))
                     {
                         Assert.Equal(4, cursor.RecordCount);

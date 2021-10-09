@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Linq;
-using TagBites.DB.Postgres;
-using TagBites.DB.Tests.DB.Core;
 using TagBites.Sql;
 using Xunit;
 
-namespace TagBites.DB.Tests.DB.PostgreSql
+namespace TagBites.DB.Postgres
 {
-    public class CustomTypesTest : DbTestBase
+    public class CustomTypesTests : DbTests
     {
         [Fact]
         public void LargeDecimalTest()
@@ -146,30 +144,23 @@ namespace TagBites.DB.Tests.DB.PostgreSql
         [Fact]
         public void ArrayTest()
         {
-            var q = "SELECT Array[1,2]::int[] AS A, Array['x','y']::text[] AS B";
+            var q = "SELECT Array[1,2]::int[] AS IntArray, Array['x','y']::text[] AS TextArray";
             using var link = NpgsqlProvider.CreateLink();
             var result = link.Execute<Model>(q);
 
             Assert.Single(result);
 
             // A
-            Assert.Equal(3, result[0].A.Length);
-            Assert.Equal(0, result[0].A[0]);
-            Assert.Equal(1, result[0].A[1]);
-            Assert.Equal(2, result[0].A[2]);
+            Assert.Equal(3, result[0].IntArray.Length);
+            Assert.Equal(0, result[0].IntArray[0]);
+            Assert.Equal(1, result[0].IntArray[1]);
+            Assert.Equal(2, result[0].IntArray[2]);
 
             // B
-            Assert.Equal(3, result[0].B.Length);
-            Assert.Null(result[0].B[0]);
-            Assert.Equal("x", result[0].B[1]);
-            Assert.Equal("y", result[0].B[2]);
-        }
-
-        private class Model
-        {
-            public int? NullableInt { get; set; }
-            public int[] A { get; set; }
-            public string[] B { get; set; }
+            Assert.Equal(3, result[0].TextArray.Length);
+            Assert.Null(result[0].TextArray[0]);
+            Assert.Equal("x", result[0].TextArray[1]);
+            Assert.Equal("y", result[0].TextArray[2]);
         }
     }
 }

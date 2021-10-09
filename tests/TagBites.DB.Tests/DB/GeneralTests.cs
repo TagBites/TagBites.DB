@@ -1,20 +1,14 @@
 ﻿using System;
 using System.Text;
+using System.Threading.Tasks;
 using System.Transactions;
 using TagBites.DB.Configuration;
-using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TagBites.DB.Tests.DB
+namespace TagBites.DB
 {
-    public class DbLinkTest : DbTestBase
+    public class GeneralTests : DbTests
     {
-        private class Model
-        {
-            public double Number { get; set; }
-            public string Text { get; set; }
-        }
-
         [Fact]
         public void ConnectionTest()
         {
@@ -38,9 +32,9 @@ namespace TagBites.DB.Tests.DB
 
             using (var link = NpgsqlProvider.CreateExclusiveLink())
             {
-                var result = link.Execute<Model>("SELECT 1.5 AS Number, 'This is text.' AS Text");
+                var result = link.Execute<Model>("SELECT 1.5 AS Double, 'This is text.' AS Text");
                 Assert.Single(result);
-                Assert.Equal(1.5, result[0].Number);
+                Assert.Equal(1.5, result[0].Double);
                 Assert.Equal("This is text.", result[0].Text);
             }
         }
@@ -254,11 +248,11 @@ namespace TagBites.DB.Tests.DB
         [Fact]
         public void EventFireOrderTest()
         {
-            bool firstOpen = false;
-            bool firstClose = false;
-            bool firstBeforeBeginTransaction = false;
-            bool firstBeginTransaction = false;
-            bool firstCloseTransaction = false;
+            var firstOpen = false;
+            var firstClose = false;
+            var firstBeforeBeginTransaction = false;
+            var firstBeginTransaction = false;
+            var firstCloseTransaction = false;
 
             using (var link = NpgsqlProvider.CreateExclusiveLink())
             {
@@ -335,7 +329,7 @@ namespace TagBites.DB.Tests.DB
         [Fact]
         public void ExecuteOnConnectionOpenTest()
         {
-            for (int i = 0; i < 2; i++)
+            for (var i = 0; i < 2; i++)
             {
                 var order = new StringBuilder();
 
@@ -358,6 +352,33 @@ namespace TagBites.DB.Tests.DB
                     Assert.Equal("12", order.ToString());
 
                     transaction.Commit();
+                }
+            }
+        }
+
+        [Fact]
+        public async Task ShareLinkWithChildTaskTest()
+        {
+            using (var link = DefaultProvider.CreateLink())
+            {
+                await Task.Run(() =>
+                {
+                    using (var link2 = DefaultProvider.CreateLink())
+                    {
+                        Assert.Equal(link.ConnectionContext, link2.ConnectionContext);
+                    }
+                });
+            }
+        }
+
+        [Fact]
+        public void ShareLinkOverNestedCalls()
+        {
+            using (var link = DefaultProvider.CreateLink())
+            {
+                using (var link2 = DefaultProvider.CreateLink())
+                {
+                    Assert.Equal(link.ConnectionContext, link2.ConnectionContext);
                 }
             }
         }

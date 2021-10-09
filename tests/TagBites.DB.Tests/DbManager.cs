@@ -1,8 +1,11 @@
-﻿using TagBites.DB.Npgsql;
+﻿using TagBites.DB;
+using TagBites.DB.Npgsql;
 using TagBites.DB.Postgres;
 using TagBites.DB.SqLite;
 
-namespace TagBites.DB.Tests.DB.Core
+//using TagBites.DB.SqLite;
+
+namespace TagBites
 {
     public static class DbManager
     {
@@ -27,7 +30,6 @@ namespace TagBites.DB.Tests.DB.Core
             };
         }
 
-        // ReSharper disable once InconsistentNaming
         public static SqliteLinkProvider CreateSQLiteProvider()
         {
             var arguments = new DbConnectionArguments()

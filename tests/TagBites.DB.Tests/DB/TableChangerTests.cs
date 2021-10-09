@@ -1,12 +1,11 @@
 ﻿using TagBites.DB.Postgres;
-using TagBites.DB.Tests.DB.Core;
 using TagBites.DB.Utils;
 using TagBites.Utils;
 using Xunit;
 
-namespace TagBites.DB.Tests.DB
+namespace TagBites.DB
 {
-    public class DbUtilsTest : DbTestBase
+    public class TableChangerTests : DbTests
     {
         [Fact]
         public void DbTableChangerTest()
