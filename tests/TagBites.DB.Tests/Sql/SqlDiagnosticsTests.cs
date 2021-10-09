@@ -1,11 +1,9 @@
 ﻿using System;
-using TagBites.DB.Tests.DB.Core;
-using TagBites.Sql;
 using Xunit;
 
-namespace TagBites.DB.Tests.DB.Common
+namespace TagBites.Sql
 {
-    public class SqlDiagnosticsTests : DbTestBase
+    public class SqlDiagnosticsTests : DbTests
     {
         [Fact]
         public void QueryTrackingCommentTest()

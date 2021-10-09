@@ -1,14 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using TagBites.DB;
 using TagBites.DB.Postgres;
 using TagBites.DB.SqLite;
 using TagBites.Sql;
+using Xunit; //using TagBites.DB.SqLite;
 
-namespace TagBites.DB.Tests.DB.Core
+namespace TagBites
 {
-    public class DbTestBase
+    public class DbTests
     {
         private readonly object m_locker = new object();
         private PgSqlLinkProvider m_npgsqlProvider;
@@ -46,6 +44,11 @@ namespace TagBites.DB.Tests.DB.Core
             }
         }
         public DbLinkProvider DefaultProvider => NpgsqlProvider;
+
+        public DbTests()
+        {
+            Assert.Null(DefaultProvider.CurrentConnectionContext);
+        }
 
 
         protected virtual void InitializeConnectionProvider(PgSqlLinkProvider connectionProvider) { }

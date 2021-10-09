@@ -1,11 +1,10 @@
 ﻿using System.Linq;
 using System.Reflection;
-using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TagBites.DB.Tests.DB
+namespace TagBites.DB
 {
-    public class QueryObjectResultTest : DbTestBase
+    public class QueryObjectResultTests : DbTests
     {
         [Fact]
         public void QueryObjectResultPropertyResolverTest()

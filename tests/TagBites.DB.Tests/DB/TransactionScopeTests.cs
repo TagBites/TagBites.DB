@@ -3,12 +3,11 @@ using System.Data.Common;
 using System.Threading.Tasks;
 using System.Transactions;
 using TagBites.DB.Configuration;
-using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TagBites.DB.Tests.DB.Common
+namespace TagBites.DB
 {
-    public class DbLinkWithTransactionScope : DbTestBase
+    public class TransactionScopeTests : DbTests
     {
         [Fact]
         public void UncommitedTransactionScopeTest()

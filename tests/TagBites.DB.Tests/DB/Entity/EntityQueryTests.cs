@@ -4,16 +4,13 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
-using TagBites.DB;
-using TagBites.DB.Entity;
-using TagBites.DB.Tests.DB.Core;
 using TagBites.Sql;
 using Xunit;
 using static TagBites.Sql.SqlExpression;
 
-namespace TagBites.Data.UnitTests.DB
+namespace TagBites.DB.Entity
 {
-    public class EntityQueryTest : DbTestBase
+    public class EntityQueryTests : DbTests
     {
         #region Private members
 

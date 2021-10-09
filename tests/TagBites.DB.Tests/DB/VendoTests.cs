@@ -5,16 +5,15 @@ using System.Threading.Tasks;
 using System.Transactions;
 using TagBites.DB.Configuration;
 using TagBites.DB.Postgres;
-using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TagBites.DB.Tests.DB
+namespace TagBites.DB
 {
-    public class VendoTest : DbTestBase
+    public class VendoTests : DbTests
     {
         protected override void InitializeConnectionProvider(PgSqlLinkProvider connectionProvider)
         {
-            Semaphore transactionSemaphore = new Semaphore(1, 1);
+            var transactionSemaphore = new Semaphore(1, 1);
 
             connectionProvider.Configuration.ForceOnLinkCreate = false;
             connectionProvider.Configuration.ForceOnTransactionBegin = false;
@@ -74,7 +73,7 @@ namespace TagBites.DB.Tests.DB
 
             Task.WaitAll(Enumerable.Range(0, 4).Select(x => Task.Factory.StartNew(() =>
             {
-                for (int i = 0; i < 10; i++)
+                for (var i = 0; i < 10; i++)
                 {
                     using (var sc = new TransactionScope())
                     {
@@ -94,7 +93,7 @@ namespace TagBites.DB.Tests.DB
         [Fact]
         public void VendoNotifyTest()
         {
-            int notifyCounter = 0;
+            var notifyCounter = 0;
 
             using (var link = NpgsqlProvider.CreateLink())
             {

@@ -1,11 +1,10 @@
-﻿using TagBites.DB.Tests.DB.Core;
-using Xunit;
+﻿using Xunit;
 
 // ReSharper disable AccessToModifiedClosure
 
-namespace TagBites.DB.Tests.DB.Common
+namespace TagBites.DB
 {
-    public class DbTransactionTest : DbTestBase
+    public class TransactionTests : DbTests
     {
         [Fact]
         public void CommitingEventTest()

@@ -1,9 +1,8 @@
-﻿using TagBites.DB.Tests.DB.Core;
-using Xunit;
+﻿using Xunit;
 
-namespace TagBites.DB.Tests.DB.Common
+namespace TagBites.DB
 {
-    public class DbLinkErrorStressTest : DbTestBase
+    public class ErrorStressTests : DbTests
     {
         [Fact]
         public void ConnectionStaysOpenAfterQueryExceptionTest()

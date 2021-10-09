@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Threading;
-using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TagBites.DB.Tests.DB.PostgreSql
+namespace TagBites.DB.Postgres
 {
-    public class DbLinkConnectionLostTest : DbTestBase
+    public class ConnectionLostTests : DbTests
     {
         [Fact]
         public void ReconnectAfterBreakWithAttemptsTest()
@@ -50,7 +49,7 @@ namespace TagBites.DB.Tests.DB.PostgreSql
                 using (var breakLink = NpgsqlProvider.CreateLink())
                     try
                     {
-                        string q = @"SELECT pg_terminate_backend(pg_backend_pid())";
+                        var q = @"SELECT pg_terminate_backend(pg_backend_pid())";
                         breakLink.Execute(q);
                         Assert.True(false);
                     }
@@ -73,7 +72,7 @@ namespace TagBites.DB.Tests.DB.PostgreSql
         [Fact]
         public void ReconnectAfterBreakOnDifferentConnectionTest()
         {
-            int reconnectAttempts = 0;
+            var reconnectAttempts = 0;
 
             using (var link = NpgsqlProvider.CreateExclusiveLink())
             using (var link2 = NpgsqlProvider.CreateExclusiveLink())

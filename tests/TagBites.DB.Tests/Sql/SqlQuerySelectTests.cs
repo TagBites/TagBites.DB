@@ -1,15 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using TagBites.DB.Tests.DB.Core;
-using TagBites.Sql;
+using TagBites.DB;
 using Xunit;
 using static TagBites.Sql.SqlExpression;
 
-namespace TagBites.DB.Tests.Sql
+namespace TagBites.Sql
 {
-    public class SqlQuerySelectTests : DbTestBase
+    public class SqlQuerySelectTests : DbTests
     {
         [Fact]
         public void GeneralTest()

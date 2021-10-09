@@ -1,12 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
-using TagBites.DB.Tests.DB.Core;
 using Xunit;
 
-namespace TagBites.DB.Tests.DB
+namespace TagBites.DB.Entity
 {
-    public class EntityTableTest : DbTestBase
+    public class EntityTableTests : DbTests
     {
         [Fact]
         public void EntityTableMethodsTest()
