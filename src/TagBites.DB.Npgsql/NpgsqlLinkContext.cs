@@ -56,7 +56,11 @@ namespace TagBites.DB.Npgsql
                         var npgsqlConnection = (NpgsqlConnection)connection;
 
                         while (!token.IsCancellationRequested)
-                            npgsqlConnection.WaitAsync(token).Wait(token);
+                        {
+                            // Can't pass token to Wait, need to wait until all operations on connection is finished
+                            // ReSharper disable once MethodSupportsCancellation
+                            npgsqlConnection.WaitAsync(token).Wait();
+                        }
                     }
                     catch when (token.IsCancellationRequested)
                     {

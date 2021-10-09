@@ -171,14 +171,14 @@ namespace TagBites.DB.Postgres
                 var ts = new List<Task>();
                 var r = new Random();
 
-                for (var i = 0; i < 100; i++)
+                for (var i = 0; i < 10; i++)
                 {
                     var t = Task.Run(async () =>
                     {
                         // ReSharper disable once AccessToDisposedClosure
                         using (var cursor = cursorManager.CreateCursor(q))
                         {
-                            await Task.Delay(r.Next(1, 100));
+                            await Task.Delay(r.Next(1, 10));
                             Assert.True(cursor.RecordCount > 0);
                         }
                     });
