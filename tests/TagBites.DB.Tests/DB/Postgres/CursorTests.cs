@@ -19,7 +19,7 @@ namespace TagBites.DB.Postgres
 
             for (var i = 0; i < 2; i++)
             {
-                var q = new Query("SELECT 1 UNION SELECT 2");
+                var q = new Query("SELECT * FROM generate_series(1, 2000)");
 
                 var c1 = cursorManager.CreateCursor(q);
                 await Task.Delay(150);
