@@ -1,4 +1,4 @@
-﻿<Project>
+<Project>
 
   <ItemGroup>
     <PackageReference Include="GitInfo" Version="2.1.2">
@@ -17,8 +17,12 @@
       DestinationFolder="$(SolutionDir)..\LocalPackages\" 
       ContinueOnError="false" /> 
       
-    <Message Text="Delete local package folder 'C:\Users\User\.nuget\packages\$(PackageId)\$(PackageVersion)'" Importance="high"/>
-    <RemoveDir Directories="C:\Users\User\.nuget\packages\$(PackageId)\$(PackageVersion)" />
+    <Message
+      Condition="exists('C:\Users\$([System.Environment]::UserName)\.nuget\packages\$(PackageId)\$(PackageVersion)')"
+      Text="Delete local package folder 'C:\Users\$([System.Environment]::UserName)\.nuget\packages\$(PackageId)\$(PackageVersion)'" Importance="high"/>
+    <RemoveDir 
+      Condition="exists('C:\Users\$([System.Environment]::UserName)\.nuget\packages\$(PackageId)\$(PackageVersion)')"
+      Directories="C:\Users\$([System.Environment]::UserName)\.nuget\packages\$(PackageId)\$(PackageVersion)" />
   </Target>
 
 </Project>

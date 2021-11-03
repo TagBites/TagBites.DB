@@ -1,28 +1,24 @@
-﻿<Project>
+<Project>
 
   <!-- Company/Copyright -->
   <PropertyGroup>
     <Company>Tag Bites sp. z o.o.</Company>
     <Authors>Tag Bites sp. z o.o.</Authors>
-    <Copyright>Tag Bites sp. z o.o. © 2012-2019</Copyright>
+    <Copyright>Tag Bites sp. z o.o. © 2012-$([System.DateTime]::Today.ToString(`yyyy`))</Copyright>
   </PropertyGroup>
 
   <!-- Bin/Obj directories -->
   <PropertyGroup>
-    <BaseOutputPath>$(SolutionDir)bin\</BaseOutputPath>
+    <BaseOutputPath>$(SolutionDir)bin\$(MSBuildProjectName)\</BaseOutputPath>
+    <PackageOutputPath>$(SolutionDir)bin\</PackageOutputPath>
     <BaseIntermediateOutputPath>$(SolutionDir)bin\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
   </PropertyGroup>
 
   <!-- Compilation settings -->
   <PropertyGroup>
-    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <LangVersion>latest</LangVersion>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <Deterministic>true</Deterministic>
-  </PropertyGroup>
-
-  <!-- Warnings -->
-  <PropertyGroup>
-      <NoWarn>1701;1702;1591</NoWarn>
   </PropertyGroup>
 
   <!-- Globalziation -->
@@ -37,6 +33,8 @@
 
   <!-- Includes -->
   <Import Condition="exists('Version.props')" Project="Version.props" />
-  <Import Condition="exists('Licensing.props')" Project="Licensing.props" /> 
+  <Import Condition="exists('Licensing.props')" Project="Licensing.props" />
+  <Import Condition="exists('Package.props')" Project="Package.props" />
+  <Import Condition="exists('Project.props')" Project="Project.props" />
 
 </Project>

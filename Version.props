@@ -1,29 +1,31 @@
-﻿<Project>
+<Project>
+  <PropertyGroup>
+    <MinVerDefaultPreReleasePhase>preview</MinVerDefaultPreReleasePhase>
+    <MinVerMinimumMajorMinor>0.1</MinVerMinimumMajorMinor>
+    <GitThisAssembly>false</GitThisAssembly>
+  </PropertyGroup>
+
+  <Target Name="VersionFromGit-Pre" AfterTargets="GitInfo">
     <PropertyGroup>
-        <MinVerDefaultPreReleasePhase>preview</MinVerDefaultPreReleasePhase>
+      <VersionDate>$([System.DateTime]::Parse($(GitCommitDate)).ToString(`yyyy-MM-dd`))</VersionDate>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="VersionFromGit" AfterTargets="MinVer">
+    <PropertyGroup>
+      <VersionPrefix>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</VersionPrefix>
+      <VersionSuffix>$(MinVerPreRelease)</VersionSuffix>
+      <VersionFull Condition=" '$(VersionSuffix)' == '' ">$(VersionPrefix)</VersionFull>
+      <VersionFull Condition=" '$(VersionSuffix)' != '' ">$(VersionPrefix)-$(VersionSuffix)</VersionFull>
+
+      <Version>$(VersionFull)</Version>
+      <PackageVersion>$(VersionFull)</PackageVersion>
+      <AssemblyVersion>$(VersionPrefix).0</AssemblyVersion>
+      <AssemblyFileVersion>$(VersionPrefix).0</AssemblyFileVersion>
+      <InformationalVersion>$([System.String]::Copy("$(VersionFull) $(VersionDate)").Trim())</InformationalVersion>
     </PropertyGroup>
 
-    <Target Name="VersionFromGit-Pre" AfterTargets="GitInfo">
-        <PropertyGroup>
-            <VersionDate>$([System.DateTime]::Parse($(GitCommitDate)).ToString(`yyyy-MM-dd`))</VersionDate>
-        </PropertyGroup>
-    </Target>
-
-    <Target Name="VersionFromGit" AfterTargets="MinVer">
-        <PropertyGroup>
-            <VersionPrefix>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</VersionPrefix>
-            <VersionSuffix>$(MinVerPreRelease)</VersionSuffix>
-            <VersionFull Condition=" '$(VersionSuffix)' == '' ">$(VersionPrefix)</VersionFull>
-            <VersionFull Condition=" '$(VersionSuffix)' != '' ">$(VersionPrefix)-$(VersionSuffix)</VersionFull>
-
-            <Version>$(VersionFull)</Version>
-            <PackageVersion>$(VersionFull)</PackageVersion>
-            <AssemblyVersion>$(VersionPrefix).0</AssemblyVersion>
-            <AssemblyFileVersion>$(VersionPrefix).0</AssemblyFileVersion>
-            <InformationalVersion>$(VersionFull) $(VersionDate)</InformationalVersion>
-        </PropertyGroup>
-        
-        <Message Importance="High" Text="InformationalVersion: $(InformationalVersion)"/>
-    </Target>
+    <Message Importance="High" Text="InformationalVersion: $(InformationalVersion)"/>
+  </Target>
 
 </Project>
