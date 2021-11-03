@@ -1,8 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Text;
 using TagBites.Collections;
 
 namespace TagBites.DB
@@ -65,51 +63,56 @@ namespace TagBites.DB
             var batchQuery = Query.Concat(queries);
 
             // Execute
-            QueryResult[] results;
-            try
+            m_context.ExecuteOnAdapter(batchQuery, adapter =>
             {
-                using (var set = new DataSet())
+                QueryResult[] results;
+                int returnValue;
+
+                try
                 {
-                    m_context.ExecuteOnAdapter(batchQuery, adapter => adapter.Fill(set));
+                    using var set = new DataSet();
+                    returnValue = adapter.Fill(set);
 
                     results = new QueryResult[set.Tables.Count];
 
-                    for (int i = 0; i < set.Tables.Count; i++)
+                    for (var i = 0; i < set.Tables.Count; i++)
                         results[i] = QueryResult.Create(set.Tables[i]);
                 }
-            }
-            catch (Exception e)
-            {
-                // Set exceptions
-                foreach (var item in items)
-                    item.SetResult(null, e, false);
-
-                throw;
-            }
-
-            // Set results
-            var currentItemIndex = 0;
-            var currentResultIndex = 0;
-            var currentResultCount = 0;
-
-            for (var i = 0; i < results.Length; i++)
-            {
-                QueryResult result = results[i];
-                if (result.RowCount == 1 && result.ColumnCount == 1 && currentItemIndex < ids.Count && Equals(result.GetValue(0, 0), ids[currentItemIndex]))
+                catch (Exception e)
                 {
-                    items[currentItemIndex].SetResult(new SpanCollection<QueryResult>(results, currentResultIndex, currentResultCount), null, false);
+                    // Set exceptions
+                    foreach (var item in items)
+                        item.SetResult(null, e, false);
 
-                    currentResultIndex = i + 1;
-                    currentResultCount = 0;
-                    ++currentItemIndex;
-
-                    continue;
+                    throw;
                 }
 
-                ++currentResultCount;
-            }
+                // Set results
+                var currentItemIndex = 0;
+                var currentResultIndex = 0;
+                var currentResultCount = 0;
 
-            items[currentItemIndex].SetResult(new SpanCollection<QueryResult>(results, currentResultIndex, currentResultCount), null, false);
+                for (var i = 0; i < results.Length; i++)
+                {
+                    var result = results[i];
+                    if (result.RowCount == 1 && result.ColumnCount == 1 && currentItemIndex < ids.Count && Equals(result.GetValue(0, 0), ids[currentItemIndex]))
+                    {
+                        items[currentItemIndex].SetResult(new SpanCollection<QueryResult>(results, currentResultIndex, currentResultCount), null, false);
+
+                        currentResultIndex = i + 1;
+                        currentResultCount = 0;
+                        ++currentItemIndex;
+
+                        continue;
+                    }
+
+                    ++currentResultCount;
+                }
+
+                items[currentItemIndex].SetResult(new SpanCollection<QueryResult>(results, currentResultIndex, currentResultCount), null, false);
+
+                return returnValue;
+            });
         }
         public void Cancel()
         {
