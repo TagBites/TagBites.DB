@@ -5,7 +5,6 @@ using System.Data.Common;
 using System.IO;
 using System.Linq;
 using System.Net.Sockets;
-using System.Threading.Tasks;
 using System.Transactions;
 using TagBites.Utils;
 
@@ -1086,7 +1085,7 @@ namespace TagBites.DB
 
                                 try
                                 {
-                                    Task.Run(_connection.OpenAsync).GetAwaiter().GetResult();
+                                    _connection.Open();
                                     OnConnectionOpen();
 
                                     if (_connectionOpened != null)

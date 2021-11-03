@@ -9,7 +9,7 @@ namespace TagBites
 {
     public static class DbManager
     {
-        public static PgSqlLinkProvider CreateNpgsqlProvider(bool pooling = true, int minPoolSize = 1, int maxPoolSize = 3)
+        public static PgSqlLinkProvider CreateNpgsqlProvider(bool pooling = true, int minPoolSize = 1, int maxPoolSize = 4)
         {
             var arguments = new DbConnectionArguments()
             {
