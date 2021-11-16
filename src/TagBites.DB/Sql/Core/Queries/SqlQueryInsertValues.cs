@@ -1,8 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace TagBites.Sql
 {
     public class SqlQueryInsertValues : SqlQueryInsertBase
@@ -20,6 +15,7 @@ namespace TagBites.Sql
         protected internal override void Accept(SqlQueryResolver resolver, SqlQueryBuilder builder)
         {
             resolver.VisitQuery(this, builder);
+            resolver.PostVisitQuery(this, builder);
         }
     }
 }

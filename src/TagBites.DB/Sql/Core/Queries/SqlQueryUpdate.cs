@@ -1,7 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using TagBites.Utils;
 
 namespace TagBites.Sql
@@ -34,6 +30,7 @@ namespace TagBites.Sql
         protected internal override void Accept(SqlQueryResolver resolver, SqlQueryBuilder builder)
         {
             resolver.VisitQuery(this, builder);
+            resolver.PostVisitQuery(this, builder);
         }
     }
 }

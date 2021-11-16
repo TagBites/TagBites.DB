@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -33,6 +33,7 @@ namespace TagBites.Sql
         /// Number of values sets to include names to.
         /// </summary>
         public int NamedValuesNumber { get; set; }
+        public bool UseMultilineTrackingComment { get; set; } = true;
 
         protected virtual string TrueLiteral => "true";
         protected virtual string FalseLiteral => "false";
@@ -328,8 +329,6 @@ namespace TagBites.Sql
             if (builder.ValidationEnabled && query.Select.Count == 0)
                 throw new Exception("Select clause does not contain any column.");
 
-            VisitQueryTrackingComment(query, builder);
-
             VisitClause(query.With, "WITH", builder);
 
             builder.AppendKeyword("SELECT");
@@ -350,8 +349,6 @@ namespace TagBites.Sql
             if (builder.ValidationEnabled && query.Values.Count == 0)
                 throw new Exception("Values clause does not contain any values.");
 
-            VisitQueryTrackingComment(query, builder);
-
             VisitClause(query.Values, "VALUES", builder, null);
             VisitClause(query.OrderBy, "ORDER BY", builder);
             VisitClause(query.Union, builder);
@@ -359,8 +356,6 @@ namespace TagBites.Sql
         }
         protected internal virtual void VisitQuery(SqlQueryInsertBase query, SqlQueryBuilder builder)
         {
-            VisitQueryTrackingComment(query, builder);
-
             VisitClause(query.With, "WITH", builder);
             VisitTableClause(query.Into, "INSERT INTO", builder);
             VisitClause(query.Columns, builder);
@@ -368,7 +363,9 @@ namespace TagBites.Sql
             if (query is SqlQueryInsertSelect select)
             {
                 builder.Append(" ");
+
                 VisitQuery(select.Select, builder);
+                PostVisitQuery(select.Select, builder);
             }
             else
                 VisitClause(((SqlQueryInsertValues)query).Values, "VALUES", builder, query.Columns);
@@ -380,8 +377,6 @@ namespace TagBites.Sql
             if (query.Set.Count == 0)
                 throw new Exception("Set clause does not contain any column.");
 
-            VisitQueryTrackingComment(query, builder);
-
             VisitClause(query.With, "WITH", builder);
             VisitTableClause(query.Table, "UPDATE", builder);
             VisitClause(query.Set, "SET", builder);
@@ -392,14 +387,16 @@ namespace TagBites.Sql
         }
         protected internal virtual void VisitQuery(SqlQueryDelete query, SqlQueryBuilder builder)
         {
-            VisitQueryTrackingComment(query, builder);
-
             VisitClause(query.With, "WITH", builder);
             VisitTableClause(query.From, "DELETE FROM", builder);
             VisitClause(query.Using, "USING", builder);
             VisitClause(query.Join, builder);
             VisitClause(query.Where, "WHERE", builder);
             VisitClause(query.Returning, "RETURNING", builder);
+        }
+        internal void PostVisitQuery(SqlQueryBase query, SqlQueryBuilder builder)
+        {
+            VisitQueryTrackingComment(query, builder);
         }
         private void VisitQueryTrackingComment(SqlQueryBase query, SqlQueryBuilder builder)
         {
@@ -408,7 +405,10 @@ namespace TagBites.Sql
                 if (!builder.IsEmpty)
                     builder.Append(' ');
 
-                builder.Append($"/* {query.TrackingComment.Trim()} */ ");
+                if (UseMultilineTrackingComment)
+                builder.Append($"/* {query.TrackingComment.Trim()} */");
+                else
+                    builder.Append($"-- {query.TrackingComment.Trim().Replace("\r", "").Replace("\n", " -- ")}");
             }
         }
 
