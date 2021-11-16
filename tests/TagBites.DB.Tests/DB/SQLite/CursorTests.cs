@@ -1,4 +1,6 @@
-﻿using Xunit;
+#if SQLITE
+
+using Xunit;
 
 namespace TagBites.DB.Sqlite
 {
@@ -65,3 +67,5 @@ namespace TagBites.DB.Sqlite
         }
     }
 }
+
+#endif

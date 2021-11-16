@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
@@ -24,7 +24,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\TagBites.DB.Npgsql\TagBites.DB.Npgsql.csproj" />
     <ProjectReference Include="..\..\src\TagBites.DB.Postgres\TagBites.DB.Postgres.csproj" />
-    <ProjectReference Include="..\..\src\TagBites.DB.Sqlite\TagBites.DB.Sqlite.csproj" />
     <ProjectReference Include="..\..\src\TagBites.DB\TagBites.DB.csproj" />
   </ItemGroup>
 

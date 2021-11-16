@@ -1,15 +1,13 @@
-﻿using TagBites.DB;
+using TagBites.DB;
 using TagBites.DB.Postgres;
-using TagBites.DB.SqLite;
 using TagBites.Sql;
 
 namespace TagBites
 {
-    public class DbTests
+    public partial class DbTests
     {
         private readonly object m_locker = new object();
         private PgSqlLinkProvider m_npgsqlProvider;
-        private SqliteLinkProvider _mSqliteProvider;
 
         public PgSqlLinkProvider NpgsqlProvider
         {
@@ -24,19 +22,6 @@ namespace TagBites
                     }
 
                     return m_npgsqlProvider;
-                }
-            }
-        }
-        public SqliteLinkProvider SqliteProvider
-        {
-            get
-            {
-                lock (m_locker)
-                {
-                    if (_mSqliteProvider == null)
-                        _mSqliteProvider = DbManager.CreateSQLiteProvider();
-
-                    return _mSqliteProvider;
                 }
             }
         }

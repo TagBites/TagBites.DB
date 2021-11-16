@@ -1,13 +1,10 @@
-﻿using TagBites.DB;
+using TagBites.DB;
 using TagBites.DB.Npgsql;
 using TagBites.DB.Postgres;
-using TagBites.DB.SqLite;
-
-//using TagBites.DB.SqLite;
 
 namespace TagBites
 {
-    public static class DbManager
+    public static partial class DbManager
     {
         public static PgSqlLinkProvider CreateNpgsqlProvider(bool pooling = true, int minPoolSize = 1, int maxPoolSize = 4)
         {
@@ -28,20 +25,6 @@ namespace TagBites
             {
                 Configuration = { UseSystemTransactions = false, ImplicitCreateTransactionScopeIfNotExists = true }
             };
-        }
-
-        public static SqliteLinkProvider CreateSQLiteProvider()
-        {
-            var arguments = new DbConnectionArguments()
-            {
-                Database = "D:/db.sqlite",
-
-                UsePooling = true,
-                MinPoolSize = 1,
-                MaxPoolSize = 3
-            };
-
-            return new SqliteLinkProvider(arguments);
         }
     }
 }

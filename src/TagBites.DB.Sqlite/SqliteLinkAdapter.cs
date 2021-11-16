@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data.Common;
@@ -26,7 +26,7 @@ using System.Data.SQLite;
 #endif
 
 
-namespace TagBites.DB.SqLite
+namespace TagBites.DB.Sqlite
 {
     public class SqliteLinkAdapter : DbLinkAdapter
     {
