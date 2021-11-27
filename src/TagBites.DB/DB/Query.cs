@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
+using TagBites.DB.Configuration;
 using TagBites.Sql;
 using TagBites.Utils;
 
@@ -37,12 +38,26 @@ namespace TagBites.DB
             else
             {
                 var names = new object[args.Length];
-                var pms = new QueryParameter[args.Length];
+                var pms = new List<QueryParameter>(args.Length);
 
                 for (int i = 0; i < args.Length; i++)
                 {
-                    pms[i] = new QueryParameter(ParameterPrefix + (i + 1).ToString(), args[i]);
-                    names[i] = pms[i].Name;
+                    var dbValue = DbLinkDataConverter.Default.ToDbType(args[i]);
+
+                    if (dbValue is SqlExpression s)
+                    {
+                        var builder = SqlQueryBuilder.CreateToStringBuilder();
+                        SqlQueryResolver.DefaultToStringResolver.Visit(s, builder);
+
+                        names[i] = builder.Query;
+                    }
+                    else
+                    {
+                        var p = new QueryParameter(ParameterPrefix + (pms.Count + 1).ToString(), dbValue);
+                        pms.Add(p);
+
+                        names[i] = p.Name;
+                    }
                 }
 
                 Command = string.Format(commandFormat, names);
