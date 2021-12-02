@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 
@@ -100,8 +100,10 @@ namespace TagBites.DB.Postgres
                 }
                 finally
                 {
-                    lock (Manager.PoolSynchRoot)
-                        --PendingCreateCursor;
+                    var manager = Manager;
+                    if (manager != null)
+                        lock (manager.PoolSynchRoot)
+                            --PendingCreateCursor;
                 }
             }
         }
@@ -202,17 +204,20 @@ namespace TagBites.DB.Postgres
             _cursors.Clear();
 
             if (_manager != null)
-                try { _manager?.OnConnectionContextDisposed(this); }
+                try
+                { _manager?.OnConnectionContextDisposed(this); }
                 catch { /* ignored */ }
                 finally { _manager = null; }
 
             if (_transaction != null)
-                try { _transaction?.Dispose(); }
+                try
+                { _transaction?.Dispose(); }
                 catch { /* ignored */ }
                 finally { _transaction = null; }
 
             if (_link != null)
-                try { _link?.Dispose(); }
+                try
+                { _link?.Dispose(); }
                 catch { /* ignored */ }
                 finally { _link = null; }
         }
