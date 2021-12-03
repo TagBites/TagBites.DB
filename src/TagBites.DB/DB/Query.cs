@@ -79,8 +79,9 @@ namespace TagBites.DB
         public string GetUnsafeEscapeString(SqlQueryResolver resolver)
         {
             var stringBuilder = new StringBuilder(Command.Length + Parameters.Count * 32);
-            CommandResolve(stringBuilder, Command, name =>
+            ResolveSqlQueryParameters(stringBuilder, Command, ParameterPrefix[0], name =>
             {
+                name = "@" + name;
                 var arg = Parameters.FirstOrDefault(x => x.Name == name);
                 if (arg == null)
                     throw new Exception(string.Format("Argument \"{0}\" not found!", name));
@@ -203,8 +204,9 @@ namespace TagBites.DB
                 }
                 else
                 {
-                    CommandResolve(sb, query.Command, name =>
+                    ResolveSqlQueryParameters(sb, query.Command, ParameterPrefix[0], name =>
                     {
+                        name = "@" + name;
                         var qp = query.Parameters.FirstOrDefault(x => x.Name == name);
                         if (qp == null)
                             return name;
@@ -229,75 +231,128 @@ namespace TagBites.DB
             return new Query(sb.ToString(), parameters);
         }
 
-        private static void CommandResolve(StringBuilder sb, string command, Func<string, string> parameterResolver)
+        internal static void ResolveSqlQueryParameters(StringBuilder sb, string query, char parameterPrefix, Func<string, string> parameterResolver)
         {
-            var escape = false;
-            var escapeChar = '\'';
-            var start = 0;
-
-            while (start < command.Length && (char.IsWhiteSpace(command[start]) || command[start] == ';'))
-                ++start;
-
-            for (var i = start; i < command.Length; i++)
+            for (var idx = 0; idx < query.Length; idx++)
             {
-                var c = command[i];
-                if (escape)
+                var c = query[idx];
+
+                // Line comment
+                if (c == '-' && idx + 1 < query.Length && query[idx + 1] == '-')
                 {
-                    if (c == escapeChar && command[i - 1] != '\\')
-                    {
-                        if (i + 1 < command.Length && command[i + 1] == escapeChar)
-                        {
-                            i++;
-                            continue;
-                        }
+                    sb.Append(c);
+                    sb.Append(query[++idx]);
 
-                        escape = false;
+                    while (++idx < query.Length)
+                    {
+                        sb.Append(query[idx]);
+
+                        if (query[idx] == '\n')
+                            break;
                     }
+
+                    continue;
                 }
-                else
+
+                // Multiline comment
+                if (c == '/' && idx + 2 < query.Length && query[idx + 1] == '*')
                 {
-                    if (c == '\'' || c == '"')
+                    sb.Append(c);
+                    sb.Append(query[++idx]);
+                    sb.Append(query[++idx]);
+
+                    while (++idx < query.Length)
                     {
-                        escape = true;
-                        escapeChar = c;
+                        sb.Append(query[idx]);
+
+                        if (query[idx] == '/' && query[idx - 1] == '*')
+                            break;
                     }
-                    else if (c == ParameterPrefix[0])
-                    {
-                        if (ParameterPrefix.Length > 1)
-                        {
-                            var isParameter = true;
-                            for (var j = 1; j < ParameterPrefix.Length; j++)
-                                if (command[i + j] != ParameterPrefix[j])
-                                {
-                                    isParameter = false;
-                                    break;
-                                }
 
-                            if (!isParameter)
-                                continue;
-                        }
-
-                        var end = i + 1;
-                        while (end < command.Length && (char.IsLetterOrDigit(command[end]) || command[end] == '_'))
-                            ++end;
-
-                        if (i + ParameterPrefix.Length >= end)
-                            continue;
-
-                        sb.Append(command, start, i - start);
-                        sb.Append(parameterResolver(command.Substring(i, end - i)));
-
-                        start = end;
-                        i = end - 1;
-                    }
+                    continue;
                 }
+
+                // String $$Text with ' sign.$$ or $any$Text with ' sign.$any$
+                if (c == '$')
+                {
+                    var next = query.IndexOf('$', idx + 1);
+                    if (next < 0)
+                    {
+                        sb.Append(query, idx, query.Length - idx);
+                        break;
+                    }
+
+                    var escapePhrase = query.Substring(idx, next - idx + 1);
+                    next = query.IndexOf(escapePhrase, idx + escapePhrase.Length);
+                    if (next < 0)
+                    {
+                        sb.Append(query, idx, query.Length - idx);
+                        break;
+                    }
+
+                    next += escapePhrase.Length;
+                    sb.Append(query, idx, next - idx);
+
+                    idx = next - 1;
+                    continue;
+                }
+
+                // String E'Text with \' sign.'
+                if (c == 'E' && idx + 1 < query.Length && query[idx + 1] == '\'' && !(idx > 0 && char.IsLetterOrDigit(query[idx - 1])))
+                {
+                    sb.Append(c);
+                    sb.Append(query[++idx]);
+
+                    while (++idx < query.Length)
+                    {
+                        sb.Append(query[idx]);
+
+                        if (query[idx] == '\'' && query[idx - 1] != '\\')
+                            break;
+                    }
+
+                    continue;
+                }
+
+                // String 'Text with '' sign.' or "Text with "" sign."
+                if (c == '\'' || c == '"')
+                {
+                    sb.Append(c);
+
+                    while (++idx < query.Length)
+                    {
+                        sb.Append(query[idx]);
+
+                        if (query[idx] == c)
+                            if (idx + 1 < query.Length && query[idx + 1] == c)
+                                sb.Append(query[++idx]);
+                            else
+                                break;
+                    }
+
+                    continue;
+                }
+
+                // Argument @name
+                if (c == parameterPrefix
+                    && idx + 1 < query.Length && (char.IsLetterOrDigit(query[idx + 1]) || query[idx + 1] == '_')
+                    && (idx == 0 || !(char.IsLetterOrDigit(query[idx - 1]) || query[idx - 1] == '_')))
+                {
+                    var end = idx + 2;
+                    while (end < query.Length && (char.IsLetterOrDigit(query[end]) || query[end] == '_'))
+                        ++end;
+
+                    var arg = query.Substring(idx + 1, end - idx - 1);
+                    arg = parameterResolver(arg);
+                    sb.Append(arg);
+
+                    idx = end - 1;
+                    continue;
+                }
+
+                // Other
+                sb.Append(c);
             }
-
-            var last = command.Length - 1;
-            while (last > start && (char.IsWhiteSpace(command[last]) || command[last] == ';'))
-                --last;
-
-            sb.Append(command, start, last - start + 1);
         }
 
         public static bool operator ==(Query left, Query right)
