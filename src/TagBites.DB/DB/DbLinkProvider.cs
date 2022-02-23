@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -42,7 +42,7 @@ namespace TagBites.DB
         #region Pooling Properties
 
         private readonly Semaphore m_createContextSemaphore;
-        private readonly Queue<DbLinkContext> m_poolContexts;
+        private readonly Stack<DbLinkContext> m_poolContexts;
         private readonly List<DbLinkContext> m_activeConnections = new List<DbLinkContext>();
 
         public bool UsePooling { get; }
@@ -132,7 +132,7 @@ namespace TagBites.DB
             m_createContextSemaphore = new Semaphore(MaxPoolSize, MaxPoolSize);
 
             if (UsePooling)
-                m_poolContexts = new Queue<DbLinkContext>();
+                m_poolContexts = new Stack<DbLinkContext>();
 
             LinkAdapter = linkAdapter;
             ConnectionString = linkAdapter.CreateConnectionString(arguments);
@@ -236,7 +236,7 @@ namespace TagBites.DB
                             {
                                 if (m_poolContexts.Count > 0)
                                 {
-                                    context = m_poolContexts.Dequeue();
+                                    context = m_poolContexts.Pop();
                                     isNewContext = false;
                                 }
                             }
@@ -395,7 +395,7 @@ namespace TagBites.DB
                     {
                         if (m_poolContexts.Count < MinPoolSize)
                         {
-                            m_poolContexts.Enqueue(context);
+                            m_poolContexts.Push(context);
                             released = false;
                         }
                     }
