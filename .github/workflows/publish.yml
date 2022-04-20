@@ -13,6 +13,8 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: TagBites/actions/dotnet-build@master
+      with:
+        solution: TagBites.DB.sln
     - uses: TagBites/actions/nuget-publish@master
       with:
         nuget-source: "https://api.nuget.org/v3/index.json"

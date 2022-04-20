@@ -24,8 +24,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TagBites.DB.Npgsql", "src\T
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TagBites.DB.Postgres", "src\TagBites.DB.Postgres\TagBites.DB.Postgres.csproj", "{8710A285-F269-4F09-B435-D2612DF7522A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TagBites.DB.Sqlite", "src\TagBites.DB.Sqlite\TagBites.DB.Sqlite.csproj", "{34752766-031C-4BFE-9B51-88A6FDB80FE8}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,10 +46,6 @@ Global
 		{8710A285-F269-4F09-B435-D2612DF7522A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8710A285-F269-4F09-B435-D2612DF7522A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8710A285-F269-4F09-B435-D2612DF7522A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{34752766-031C-4BFE-9B51-88A6FDB80FE8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{34752766-031C-4BFE-9B51-88A6FDB80FE8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{34752766-031C-4BFE-9B51-88A6FDB80FE8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{34752766-031C-4BFE-9B51-88A6FDB80FE8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -61,7 +55,6 @@ Global
 		{B3AE3A57-B5C2-4F69-AFD3-BE1A8D89D7AA} = {1C2646DE-48D1-4B30-B3C6-DA3D010B070D}
 		{F5CD7029-EDD9-4D57-9792-6DDE6CF2D3E2} = {89927951-8603-4371-BAE4-AA7BE43AC112}
 		{8710A285-F269-4F09-B435-D2612DF7522A} = {89927951-8603-4371-BAE4-AA7BE43AC112}
-		{34752766-031C-4BFE-9B51-88A6FDB80FE8} = {89927951-8603-4371-BAE4-AA7BE43AC112}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3950865B-85F5-4D9C-AEDD-F9A848BD9057}
