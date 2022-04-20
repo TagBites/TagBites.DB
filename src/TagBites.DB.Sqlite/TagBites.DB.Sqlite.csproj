@@ -1,4 +1,4 @@
-﻿<Project Sdk="MSBuild.Sdk.Extras">
+<Project Sdk="MSBuild.Sdk.Extras/3.0.22">
 
   <!-- Package info -->
   <PropertyGroup>
@@ -21,7 +21,7 @@
 
   <!-- Targets -->
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;MonoAndroid10.0;Xamarin.iOS10</TargetFrameworks>
+    <TargetFrameworks>net6.0;net462;MonoAndroid10.0;Xamarin.iOS10</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -30,7 +30,11 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp3.1'">
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net462'">
+    <DefineConstants>$(DefineConstants)TRACE;NUGET</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0' OR '$(TargetFramework)' == 'net462'">
     <PackageReference Include="System.Data.SQLite" Version="1.0.110" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'MonoAndroid10.0'">
