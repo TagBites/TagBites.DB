@@ -107,6 +107,7 @@ namespace TagBites.DB
         internal DbLinkAdapter LinkAdapter { get; }
         internal string ConnectionString { get; }
 
+        public bool HasCurrentContext => CurrentContextKey != null;
         public IDbLinkContext CurrentConnectionContext => GetCurrentContext();
         public IDbLinkTransactionContext CurrentTransactionContext => CurrentConnectionContext?.TransactionContext;
 
