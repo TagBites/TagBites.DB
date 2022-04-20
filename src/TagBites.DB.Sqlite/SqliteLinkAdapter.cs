@@ -1,28 +1,16 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Data.Common;
-using System.Linq;
-using System.Text;
 using TagBites.Sql;
 using TagBites.Sql.Sqlite;
 
-#if MONOANDROID10_0 
-using Mono.Data.Sqlite;
-using SQLiteConnection = Mono.Data.Sqlite.SqliteConnection;
-using SQLiteConnectionStringBuilder = Mono.Data.Sqlite.SqliteConnectionStringBuilder;
-using SQLiteCommand = Mono.Data.Sqlite.SqliteCommand;
-using SQLiteParameter = Mono.Data.Sqlite.SqliteParameter;
-using SQLiteDataAdapter = Mono.Data.Sqlite.SqliteDataAdapter;
-#elif !NETCOREAPP3_1
-using Mono.Data.Sqlite;
-using SQLiteConnection = Mono.Data.Sqlite.SqliteConnection;
-using SQLiteConnectionStringBuilder = Mono.Data.Sqlite.SqliteConnectionStringBuilder;
-using SQLiteCommand = Mono.Data.Sqlite.SqliteCommand;
-using SQLiteParameter = Mono.Data.Sqlite.SqliteParameter;
-using SQLiteDataAdapter = Mono.Data.Sqlite.SqliteDataAdapter;
-#else
+#if NUGET
 using System.Data.SQLite;
+#else
+using Mono.Data.Sqlite;
+using SQLiteConnection = Mono.Data.Sqlite.SqliteConnection;
+using SQLiteConnectionStringBuilder = Mono.Data.Sqlite.SqliteConnectionStringBuilder;
+using SQLiteCommand = Mono.Data.Sqlite.SqliteCommand;
+using SQLiteParameter = Mono.Data.Sqlite.SqliteParameter;
+using SQLiteDataAdapter = Mono.Data.Sqlite.SqliteDataAdapter;
 #endif
 
 

@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 
 namespace TagBites.DB.Sqlite
 {
@@ -26,12 +22,10 @@ namespace TagBites.DB.Sqlite
                 if (directory != null)
                     Directory.CreateDirectory(directory);
 
-#if MONOANDROID10_0
-                Mono.Data.Sqlite.SqliteConnection.CreateFile(Database);
-#elif !NETCOREAPP3_1
-                Mono.Data.Sqlite.SqliteConnection.CreateFile(Database);
-#else
+#if NUGET
                 System.Data.SQLite.SQLiteConnection.CreateFile(Database);
+#else
+                Mono.Data.Sqlite.SqliteConnection.CreateFile(Database);
 #endif
             }
         }
