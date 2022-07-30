@@ -1,15 +1,16 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace TagBites.DB.Postgres
 {
     public sealed class PgSqlCursorManager : IDbCursorManager
     {
-        internal readonly object PoolSynchRoot = new();
-
-        private readonly List<PgSqlCursorConnectionContext> _connections = new List<PgSqlCursorConnectionContext>();
+        private readonly object _poolSynchRoot = new();
+        private readonly object _newConnectionSynchRoot = new();
+        private readonly List<PgSqlCursorConnectionContext> _connections = new();
 
         public IDbLinkProvider LinkProvider { get; }
         public bool IsActive
@@ -81,14 +82,8 @@ namespace TagBites.DB.Postgres
             return null;
         }
 
-        public IDbCursor CreateCursor(IQuerySource querySource)
-        {
-            return CreateCursor(querySource, null, null);
-        }
-        public IDbCursor CreateCursor(IQuerySource querySource, string searchColumn, object searchId)
-        {
-            return CreateCursor(querySource, null, searchColumn, searchId, null, null);
-        }
+        public IDbCursor CreateCursor(IQuerySource querySource) => CreateCursor(querySource, null, null);
+        public IDbCursor CreateCursor(IQuerySource querySource, string searchColumn, object searchId) => CreateCursor(querySource, null, searchColumn, searchId, null, null);
         public IDbCursor CreateCursor(IQuerySource querySource, IQuerySource queryCountSource, string searchColumn, object searchId, Action<IDbLink> beforeCreateAction, Action<IDbLink> cleanUpAction)
         {
             if (querySource == null)
@@ -96,95 +91,128 @@ namespace TagBites.DB.Postgres
 
             var timeout = TransactionTimeout;
 
-            var maxConnections = ActiveTransactionLimit > 0 ? Math.Min(ActiveTransactionLimit, LinkProvider.MaxPoolSize) : LinkProvider.MaxPoolSize;
+            var maxConnections = ActiveTransactionLimit > 0
+                ? Math.Min(ActiveTransactionLimit, LinkProvider.MaxPoolSize)
+                : LinkProvider.MaxPoolSize;
             if (timeout > 0 && maxConnections * 2 > LinkProvider.MaxPoolSize)
                 maxConnections = Math.Max(1, maxConnections / 2);
 
             // Create context
             PgSqlCursorConnectionContext context = null;
             var isNew = false;
+            var isWaiting = false;
 
-            lock (PoolSynchRoot)
+            while (true)
             {
-                // Existing context
-                List<PgSqlCursorConnectionContext> connections;
+                if (isWaiting)
+                    Thread.Yield();
 
-                lock (_connections)
-                    connections = _connections.ToList();
-
-                if (connections.Count > 0)
+                lock (_poolSynchRoot)
                 {
-                    if (connections.Count > 1)
-                        Shuffle(connections);
-
-                    // First free
-                    for (var i = connections.Count - 1; i >= 0; i--)
-                    {
-                        var connection = connections[i];
-
-                        // Inactive or waiting for timeout
-                        if (!connection.IsActive || timeout > 0 && connection.StartDateTime.AddMilliseconds(timeout / 2d) <= DateTime.Now)
-                        {
-                            connections.RemoveAt(i);
-                            continue;
-                        }
-
-                        // Free
-                        if (!connection.IsExecuting)
-                        {
-                            context = connection;
-                            break;
-                        }
-                    }
-
-                    // First active
-                    if (context == null && maxConnections > 0 && connections.Count >= maxConnections)
-                        context = connections.FirstOrDefault();
-                }
-
-                // Default context
-                if (context == null)
-                {
-                    context = new PgSqlCursorConnectionContext(this);
-                    isNew = true;
+                    // Existing context
+                    List<PgSqlCursorConnectionContext> connections;
 
                     lock (_connections)
-                        _connections.Add(context);
-                }
+                        connections = _connections.ToList();
 
-                // Pending
-                ++context.PendingCreateCursor;
+                    if (connections.Count > 0)
+                    {
+                        if (connections.Count > 1)
+                            Shuffle(connections);
+
+                        // First free
+                        for (var i = connections.Count - 1; i >= 0; i--)
+                        {
+                            var connection = connections[i];
+
+                            // New context without connection
+                            if (connection.IsNew)
+                                continue;
+
+                            // Inactive or waiting for timeout
+                            if (!connection.IsActive || timeout > 0 && connection.StartDateTime.AddMilliseconds(timeout / 2d) <= DateTime.Now)
+                            {
+                                connections.RemoveAt(i);
+                                continue;
+                            }
+
+                            // Free
+                            if (!connection.IsExecuting)
+                            {
+                                context = connection;
+                                break;
+                            }
+                        }
+
+                        // First active
+                        if (context == null && maxConnections > 0 && connections.Count >= maxConnections)
+                            context = connections.FirstOrDefault();
+                    }
+
+                    // New context
+                    if (context == null)
+                    {
+                        // Maximum number of connections reached
+                        if (maxConnections > 0)
+                            lock (_connections)
+                                if (_connections.Count >= maxConnections * (timeout > 0 ? 2 : 1))
+                                {
+                                    isWaiting = true;
+                                    continue;
+                                }
+
+                        //
+                        context = new PgSqlCursorConnectionContext(this);
+                        isNew = true;
+
+                        lock (_connections)
+                            _connections.Add(context);
+                    }
+
+                    // Pending
+                    ++context.PendingCreateCursor;
+                    break;
+                }
             }
 
-            // Execute
-            lock (context.SynchRoot)
-            {
-                // Create connection outside of PoolSynchRoot to await deadlock when connection pool is exceeded in link provider
-                context.TryCreateConnectionInternal();
+            // Create new connection outside of PoolSynchRoot to await deadlock when connection pool is exceeded in link provider
+            if (context.IsNew)
+                TryCreateConnection(context);
 
+            // Execute
+            try
+            {
                 var cursor = context.CreateCursor(querySource, searchColumn, searchId, beforeCreateAction, cleanUpAction);
 
-                if (timeout > 0 && isNew)
+                if (isNew && timeout > 0)
                 {
                     Task.Run(async () =>
                     {
-                        waiting:
-                        await Task.Delay(timeout).ConfigureAwait(false);
-                        timeout = Math.Min(timeout, Math.Max(timeout / 10, 1000));
-
-                        lock (PoolSynchRoot)
+                        while (true)
                         {
-                            while (context.PendingCreateCursor > 0)
-                                goto waiting; // workaround for awaiting in lock
+                            await Task.Delay(timeout).ConfigureAwait(false);
+                            timeout = Math.Min(timeout, Math.Max(timeout / 10, 1000));
 
-                            context.PendingDisposeInternal();
+                            lock (_poolSynchRoot)
+                            {
+                                if (context.PendingCreateCursor > 0)
+                                    continue;
+
+                                context.PendingDisposeInternal();
+                            }
+
+                            context.Dispose();
+                            break;
                         }
-
-                        context.Dispose();
                     });
                 }
 
                 return cursor;
+            }
+            finally
+            {
+                lock (_poolSynchRoot)
+                    --context.PendingCreateCursor;
             }
         }
 
@@ -199,6 +227,23 @@ namespace TagBites.DB.Postgres
 
                     connection.Dispose();
                 }
+            }
+        }
+
+        private void TryCreateConnection(PgSqlCursorConnectionContext context)
+        {
+            lock (_newConnectionSynchRoot)
+                context.TryCreateConnection();
+        }
+        internal bool ShouldDispose(PgSqlCursorConnectionContext context)
+        {
+            lock (_poolSynchRoot)
+            {
+                if (context.PendingCreateCursor > 0)
+                    return false;
+
+                context.PendingDisposeInternal();
+                return true;
             }
         }
         internal void OnConnectionContextDisposed(PgSqlCursorConnectionContext context)
@@ -222,7 +267,7 @@ namespace TagBites.DB.Postgres
             var random = new Random();
             var n = items.Count;
 
-            for (var i = 0; i < (n - 1); i++)
+            for (var i = 0; i < n - 1; i++)
             {
                 var r = i + random.Next(n - i);
                 T t = items[r];
