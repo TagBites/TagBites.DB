@@ -8,30 +8,34 @@ namespace TagBites.DB.Postgres
     {
         private static int s_nextCursorIndex;
 
-        internal readonly object SynchRoot = new();
-        internal int PendingCreateCursor;
-
-        private PgSqlCursorManager _manager;
+        private readonly object _synchRoot = new();
         private IDbLink _link;
         private IDbLinkTransaction _transaction;
         private readonly List<PgSqlCursor> _cursors = new();
         private bool _disposed;
 
-        IDbLinkProvider IDbCursorOwner.LinkProvider => _manager.LinkProvider;
-        public PgSqlCursorManager Manager => _manager;
-        public bool IsActive => (_link == null || _link?.TransactionStatus == DbLinkTransactionStatus.Open) && !_disposed;
-        public bool IsExecuting => _link?.ConnectionContext?.IsExecuting == true;
-        public int CursorCount => IsActive ? _cursors.Count : 0;
+        internal int PendingCreateCursor { get; set; }
+
+        IDbLinkProvider IDbCursorOwner.LinkProvider => Manager.LinkProvider;
+        public PgSqlCursorManager Manager { get; private set; }
+        public bool IsNew { get; private set; } = true;
+        public bool IsActive { get; private set; }
+        public bool IsExecuting => IsActive && _link?.ConnectionContext?.IsExecuting == true;
+        public int CursorCount
+        {
+            get
+            {
+                if (IsActive)
+                    lock (_cursors)
+                        return _cursors.Count;
+
+                return 0;
+            }
+        }
         public DateTime StartDateTime { get; } = DateTime.Now;
 
-        public PgSqlCursorConnectionContext(PgSqlCursorManager manager)
-        {
-            _manager = manager;
-        }
-        ~PgSqlCursorConnectionContext()
-        {
-            Dispose(false);
-        }
+        public PgSqlCursorConnectionContext(PgSqlCursorManager manager) => Manager = manager;
+        ~PgSqlCursorConnectionContext() => Dispose(false);
 
 
         public bool ContainsCursor(string cursorName) => GetCursor(cursorName) != null;
@@ -42,22 +46,20 @@ namespace TagBites.DB.Postgres
 
             cursorName = cursorName.ToLower();
 
-            lock (SynchRoot)
-            {
-                if (!IsActive)
-                    return null;
+            if (!IsActive)
+                return null;
 
+            lock (_cursors)
                 foreach (var c in _cursors)
                     if (c.Name == cursorName)
                         return c;
-            }
 
             return null;
         }
 
         public PgSqlCursor CreateCursor(IQuerySource querySource, string searchColumn, object searchId, Action<IDbLink> beforeCreateAction, Action<IDbLink> cleanUpAction)
         {
-            lock (SynchRoot)
+            lock (_synchRoot)
             {
                 ThrowIfNotActive();
 
@@ -90,7 +92,9 @@ namespace TagBites.DB.Postgres
                         searchIndex,
                         cleanUpAction);
 
-                    _cursors.Add(cursor);
+                    lock (_cursors)
+                        _cursors.Add(cursor);
+
                     return cursor;
                 }
                 catch
@@ -98,24 +102,20 @@ namespace TagBites.DB.Postgres
                     Dispose();
                     throw;
                 }
-                finally
-                {
-                    var manager = Manager;
-                    if (manager != null)
-                        lock (manager.PoolSynchRoot)
-                            --PendingCreateCursor;
-                }
             }
         }
         public QueryResult FetchCursor(PgSqlCursor cursor, int index, int count)
         {
+            if (cursor.ConnectionContext != this)
+                throw new ArgumentException("Cursor is not owned by this context.", nameof(cursor));
+
             if (index < 0 || count < 0 || (index + count) > cursor.RecordCount)
                 throw new IndexOutOfRangeException();
 
             if (cursor.RecordCount == 0 || count == 0)
                 return QueryResult.Empty;
 
-            lock (SynchRoot)
+            lock (_synchRoot)
             {
                 ThrowIfNotActive();
 
@@ -159,38 +159,53 @@ namespace TagBites.DB.Postgres
         }
         public void CloseCursor(PgSqlCursor cursor)
         {
-            lock (SynchRoot)
-            {
+            lock (_cursors)
                 if (!_cursors.Remove(cursor))
                     return;
 
-                ThrowIfNotActive();
-
-                try
+            lock (_synchRoot)
+            {
+                if (IsActive)
                 {
-                    _link.ExecuteNonQuery($"CLOSE {cursor.Name}");
-                    cursor.CleanUpAction?.Invoke(_link);
-                }
-                catch
-                {
-                    Dispose();
-                    throw;
+                    try
+                    {
+                        _link.ExecuteNonQuery($"CLOSE {cursor.Name}");
+                        cursor.CleanUpAction?.Invoke(_link);
+                    }
+                    catch
+                    {
+                        Dispose();
+                        throw;
+                    }
                 }
 
-                var poolSynchRoot = Manager?.PoolSynchRoot;
-                if (poolSynchRoot == null)
+                if (_cursors.Count > 0)
                     return;
 
-                lock (poolSynchRoot)
-                {
-                    if (_cursors.Count > 0 || PendingCreateCursor > 0)
-                        return;
-
-                    _disposed = true;
-                }
+                if (Manager?.ShouldDispose(this) != true)
+                    return;
             }
 
             Dispose();
+        }
+
+        internal void TryCreateConnection()
+        {
+            lock (_synchRoot)
+            {
+                if (_disposed)
+                    throw new ObjectDisposedException(nameof(PgSqlCursorConnectionContext));
+
+                if (_link != null)
+                    return;
+
+                _link = Manager.LinkProvider.CreateLink(DbLinkCreateOption.RequiresNew);
+                _transaction = ((PgSqlLinkContext)_link.ConnectionContext).BeginForCursorManager();
+                _transaction.Context.TransactionClosed += (_, _) => IsActive = false;
+
+                IsActive = true;
+                IsNew = false;
+            }
         }
 
         public void Dispose()
@@ -200,43 +215,43 @@ namespace TagBites.DB.Postgres
         }
         private void Dispose(bool disposing)
         {
-            _disposed = true;
-            _cursors.Clear();
+            PendingDisposeInternal();
 
-            if (_manager != null)
-                try
-                { _manager?.OnConnectionContextDisposed(this); }
-                catch { /* ignored */ }
-                finally { _manager = null; }
+            lock (_cursors)
+                _cursors.Clear();
 
-            if (_transaction != null)
-                try
-                { _transaction?.Dispose(); }
-                catch { /* ignored */ }
-                finally { _transaction = null; }
+            lock (_synchRoot)
+            {
+                if (Manager != null)
+                    try
+                    { Manager?.OnConnectionContextDisposed(this); }
+                    catch { /* ignored */ }
+                    finally { Manager = null; }
 
-            if (_link != null)
-                try
-                { _link?.Dispose(); }
-                catch { /* ignored */ }
-                finally { _link = null; }
+                if (_transaction != null)
+                    try
+                    { _transaction?.Dispose(); }
+                    catch { /* ignored */ }
+                    finally { _transaction = null; }
+
+                if (_link != null)
+                    try
+                    { _link?.Dispose(); }
+                    catch { /* ignored */ }
+                    finally { _link = null; }
+            }
         }
+        internal void PendingDisposeInternal()
+        {
+            _disposed = true;
+            IsActive = false;
+            IsNew = false;
+        }
+
         private void ThrowIfNotActive()
         {
             if (!IsActive)
                 throw new ObjectDisposedException("Cursor connection is closed.");
         }
-
-        internal void TryCreateConnectionInternal()
-        {
-            ThrowIfNotActive();
-
-            if (_link != null)
-                return;
-
-            _link = Manager.LinkProvider.CreateLink(DbLinkCreateOption.RequiresNew);
-            _transaction = ((PgSqlLinkContext)_link.ConnectionContext).BeginForCursorManager();
-        }
-        internal void PendingDisposeInternal() => _disposed = true;
     }
 }
