@@ -7,7 +7,6 @@ on:
 
 jobs:
   publish:
-    if: ${{ !env.ACT }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
