@@ -199,9 +199,30 @@ namespace TagBites.DB.Postgres
                 if (_link != null)
                     return;
 
-                _link = Manager.LinkProvider.CreateLink(DbLinkCreateOption.RequiresNew);
-                _transaction = ((PgSqlLinkContext)_link.ConnectionContext).BeginForCursorManager();
-                _transaction.Context.TransactionClosed += (_, _) => IsActive = false;
+                try
+                {
+                    _link = Manager.LinkProvider.CreateLink(DbLinkCreateOption.RequiresNew);
+                    _transaction = ((PgSqlLinkContext)_link.ConnectionContext).BeginForCursorManager();
+                    _transaction.Context.TransactionClosed += (_, _) => IsActive = false;
+                }
+                catch
+                {
+                    try
+                    {
+                        _link?.Dispose();
+                    }
+                    catch
+                    {
+                        // ignored
+                    }
+                    finally
+                    {
+                        _link = null;
+                        _transaction = null;
+                    }
+
+                    throw;
+                }
 
                 IsActive = true;
                 IsNew = false;
