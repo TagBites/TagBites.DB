@@ -187,23 +187,28 @@ namespace TagBites.DB
                             context = m_activeConnections.FirstOrDefault(x => x.Key == currentContextKey);
 
                     // Use existing context
-                    if (useSystemTransactions && context != null)
+                    if (context != null)
                     {
-                        var linkTransaction = context.TransactionContextInternal?.SystemTransactionInternal;
-                        System.Transactions.TransactionScope transactionScope = null;
-
-                        if (linkTransaction != null && transaction != linkTransaction)
+                        if (useSystemTransactions)
                         {
-                            if (Configuration.LinkCreateOnDifferentSystemTransaction == DbLinkCreateOnDifferentSystemTransaction.CreateLinkWithNewContextOrAssigedToCurrentTransaction)
-                                context = null;
-                            else if (Configuration.LinkCreateOnDifferentSystemTransaction == DbLinkCreateOnDifferentSystemTransaction.TryToMoveTransactionOrThrowException && transaction == null)
-                                transactionScope = new System.Transactions.TransactionScope(linkTransaction.DependentClone(System.Transactions.DependentCloneOption.BlockCommitUntilComplete));
-                            else
-                                throw new Exception("This link is already associated with different transaction.");
-                        }
+                            var linkTransaction = context.TransactionContextInternal?.SystemTransactionInternal;
+                            System.Transactions.TransactionScope transactionScope = null;
 
-                        if (context != null && transactionScope != null)
-                            switcher = new DbLinkContextSwitch(context, DbLinkContextSwitchMode.Activate) { TransactionScope = transactionScope };
+                            if (linkTransaction != null && transaction != linkTransaction)
+                            {
+                                if (Configuration.LinkCreateOnDifferentSystemTransaction == DbLinkCreateOnDifferentSystemTransaction.CreateLinkWithNewContextOrAssigedToCurrentTransaction)
+                                    context = null;
+                                else if (Configuration.LinkCreateOnDifferentSystemTransaction == DbLinkCreateOnDifferentSystemTransaction.TryToMoveTransactionOrThrowException && transaction == null)
+                                    transactionScope = new System.Transactions.TransactionScope(linkTransaction.DependentClone(System.Transactions.DependentCloneOption.BlockCommitUntilComplete));
+                                else
+                                    throw new Exception("This link is already associated with different transaction.");
+                            }
+
+                            if (context != null && transactionScope != null)
+                                switcher = new DbLinkContextSwitch(context, DbLinkContextSwitchMode.Activate) { TransactionScope = transactionScope };
+                        }
+                        else if (context.IsExecuting)
+                            context = null;
                     }
                 }
 
