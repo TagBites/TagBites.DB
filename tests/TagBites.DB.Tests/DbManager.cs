@@ -1,6 +1,7 @@
 using TagBites.DB;
 using TagBites.DB.Npgsql;
 using TagBites.DB.Postgres;
+using TagBites.DB.SqlServer;
 
 namespace TagBites
 {
@@ -25,6 +26,11 @@ namespace TagBites
             {
                 Configuration = { UseSystemTransactions = false, ImplicitCreateTransactionScopeIfNotExists = true }
             };
+        }
+
+        public static SqlServerLinkProvider CreateSqlServerProvider()
+        {
+            return new SqlServerLinkProvider("Server=localhost\\SQLEXPRESS;Database=master;Trusted_Connection=True;");
         }
     }
 }
