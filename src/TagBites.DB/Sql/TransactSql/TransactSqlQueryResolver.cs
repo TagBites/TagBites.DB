@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace TagBites.Sql.TransactSql
 {
@@ -10,6 +10,13 @@ namespace TagBites.Sql.TransactSql
                 expression = (SqlExpressionFunctionCall)SqlFunction.TrimStart(expression);
 
             base.VisitExpression(expression, builder);
+        }
+
+        protected override string GetCastString(object value, string typeName)
+        {
+            return value is string
+                ? $"CONVERT({typeName}, '{value}')"
+                : $"CONVERT({typeName}, {value})";
         }
 
         protected override string GetBuildInFunctionName(string functionName)

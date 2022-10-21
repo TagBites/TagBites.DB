@@ -1,5 +1,6 @@
 using TagBites.DB;
 using TagBites.DB.Postgres;
+using TagBites.DB.SqlServer;
 using TagBites.Sql;
 
 namespace TagBites
@@ -25,6 +26,8 @@ namespace TagBites
                 }
             }
         }
+        public SqlServerLinkProvider SqlServerProvider { get; set; } = DbManager.CreateSqlServerProvider();
+
         public DbLinkProvider DefaultProvider => NpgsqlProvider;
 
 
