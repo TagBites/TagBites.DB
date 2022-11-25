@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using TagBites.DB.Configuration;
@@ -109,6 +109,7 @@ namespace TagBites.DB
         {
             return new DataTableProvider(table);
         }
+        internal static QueryResult Create(IList<string> columns, IDictionary<string, int> namesMap, IList<object[]> rows) => new RowsQueryResult(columns, namesMap, rows);
 
         private class EmptyProvider : QueryResult
         {
@@ -136,6 +137,28 @@ namespace TagBites.DB
             public override int GetColumnIndex(string columnName) => _data.Columns.IndexOf(columnName);
             public override string GetColumnName(int column) => _data.Columns[column].ColumnName;
             protected override object GetValueCore(int row, int column) => _data.Rows[row][column];
+        }
+        private class RowsQueryResult : QueryResult
+        {
+            private readonly IDictionary<string, int> _namesMap;
+            private readonly IList<string> _columns;
+            private readonly IList<object[]> _rows;
+
+            public override int RowCount => _rows.Count;
+            public override int ColumnCount => _columns.Count;
+
+            public RowsQueryResult(IList<string> columns, IDictionary<string, int> namesMap, IList<object[]> rows)
+            {
+                _namesMap = namesMap;
+                _columns = columns;
+                _rows = rows;
+            }
+
+
+            public override int GetColumnIndex(string columnName) => _namesMap.TryGetValue(columnName.ToLower(), out var index) ? index : -1;
+            public override string GetColumnName(int column) => _columns[column];
+
+            protected override object GetValueCore(int row, int column) => _rows[row][column];
         }
     }
 }

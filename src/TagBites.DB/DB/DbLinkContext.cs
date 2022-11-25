@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
@@ -419,15 +419,12 @@ namespace TagBites.DB
 
                 return ExecuteInner(query, (IQuerySource q, out int rowCount) =>
                 {
-                    using (var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q))
-                    using (var adapter = _provider.LinkAdapter.CreateDataAdapter(command))
-                    {
-                        var dt = new DataTable();
-                        adapter.Fill(dt);
-                        rowCount = dt.Rows.Count;
+                    using var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q);
+                    using var reader = command.ExecuteReader();
 
-                        return QueryResult.Create(dt);
-                    }
+                    var result = reader.ReadResult();
+                    rowCount = result.RowCount;
+                    return result;
                 });
             }
         }
@@ -445,8 +442,8 @@ namespace TagBites.DB
 
                 return ExecuteInner(query, q =>
                 {
-                    using (var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q))
-                        return command.ExecuteScalar();
+                    using var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q);
+                    return command.ExecuteScalar();
                 });
             }
         }
@@ -468,25 +465,16 @@ namespace TagBites.DB
         {
             return ExecuteInner(query, (IQuerySource q, out int rowCount) =>
             {
-                using (var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q))
-                using (var adapter = _provider.LinkAdapter.CreateDataAdapter(command))
-                {
-                    using (var set = new DataSet())
-                    {
-                        adapter.Fill(set);
+                using var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q);
+                using var reader = command.ExecuteReader();
 
-                        var results = new QueryResult[set.Tables.Count];
-                        rowCount = 0;
+                var results = reader.ReadBatchResult();
+                rowCount = 0;
 
-                        for (int i = 0; i < set.Tables.Count; i++)
-                        {
-                            results[i] = QueryResult.Create(set.Tables[i]);
-                            rowCount += results[i].RowCount;
-                        }
+                for (var i = 0; i < results.Length; i++)
+                    rowCount += results[i].RowCount;
 
-                        return results;
-                    }
-                }
+                return results;
             });
         }
         public DelayedBatchQueryResult DelayedBatchExecute(IQuerySource query)
@@ -537,15 +525,6 @@ namespace TagBites.DB
                 connectionProvider(_connection);
                 return 0;
             });
-        }
-
-        internal void OnQuery(string query)
-        {
-            if (_queryExecuting != null && !string.IsNullOrWhiteSpace(query))
-            {
-                var e = new DbLinkQueryExecutingEventArgs(new Query(query));
-                _queryExecuting(this, e);
-            }
         }
 
         internal void AttachInternal()

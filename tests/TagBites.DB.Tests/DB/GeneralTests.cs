@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -381,6 +381,23 @@ namespace TagBites.DB
                     Assert.Equal(link.ConnectionContext, link2.ConnectionContext);
                 }
             }
+        }
+
+        [Theory]
+        [InlineData("select 1 as a, 2 as a, 3 as a", "a", "a1", "a2")]
+        [InlineData("select 1 as a, 2 as \"A\", 3 as a", "a", "A1", "a2")]
+        [InlineData("select 1 as a, 2 as \"A1\", 3 as a", "a", "A1", "a2")]
+        [InlineData("select 1 as a, 2 as a, 3 as a1", "a", "a2", "a1")]
+        [InlineData("select 1 as a, 2 as \"A\", 3 as a1", "a", "A2", "a1")]
+        public void UniqueColumnNames(string query, string name1, string name2, string name3)
+        {
+            using var link = CreateLink();
+
+            var result = link.Execute(query);
+
+            Assert.Equal(name1, result.GetColumnName(0));
+            Assert.Equal(name2, result.GetColumnName(1));
+            Assert.Equal(name3, result.GetColumnName(2));
         }
     }
 }
