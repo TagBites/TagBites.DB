@@ -1,22 +1,19 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
+using System.Threading;
 using TagBites.Collections;
 
 namespace TagBites.DB
 {
     internal class DelayedBatchQueryQueue
     {
-        private readonly IDbLinkContext m_context;
-        private List<DelayedBatchQueryResult> m_queries = new List<DelayedBatchQueryResult>();
+        private readonly DbLinkContext m_context;
+        private List<DelayedBatchQueryResult> m_queries = new();
 
         public bool IsEmpty => m_queries.Count == 0;
         public object SynchRoot => m_context.SynchRoot;
 
-        public DelayedBatchQueryQueue(IDbLinkContext context)
-        {
-            m_context = context;
-        }
+        public DelayedBatchQueryQueue(DbLinkContext context) => m_context = context;
 
 
         public DelayedBatchQueryResult Add(IQuerySource source)
@@ -34,8 +31,7 @@ namespace TagBites.DB
             if (m_queries.Count == 0)
                 return;
 
-            var items = m_queries;
-            m_queries = new List<DelayedBatchQueryResult>();
+            var items = Interlocked.Exchange(ref m_queries, new List<DelayedBatchQueryResult>());
 
             // Prepare query
             var queries = new List<Query>(items.Count * 2 + 1);
@@ -63,20 +59,13 @@ namespace TagBites.DB
             var batchQuery = Query.Concat(queries);
 
             // Execute
-            m_context.ExecuteOnAdapter(batchQuery, adapter =>
+            m_context.ExecuteOnReader(batchQuery, x =>
             {
                 QueryResult[] results;
-                int returnValue;
 
                 try
                 {
-                    using var set = new DataSet();
-                    returnValue = adapter.Fill(set);
-
-                    results = new QueryResult[set.Tables.Count];
-
-                    for (var i = 0; i < set.Tables.Count; i++)
-                        results[i] = QueryResult.Create(set.Tables[i]);
+                    results = x.ReadBatchResult();
                 }
                 catch (Exception e)
                 {
@@ -111,7 +100,7 @@ namespace TagBites.DB
 
                 items[currentItemIndex].SetResult(new SpanCollection<QueryResult>(results, currentResultIndex, currentResultCount), null, false);
 
-                return returnValue;
+                return results;
             });
         }
         public void Cancel()
@@ -119,8 +108,7 @@ namespace TagBites.DB
             if (m_queries.Count == 0)
                 return;
 
-            var items = m_queries;
-            m_queries = new List<DelayedBatchQueryResult>();
+            var items = Interlocked.Exchange(ref m_queries, new List<DelayedBatchQueryResult>());
 
             foreach (var item in items)
                 item.SetResult(null, null, true);
