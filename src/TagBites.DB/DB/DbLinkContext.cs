@@ -400,10 +400,15 @@ namespace TagBites.DB
         {
             Guard.ArgumentNotNull(query, "query");
 
-            return ExecuteInner(query, q =>
+            return ExecuteInner(query, (IQuerySource q, out int? rowCount, out int? recordsAffected) =>
             {
                 using (var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q))
-                    return command.ExecuteNonQuery();
+                {
+                    rowCount = null;
+                    recordsAffected = command.ExecuteNonQuery();
+                }
+
+                return recordsAffected.Value;
             });
         }
 
@@ -417,13 +422,14 @@ namespace TagBites.DB
                     return result.Result;
                 }
 
-                return ExecuteInner(query, (IQuerySource q, out int rowCount) =>
+                return ExecuteInner(query, (IQuerySource q, out int? rowCount, out int? recordsAffected) =>
                 {
                     using var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q);
                     using var reader = command.ExecuteReader();
 
                     var result = reader.ReadResult();
                     rowCount = result.RowCount;
+                    recordsAffected = reader.RecordsAffected;
                     return result;
                 });
             }
@@ -440,8 +446,11 @@ namespace TagBites.DB
                     return result.Result.ToScalar();
                 }
 
-                return ExecuteInner(query, q =>
+                return ExecuteInner(query, (IQuerySource q, out int? rowCount, out int? recordsAffected) =>
                 {
+                    rowCount = null;
+                    recordsAffected = null;
+
                     using var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q);
                     return command.ExecuteScalar();
                 });
@@ -463,13 +472,14 @@ namespace TagBites.DB
         }
         internal QueryResult[] BatchExecuteInternal(IQuerySource query)
         {
-            return ExecuteInner(query, (IQuerySource q, out int rowCount) =>
+            return ExecuteInner(query, (IQuerySource q, out int? rowCount, out int? recordsAffected) =>
             {
                 using var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q);
                 using var reader = command.ExecuteReader();
 
                 var results = reader.ReadBatchResult();
                 rowCount = 0;
+                recordsAffected = reader.RecordsAffected;
 
                 for (var i = 0; i < results.Length; i++)
                     rowCount += results[i].RowCount;
@@ -498,11 +508,16 @@ namespace TagBites.DB
         {
             Guard.ArgumentNotNull(query, "query");
 
-            return ExecuteInner(query, q =>
+            return ExecuteInner(query, (IQuerySource q, out int? rowCount, out int? recordsAffected) =>
             {
+                rowCount = null;
+                recordsAffected = null;
+
                 using (var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q))
                 using (var adapter = _provider.LinkAdapter.CreateDataAdapter(command))
+                {
                     return executor(adapter);
+                }
             });
         }
         [EditorBrowsable(EditorBrowsableState.Never)]
@@ -510,11 +525,16 @@ namespace TagBites.DB
         {
             Guard.ArgumentNotNull(query, "query");
 
-            return ExecuteInner(query, q =>
+            return ExecuteInner(query, (IQuerySource q, out int? rowCount, out int? recordsAffected) =>
             {
                 using (var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q))
                 using (var reader = command.ExecuteReader(CommandBehavior.SequentialAccess))
-                    return executor(reader);
+                {
+                    var result = executor(reader);
+                    rowCount = null;
+                    recordsAffected = reader.RecordsAffected;
+                    return result;
+                }
             });
         }
 
@@ -931,38 +951,6 @@ namespace TagBites.DB
             }
         }
 
-        protected T ExecuteInner<T>(IQuerySource source, Func<IQuerySource, T> action)
-        {
-            return ExecuteInner(() =>
-            {
-                if (_queryExecuting != null)
-                {
-                    var e = new DbLinkQueryExecutingEventArgs(source);
-                    _queryExecuting(this, e);
-                    source = e.Query;
-                }
-
-                if (_queryExecuted == null)
-                    return action(source);
-
-                var time = DateTime.UtcNow;
-                Exception ex = null;
-
-                try
-                {
-                    return action(source);
-                }
-                catch (Exception e)
-                {
-                    ex = e;
-                    throw;
-                }
-                finally
-                {
-                    _queryExecuted(this, new DbLinkQueryExecutedEventArgs(source, DateTime.UtcNow - time, ex));
-                }
-            });
-        }
         private T ExecuteInner<T>(IQuerySource source, ExecuteQueryWithRowCountDelegate<T> action)
         {
             return ExecuteInner(() =>
@@ -975,15 +963,16 @@ namespace TagBites.DB
                 }
 
                 if (_queryExecuted == null)
-                    return action(source, out _);
+                    return action(source, out _, out _);
 
                 var time = DateTime.UtcNow;
                 Exception ex = null;
-                var rowCount = 0;
+                int? rowCount = null;
+                int? recordsAffected = 0;
 
                 try
                 {
-                    return action(source, out rowCount);
+                    return action(source, out rowCount, out recordsAffected);
                 }
                 catch (Exception e)
                 {
@@ -992,7 +981,7 @@ namespace TagBites.DB
                 }
                 finally
                 {
-                    _queryExecuted(this, new DbLinkQueryExecutedEventArgs(source, DateTime.UtcNow - time, ex, ex != null ? (int?)null : rowCount));
+                    _queryExecuted(this, new DbLinkQueryExecutedEventArgs(source, DateTime.UtcNow - time, ex, ex != null ? null : rowCount, ex != null ? null : recordsAffected));
                 }
             });
         }
@@ -1302,7 +1291,7 @@ namespace TagBites.DB
 
         void IDisposable.Dispose() => throw new NotSupportedException("Can not call dispose!");
 
-        private delegate T ExecuteQueryWithRowCountDelegate<out T>(IQuerySource query, out int rowCount);
+        private delegate T ExecuteQueryWithRowCountDelegate<out T>(IQuerySource query, out int? rowCount, out int? recordsAffected);
 
         private class Enlistment : IEnlistmentNotification
         {
