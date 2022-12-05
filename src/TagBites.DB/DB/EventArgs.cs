@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using TagBites.Utils;
 
 namespace TagBites.DB
@@ -124,13 +124,15 @@ namespace TagBites.DB
         public TimeSpan Duration { get; }
         public Exception Exception { get; }
         public int? RowCount { get; }
+        public int? RecordsAffected { get; }
 
-        public DbLinkQueryExecutedEventArgs(IQuerySource query, TimeSpan duration, Exception exception, int? rowCount = null)
+        public DbLinkQueryExecutedEventArgs(IQuerySource query, TimeSpan duration, Exception exception, int? rowCount, int? recordsAffected)
         {
             Query = query;
             Duration = duration;
             Exception = exception;
             RowCount = rowCount;
+            RecordsAffected = recordsAffected >= 0 ? recordsAffected : null;
         }
     }
 }
