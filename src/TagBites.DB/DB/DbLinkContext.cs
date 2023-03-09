@@ -1083,6 +1083,17 @@ namespace TagBites.DB
                             // Transaction
                             if (!_suppressTransactionBegin)
                             {
+                                // Execute delayed batch
+                                _suppressTransactionBegin = true;
+                                try
+                                {
+                                    _batchQueue.Flush();
+                                }
+                                finally
+                                {
+                                    _suppressTransactionBegin = false;
+                                }
+
                                 // Enlist transaction
                                 if (_transactionContext == null && _provider.Configuration.UseSystemTransactions)
                                 {
@@ -1092,7 +1103,7 @@ namespace TagBites.DB
                                 }
 
                                 // Start transaction
-                                if (_transactionContext != null && _transactionContext.Status == DbLinkTransactionStatus.Pending)
+                                if (_transactionContext is { Status: DbLinkTransactionStatus.Pending })
                                 {
                                     // Before Begin
                                     if (_transactionBeginning != null)
