@@ -496,7 +496,7 @@ namespace TagBites.DB
                 var status = TransactionStatus;
                 if (status == DbLinkTransactionStatus.Committing || status == DbLinkTransactionStatus.RollingBack)
                     throw new Exception("Can not execute query while committing or rolling back.");
-                if (status == DbLinkTransactionStatus.Pending)
+                if (status == DbLinkTransactionStatus.Pending && !_suppressTransactionBegin)
                     Force();
 
                 return _batchQueue.Add(query);
