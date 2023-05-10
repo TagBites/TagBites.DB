@@ -23,10 +23,14 @@ public class SqlServerLinkAdapter : DbLinkAdapter
             if (sb.ContainsKey(key))
                 sb[key] = arguments[key];
 
-        int port = arguments.Port;
-        sb.DataSource = port > 0 ? arguments.Host + ',' + DefaultPort : arguments.Host;
+        if (string.IsNullOrEmpty(sb.DataSource))
+        {
+            var port = arguments.Port;
+            sb.DataSource = port > 0 ? arguments.Host + ',' + DefaultPort : arguments.Host;
+        }
 
-        sb.InitialCatalog = arguments.Database;
+        sb.InitialCatalog = arguments["initial catalog"] ?? arguments.Database;
+
         if (!string.IsNullOrWhiteSpace(arguments.Username))
             sb.UserID = arguments.Username;
 
