@@ -30,7 +30,7 @@ namespace TagBites
 
         public static SqlServerLinkProvider CreateSqlServerProvider()
         {
-            return new SqlServerLinkProvider("Server=localhost\\SQLEXPRESS;Database=master;Trusted_Connection=True;");
+            return new SqlServerLinkProvider("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=master;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
         }
     }
 }
