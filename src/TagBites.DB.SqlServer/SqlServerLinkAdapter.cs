@@ -1,5 +1,5 @@
+using Microsoft.Data.SqlClient;
 using System.Data.Common;
-using System.Data.SqlClient;
 using TagBites.Sql;
 using TagBites.Sql.TransactSql;
 
