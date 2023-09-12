@@ -1,9 +1,8 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
-using System.Text;
 using TagBites.Sql;
 using TagBites.Utils;
 using static TagBites.Sql.SqlExpression;
@@ -23,21 +22,16 @@ namespace TagBites.DB.Entity
         };
 
 
-        public static SqlQuerySelect CreateSelectQuery<T>() where T : class
+        public static SqlQuerySelect CreateSelectQuery<T>() where T : class => CreateSelectQuery(typeof(T), null, null);
+        public static SqlQuerySelect CreateSelectQuery<T>(IList<string> properties, bool excludeProperties = false) where T : class => CreateSelectQuery(typeof(T), null, properties, excludeProperties);
+        public static SqlQuerySelect CreateSelectQuery<T>(IList recordsKeys) where T : class => CreateSelectQuery(typeof(T), recordsKeys, null);
+        public static SqlQuerySelect CreateSelectQuery<T>(IList recordsKeys, IList<string> properties, bool excludeProperties = false) where T : class => CreateSelectQuery(typeof(T), recordsKeys, properties, excludeProperties);
+        public static SqlQuerySelect CreateSelectQuery(Type entityType) => CreateSelectQuery(entityType, null, null);
+        public static SqlQuerySelect CreateSelectQuery(Type entityType, IList<string> properties, bool excludeProperties = false) => CreateSelectQuery(entityType, null, properties, excludeProperties);
+        public static SqlQuerySelect CreateSelectQuery(Type entityType, IList recordsKeys) => CreateSelectQuery(entityType, recordsKeys, null);
+        public static SqlQuerySelect CreateSelectQuery(Type entityType, IList recordsKeys, IList<string> properties, bool excludeProperties = false)
         {
-            return CreateSelectQuery<T>(null, null);
-        }
-        public static SqlQuerySelect CreateSelectQuery<T>(IList<string> properties, bool excludeProperties = false) where T : class
-        {
-            return CreateSelectQuery<T>(null, properties, excludeProperties);
-        }
-        public static SqlQuerySelect CreateSelectQuery<T>(IList recordsKeys) where T : class
-        {
-            return CreateSelectQuery<T>(recordsKeys, null);
-        }
-        public static SqlQuerySelect CreateSelectQuery<T>(IList recordsKeys, IList<string> properties, bool excludeProperties = false) where T : class
-        {
-            var table = EntityTableInfo.GetTableByType(typeof(T));
+            var table = EntityTableInfo.GetTableByType(entityType);
 
             var q = new SqlQuerySelect();
             var t = q.From.Add(table.TableFullName);
@@ -54,15 +48,17 @@ namespace TagBites.DB.Entity
             return q;
         }
 
-        public static SqlQueryValues CreateValuesQuery<T>(IList<T> entities) where T : class
-        {
-            return CreateValuesQuery(entities, null);
-        }
+        public static SqlQueryValues CreateValuesQuery<T>(IList<T> entities) where T : class => CreateValuesQuery(typeof(T), entities, null);
         public static SqlQueryValues CreateValuesQuery<T>(IList<T> entities, IList<string> properties, bool excludeProperties = false) where T : class
+        {
+            return CreateValuesQuery(typeof(T), entities, properties, excludeProperties);
+        }
+        public static SqlQueryValues CreateValuesQuery(Type entityType, IEnumerable entities) => CreateValuesQuery(entityType, entities, null);
+        public static SqlQueryValues CreateValuesQuery(Type entityType, IEnumerable entities, IList<string> properties, bool excludeProperties = false)
         {
             Guard.ArgumentNotNullOrEmpty(entities, nameof(entities));
 
-            var table = EntityTableInfo.GetTableByType(typeof(T));
+            var table = EntityTableInfo.GetTableByType(entityType);
 
             var vq = new SqlQueryValues();
             FillValues(vq.Values, GetColumns(table, properties, excludeProperties, false), entities, false);
@@ -70,15 +66,17 @@ namespace TagBites.DB.Entity
             return vq;
         }
 
-        public static SqlQueryInsertValues CreateInsertQuery<T>(IList<T> entities) where T : class
-        {
-            return CreateInsertQuery(entities, null);
-        }
+        public static SqlQueryInsertValues CreateInsertQuery<T>(IList<T> entities) where T : class => CreateInsertQuery(typeof(T), entities, null);
         public static SqlQueryInsertValues CreateInsertQuery<T>(IList<T> entities, IList<string> properties, bool excludeProperties = false, bool withReturning = false) where T : class
+        {
+            return CreateInsertQuery(typeof(T), entities, properties, excludeProperties, withReturning);
+        }
+        public static SqlQueryInsertValues CreateInsertQuery(Type entityType, IEnumerable entities) => CreateInsertQuery(entityType, entities, null);
+        public static SqlQueryInsertValues CreateInsertQuery(Type entityType, IEnumerable entities, IList<string> properties, bool excludeProperties = false, bool withReturning = false)
         {
             Guard.ArgumentNotNullOrEmpty(entities, nameof(entities));
 
-            var table = EntityTableInfo.GetTableByType(typeof(T));
+            var table = EntityTableInfo.GetTableByType(entityType);
             var columns = GetColumns(table, properties, excludeProperties, true);
 
             var q = new SqlQueryInsertValues(table.TableFullName);
@@ -94,15 +92,17 @@ namespace TagBites.DB.Entity
             return q;
         }
 
-        public static SqlQueryUpdate CreateUpdateQuery<T>(IList<T> entities) where T : class
-        {
-            return CreateUpdateQuery(entities, null);
-        }
+        public static SqlQueryUpdate CreateUpdateQuery<T>(IList<T> entities) where T : class => CreateUpdateQuery(typeof(T), entities, null);
         public static SqlQueryUpdate CreateUpdateQuery<T>(IList<T> entities, IList<string> properties, bool excludeProperties = false, bool withReturning = false) where T : class
+        {
+            return CreateUpdateQuery(typeof(T), entities, properties, excludeProperties, withReturning);
+        }
+        public static SqlQueryUpdate CreateUpdateQuery(Type entityType, IEnumerable entities) => CreateUpdateQuery(entityType, entities, null);
+        public static SqlQueryUpdate CreateUpdateQuery(Type entityType, IEnumerable entities, IList<string> properties, bool excludeProperties = false, bool withReturning = false)
         {
             Guard.ArgumentNotNullOrEmpty(entities, nameof(entities));
 
-            var table = EntityTableInfo.GetTableByType(typeof(T));
+            var table = EntityTableInfo.GetTableByType(entityType);
             var columns = GetColumns(table, properties, excludeProperties, true);
             var columnsWithId = table.PrimaryKey.Concat(columns).Distinct().ToList();
 
@@ -128,15 +128,17 @@ namespace TagBites.DB.Entity
             return q;
         }
 
-        public static SqlQuerySelect CreateUpsertQuery<T>(IList<T> entities, DbUpsertMode mode) where T : class
-        {
-            return CreateUpsertQuery(entities, mode, null);
-        }
+        public static SqlQuerySelect CreateUpsertQuery<T>(IList<T> entities, DbUpsertMode mode) where T : class => CreateUpsertQuery(typeof(T), entities, mode, null);
         public static SqlQuerySelect CreateUpsertQuery<T>(IList<T> entities, DbUpsertMode mode, IList<string> properties, bool excludeProperties = false, bool withReturning = false) where T : class
+        {
+            return CreateUpsertQuery(typeof(T), entities, mode, properties, excludeProperties, withReturning);
+        }
+        public static SqlQuerySelect CreateUpsertQuery(Type entityType, IEnumerable entities, DbUpsertMode mode) => CreateUpsertQuery(entityType, entities, mode, null);
+        public static SqlQuerySelect CreateUpsertQuery(Type entityType, IEnumerable entities, DbUpsertMode mode, IList<string> properties, bool excludeProperties = false, bool withReturning = false)
         {
             Guard.ArgumentNotNullOrEmpty(entities, nameof(entities));
 
-            var table = EntityTableInfo.GetTableByType(typeof(T));
+            var table = EntityTableInfo.GetTableByType(entityType);
             var columns = GetColumns(table, properties, excludeProperties, true);
             var columnsWithId = table.PrimaryKey.Concat(columns).Distinct().ToList();
             var columnsWithIdNames = columnsWithId.Select(x => x.Name).ToArray();
@@ -242,22 +244,20 @@ namespace TagBites.DB.Entity
             return q;
         }
 
-        public static SqlQueryDelete CreateDeleteQuery<T>(IList<T> models) where T : class
+        public static SqlQueryDelete CreateDeleteQuery<T>(IList<T> models) where T : class => CreateDeleteQuery(typeof(T), (IList)models);
+        public static SqlQueryDelete CreateDeleteQuery(Type entityType, IList models)
         {
             Guard.ArgumentNotNullOrEmpty(models, nameof(models));
 
-            var table = EntityTableInfo.GetTableByType(typeof(T));
+            var table = EntityTableInfo.GetTableByType(entityType);
 
             var q = new SqlQueryDelete(table.TableFullName);
             q.Where.Add(CreatePrimaryKeyFilter(q.From, table, GetRecordsKeys(table, models)));
 
             return q;
         }
-        public static SqlQueryDelete CreateDeleteByKeyQuery<T>(IList recordsKeys) where T : class
-        {
-            return CreateDeleteByKeyQuery(typeof(T), recordsKeys);
-        }
-        internal static SqlQueryDelete CreateDeleteByKeyQuery(Type modelType, IList recordsKeys)
+        public static SqlQueryDelete CreateDeleteByKeyQuery<T>(IList recordsKeys) => CreateDeleteByKeyQuery(typeof(T), recordsKeys);
+        public static SqlQueryDelete CreateDeleteByKeyQuery(Type modelType, IList recordsKeys)
         {
             Guard.ArgumentNotNullOrEmpty(recordsKeys, nameof(recordsKeys));
 
@@ -269,7 +269,7 @@ namespace TagBites.DB.Entity
             return q;
         }
 
-        private static IList GetRecordsKeys<T>(EntityTableInfo table, IList<T> models) where T : class
+        private static IList GetRecordsKeys(EntityTableInfo table, IList models)
         {
             var recordsKeys = new object[models.Count];
 
@@ -354,7 +354,7 @@ namespace TagBites.DB.Entity
 
             return condition;
         }
-        private static void FillValues<T>(SqlClauseValues vq, IList<EntityColumnInfo> columns, IEnumerable<T> entities, bool setNullForEmptyId)
+        private static void FillValues(SqlClauseValues vq, IList<EntityColumnInfo> columns, IEnumerable entities, bool setNullForEmptyId)
         {
             //var idChecker = TableInfo.GetTableInfo(table.TableName) as INonStandardID;
 
