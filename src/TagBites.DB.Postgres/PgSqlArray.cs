@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -7,11 +7,6 @@ using System.Text;
 
 namespace TagBites.DB.Postgres
 {
-    public interface IPgSqlArray : IEnumerable
-    {
-        Type ElementType { get; }
-    }
-
     public class PgSqlArray : IPgSqlArray, IEnumerable<string>
     {
         private int _startIndex;
@@ -213,7 +208,7 @@ namespace TagBites.DB.Postgres
             array = null;
             return false;
         }
-        private static bool TryParse(string arrayString, out List<string> array, out int startIndex)
+        private static bool TryParse(string arrayString, out IList<string> array, out int startIndex)
         {
             array = null;
             startIndex = 1;
@@ -245,8 +240,10 @@ namespace TagBites.DB.Postgres
 
                 arrayString = arrayString.Substring(1, arrayString.Length - 2).Trim();
                 array = string.IsNullOrEmpty(arrayString)
-                    ? new List<string>()
-                    : TokenEnumeration(arrayString).ToList();
+                    ? Array.Empty<string>()
+                    : TokenEnumeration(arrayString);
+                if (array == null)
+                    return false;
 
                 if (count != -1 && (count - startIndex + 1) != array.Count)
                     return false;
@@ -258,15 +255,16 @@ namespace TagBites.DB.Postgres
                 return false;
             }
         }
-        private static IEnumerable<string> TokenEnumeration(string source)
+        private static IList<string> TokenEnumeration(string source)
         {
-            bool wasQuoted = false;
-            bool inQuoted = false;
-            StringBuilder sb = new StringBuilder(source.Length);
+            var wasQuoted = false;
+            var inQuoted = false;
+            var sb = new StringBuilder(source.Length);
+            var items = new List<string>();
 
-            for (int idx = 0; idx < source.Length; ++idx)
+            for (var idx = 0; idx < source.Length; ++idx)
             {
-                char c = source[idx];
+                var c = source[idx];
                 switch (c)
                 {
                     case '"': //entering of leaving a quoted string
@@ -280,20 +278,30 @@ namespace TagBites.DB.Postgres
                         }
                         else
                         {
-                            yield return Token(sb.ToString(), wasQuoted);
+                            items.Add(Token(sb.ToString(), wasQuoted));
                             sb = new StringBuilder(source.Length - idx);
                             wasQuoted = false;
                         }
                         break;
-                    case '\\': //next char is an escaped character, grab it, ignore the \ we are on now.
+                    case '\\' when !wasQuoted || inQuoted: //next char is an escaped character, grab it, ignore the \ we are on now.
                         sb.Append(source[++idx]);
                         break;
                     default:
+                        if (wasQuoted && !inQuoted)
+                        {
+                            if (char.IsWhiteSpace(c))
+                                continue;
+
+                            return null;
+                        }
+
                         sb.Append(c);
                         break;
                 }
             }
-            yield return Token(sb.ToString(), wasQuoted);
+
+            items.Add(Token(sb.ToString(), wasQuoted));
+            return items;
         }
         private static string Token(string source, bool wasQuoted)
         {
