@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <!-- Package info -->
   <PropertyGroup>
@@ -37,14 +37,15 @@
 
   <!-- For custom Npgsql -->
   <ItemGroup>
-    <Reference Include="Npgsql" HintPath="..\..\lib\Npgsql.dll" Private="true" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.0" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net462' ">
     <Reference Include="System.Transactions" Pack="false" />
     <Reference Include="System.DirectoryServices" Pack="false" />
+    <Reference Include="Npgsql" HintPath="..\..\lib\net462\Npgsql.dll" Private="true" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'netstandard2.0' ">
+    <Reference Include="Npgsql" HintPath="..\..\lib\netstandard2.0\Npgsql.dll" Private="true" />
     <PackageReference Include="System.Memory" Version="4.5.3" />
     <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
