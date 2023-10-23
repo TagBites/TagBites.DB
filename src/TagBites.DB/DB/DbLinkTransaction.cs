@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using TagBites.Utils;
 
@@ -68,7 +68,12 @@ namespace TagBites.DB
                             try
                             {
                                 if (!_executed)
+                                {
                                     Rollback();
+
+                                    if (_nestingLevel > 1 && !_context.Provider.Configuration.AllowMissingRollbackInNestedTransaction)
+                                        throw new InvalidOperationException("Missing Commit/Rollback for nested transaction.");
+                                }
                             }
                             finally
                             {

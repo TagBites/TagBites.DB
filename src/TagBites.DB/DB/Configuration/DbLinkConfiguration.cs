@@ -1,9 +1,10 @@
-﻿namespace TagBites.DB.Configuration
+namespace TagBites.DB.Configuration
 {
     public class DbLinkConfiguration
     {
         public static DbLinkConfiguration Default { get; set; } = new DbLinkConfiguration();
 
+        public bool AllowMissingRollbackInNestedTransaction { get; set; }
         public bool PostponeTransactionBeginOnConnectionOpenEvent { get; set; } = true;
         public bool ForceOnLinkCreate { get; set; }
         public bool ForceOnTransactionBegin { get; set; }
