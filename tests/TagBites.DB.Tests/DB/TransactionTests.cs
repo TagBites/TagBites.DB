@@ -1,4 +1,6 @@
-﻿using Xunit;
+using System.Linq;
+using System.Threading.Tasks;
+using Xunit;
 
 // ReSharper disable AccessToModifiedClosure
 
@@ -6,6 +8,30 @@ namespace TagBites.DB
 {
     public class TransactionTests : DbTests
     {
+        [Fact]
+        public void StressTest()
+        {
+            int done = 0;
+            var p = DbManager.CreateNpgsqlProvider(maxPoolSize: 100);
+
+            var tasks = Enumerable.Range(1, 10).Select(x => Task.Run(() =>
+            {
+                for (var i = 0; i < 100; i++)
+                {
+                    using (var link = p.CreateLink())
+                    using (var transaction = link.Begin())
+                    {
+                        link.Execute("SELECT 1");
+                        transaction.Commit();
+                    }
+                }
+
+                ++done;
+            }));
+
+            Task.WaitAll(tasks.ToArray());
+        }
+
         [Fact]
         public void CommitingEventTest()
         {

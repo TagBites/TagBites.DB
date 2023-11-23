@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data.Common;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -12,6 +12,9 @@ namespace TagBites.DB
         [Fact]
         public void UncommitedTransactionScopeTest()
         {
+            if (!NpgsqlProvider.Configuration.AllowMissingRollbackInNestedTransaction)
+                return;
+
             using (var ts = new TransactionScope())
             {
                 using (var link = DefaultProvider.CreateLink())

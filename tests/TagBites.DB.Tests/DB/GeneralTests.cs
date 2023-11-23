@@ -137,6 +137,9 @@ namespace TagBites.DB
         [Fact]
         public void RollbackTest()
         {
+            if (!NpgsqlProvider.Configuration.AllowMissingRollbackInNestedTransaction)
+                return;
+
             using (var link = NpgsqlProvider.CreateLink())
             using (var transaction = link.Begin())
             {
