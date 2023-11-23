@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using System.ComponentModel;
 using System.Data.Common;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
+using System.Threading;
 using TagBites.Utils;
 
 namespace TagBites.DB
@@ -14,26 +12,31 @@ namespace TagBites.DB
     /// </summary>
     public class DbLink : IDbLink
     {
-        private DbLinkContext m_context;
+        private DbLinkContext _context;
+        private DbLinkContextSwitch _switcher;
 
-        internal DbLinkContextSwitch Switcher { get; set; }
+        internal DbLinkContextSwitch Switcher
+        {
+            get => _switcher;
+            set => _switcher = value;
+        }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public bool IsDisposed => m_context == null;
+        public bool IsDisposed => _context == null;
 
         public DbLinkContext ConnectionContext
         {
             get
             {
                 CheckDispose();
-                return m_context;
+                return _context;
             }
             internal set
             {
-                if (m_context != null)
+                if (_context != null)
                     throw new InvalidOperationException();
 
-                m_context = value ?? throw new ArgumentNullException(nameof(value));
+                _context = value ?? throw new ArgumentNullException(nameof(value));
             }
         }
         public IDbLinkTransactionContext TransactionContext
@@ -41,7 +44,7 @@ namespace TagBites.DB
             get
             {
                 CheckDispose();
-                return m_context.TransactionContext;
+                return _context.TransactionContext;
             }
         }
         public DbLinkTransactionStatus TransactionStatus
@@ -49,7 +52,7 @@ namespace TagBites.DB
             get
             {
                 CheckDispose();
-                return m_context.TransactionStatus;
+                return _context.TransactionStatus;
             }
         }
 
@@ -68,51 +71,51 @@ namespace TagBites.DB
         public void Force()
         {
             CheckDispose();
-            m_context.Force();
+            _context.Force();
         }
         public IDbLinkTransaction Begin()
         {
             CheckDispose();
-            return m_context.Begin();
+            return _context.Begin();
         }
 
         public int ExecuteNonQuery(IQuerySource query)
         {
             CheckDispose();
-            return m_context.ExecuteNonQuery(query);
+            return _context.ExecuteNonQuery(query);
         }
 
         public QueryResult Execute(IQuerySource query)
         {
             CheckDispose();
-            return m_context.Execute(query);
+            return _context.Execute(query);
         }
         public object ExecuteScalar(IQuerySource query)
         {
             CheckDispose();
-            return m_context.ExecuteScalar(query);
+            return _context.ExecuteScalar(query);
         }
 
         public QueryResult[] BatchExecute(IQuerySource query)
         {
             CheckDispose();
-            return m_context.BatchExecute(query);
+            return _context.BatchExecute(query);
         }
         public DelayedBatchQueryResult DelayedBatchExecute(IQuerySource query)
         {
             CheckDispose();
-            return m_context.DelayedBatchExecute(query);
+            return _context.DelayedBatchExecute(query);
         }
 
         public T ExecuteOnAdapter<T>(IQuerySource query, Func<DbDataAdapter, T> executor)
         {
             CheckDispose();
-            return m_context.ExecuteOnAdapter(query, executor);
+            return _context.ExecuteOnAdapter(query, executor);
         }
         public T ExecuteOnReader<T>(IQuerySource query, Func<DbDataReader, T> executor)
         {
             CheckDispose();
-            return m_context.ExecuteOnReader(query, executor);
+            return _context.ExecuteOnReader(query, executor);
         }
 
         public void Dispose()
@@ -125,27 +128,13 @@ namespace TagBites.DB
         {
             try
             {
-                if (m_context != null)
-                    try
-                    {
-                        m_context.Release();
-                    }
-                    finally
-                    {
-                        m_context = null;
-                    }
+                if (Interlocked.Exchange(ref _context, null) is { } c)
+                    c.Release();
             }
             finally
             {
-                if (Switcher != null)
-                    try
-                    {
-                        Switcher.Dispose();
-                    }
-                    finally
-                    {
-                        Switcher = null;
-                    }
+                if (Interlocked.Exchange(ref _switcher, null) is { } s)
+                    s.Dispose();
             }
         }
         protected virtual void Dispose(bool disposing)
@@ -153,7 +142,7 @@ namespace TagBites.DB
 
         protected void CheckDispose()
         {
-            if (m_context == null)
+            if (_context == null)
                 throw new ObjectDisposedException("DbLink");
         }
     }
