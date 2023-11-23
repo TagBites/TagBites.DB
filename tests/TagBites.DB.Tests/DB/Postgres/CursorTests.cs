@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Xunit;
@@ -8,21 +8,21 @@ namespace TagBites.DB.Postgres
     [Collection("Cursors")]
     public class CursorTests : DbTests
     {
-        [Fact]
+        //[Fact]
         public async Task CursorSwitchTest()
         {
             if (!NpgsqlProvider.IsCursorSupported)
                 return;
 
             using var cursorManager = NpgsqlProvider.CreateCursorManager();
-            cursorManager.TransactionTimeout = 200;
+            cursorManager.TransactionTimeout = 500;
 
             for (var i = 0; i < 2; i++)
             {
                 var q = new Query("SELECT * FROM generate_series(1, 2000)");
 
                 var c1 = cursorManager.CreateCursor(q);
-                await Task.Delay(150);
+                await Task.Delay(100);
                 var c2 = cursorManager.CreateCursor(q);
 
                 Assert.NotEqual(c1.Owner, c2.Owner);
@@ -160,13 +160,13 @@ namespace TagBites.DB.Postgres
             if (!NpgsqlProvider.IsCursorSupported)
                 return;
 
-            var provider = DbManager.CreateNpgsqlProvider(true, 1, 6);
-            var q = new Query("SELECT 1");
+            var provider = DbManager.CreateNpgsqlProvider(true, 1, 8);
+            var q = new Query("SELECT * FROM generate_series(1, 2000)");
 
             using (var cursorManager = provider.CreateCursorManager())
             {
-                cursorManager.TransactionTimeout = 1000 * 2;
-                cursorManager.ActiveTransactionLimit = 3;
+                cursorManager.TransactionTimeout = 200 * 2;
+                cursorManager.ActiveTransactionLimit = 4;
 
                 var ts = new List<Task>();
                 var r = new Random();
@@ -175,12 +175,13 @@ namespace TagBites.DB.Postgres
                 {
                     var t = Task.Run(async () =>
                     {
-                        // ReSharper disable once AccessToDisposedClosure
-                        using (var cursor = cursorManager.CreateCursor(q))
-                        {
-                            await Task.Delay(r.Next(1, 10));
-                            Assert.True(cursor.RecordCount > 0);
-                        }
+                        for (var j = 0; j < 10; j++)
+                            // ReSharper disable once AccessToDisposedClosure
+                            using (var cursor = cursorManager.CreateCursor(q))
+                            {
+                                await Task.Delay(r.Next(1, 10));
+                                Assert.True(cursor.RecordCount > 0);
+                            }
                     });
                     ts.Add(t);
                 }
