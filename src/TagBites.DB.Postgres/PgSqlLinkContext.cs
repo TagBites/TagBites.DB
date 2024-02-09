@@ -1,23 +1,9 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace TagBites.DB.Postgres
 {
-    public class PgSqlNotificationEventArgs : EventArgs
-    {
-        public int ProcessId { get; }
-        public string Channel { get; }
-        public string Message { get; }
-
-        public PgSqlNotificationEventArgs(int pid, string channel, string message)
-        {
-            ProcessId = pid;
-            Channel = channel;
-            Message = message;
-        }
-    }
-
     public abstract class PgSqlLinkContext : DbLinkContext
     {
         private EventHandler<PgSqlNotificationEventArgs> _notification;
@@ -35,8 +21,14 @@ namespace TagBites.DB.Postgres
                 _notification -= value;
             }
         }
+        protected internal PgSqlNotificationInternalDelegate NotificationHandlerInternal;
 
         public abstract int? ProcessId { get; }
+
+        protected PgSqlLinkContext()
+        {
+            NotificationHandlerInternal = OnNotify;
+        }
 
 
         public void Notify(string chanelName, string message)
@@ -75,9 +67,6 @@ namespace TagBites.DB.Postgres
         protected internal abstract Task StartNotifyListenerTask(CancellationToken token);
         internal IDbLinkTransaction BeginForCursorManager() => Begin(true, false);
 
-        protected void OnNotify(int pid, string channel, string message)
-        {
-            _notification?.Invoke(this, new PgSqlNotificationEventArgs(pid, channel, message));
-        }
+        private void OnNotify(in PgSqlNotification notification) => _notification?.Invoke(this, new PgSqlNotificationEventArgs(notification));
     }
 }
