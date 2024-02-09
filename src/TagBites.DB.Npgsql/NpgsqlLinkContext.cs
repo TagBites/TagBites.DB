@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Npgsql;
@@ -37,7 +37,7 @@ namespace TagBites.DB.Npgsql
 
         private void OnNotification(object sender, NpgsqlNotificationEventArgs e)
         {
-            OnNotify(e.PID, e.Channel, e.Payload);
+            NotificationHandlerInternal(new PgSqlNotification(e.PID, e.Channel, e.Payload));
         }
         private void OnNotice(object sender, NpgsqlNoticeEventArgs e)
         {
@@ -46,28 +46,31 @@ namespace TagBites.DB.Npgsql
 
         protected override Task StartNotifyListenerTask(CancellationToken token)
         {
-            // ReSharper disable once MethodSupportsCancellation
-            return Task.Run(() =>
+            return Task.Run(ListenAsync, token);
+
+            async Task ListenAsync()
             {
-                ExecuteOnOpenConnection(connection =>
+                while (!token.IsCancellationRequested)
                 {
+                    var connection = (NpgsqlConnection)GetOpenConnection();
                     try
                     {
-                        var npgsqlConnection = (NpgsqlConnection)connection;
-
-                        while (!token.IsCancellationRequested)
+                        try
                         {
-                            // Can't pass token to Wait, need to wait until all operations on connection is finished
-                            // ReSharper disable once MethodSupportsCancellation
-                            npgsqlConnection.WaitAsync(token).Wait();
+                            while (!token.IsCancellationRequested)
+                                await connection.WaitAsync(token);
+                        }
+                        catch when (token.IsCancellationRequested)
+                        {
+                            return;
                         }
                     }
-                    catch when (token.IsCancellationRequested)
+                    catch
                     {
-                        // ignored
+                        await Task.Delay(100, token);
                     }
-                });
-            });
+                }
+            }
         }
         protected override bool IsConnectionBrokenException(Exception ex)
         {

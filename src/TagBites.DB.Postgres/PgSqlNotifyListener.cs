@@ -1,193 +1,157 @@
-﻿using System;
+#nullable enable
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using TagBites.Utils;
 
-namespace TagBites.DB.Postgres
+namespace TagBites.DB.Postgres;
+
+public class PgSqlNotifyListener : IDisposable
 {
-    public class PgSqlNotifyListener : IDisposable
+    private PgSqlLinkProvider? _linkProvider;
+    private PgSqlLink? _link;
+    private readonly HashSet<string> _channels = new();
+
+    private readonly SemaphoreSlim _semaphore = new(1);
+    private Task? _listenerTask;
+    private CancellationTokenSource? _listenerCancellationToken;
+    private bool _enabled;
+
+    private TimeSpan _broadcastDelay;
+    private readonly ContinueActionConsumer _notificationBroadcaster;
+    private readonly List<PgSqlNotification> _pendingNotifications = [];
+
+    public event EventHandler? ConnectionOpened;
+    public event EventHandler? ConnectionLost;
+    public event EventHandler<PgSqlNotificationEventArgs>? Notification;
+    public event EventHandler<PgSqlBatchNotificationEventArgs>? BatchNotification;
+
+    public int? ProcessId => _link?.ConnectionContext.ProcessId;
+    public TimeSpan BroadcastDelay
     {
-        private PgSqlLinkProvider _linkProvider;
-        private PgSqlLink _link;
-        private readonly HashSet<string> _channels = new();
-
-        private readonly SemaphoreSlim _listenerSemaphore = new(1);
-        private Task _listenerTask;
-        private CancellationTokenSource _listenerCancellationToken;
-        private bool _enabled;
-
-        public event EventHandler<PgSqlNotificationEventArgs> Notification;
-
-        public int? ProcessId => _link?.ConnectionContext.ProcessId;
-
-        public PgSqlNotifyListener(PgSqlLinkProvider linkProvider)
+        get => _broadcastDelay;
+        set
         {
-            _linkProvider = linkProvider ?? throw new ArgumentNullException(nameof(linkProvider));
+            if (value.Ticks < 0)
+                throw new ArgumentOutOfRangeException(nameof(value));
+
+            _broadcastDelay = value;
         }
-        ~PgSqlNotifyListener()
+    }
+
+    public PgSqlNotifyListener(PgSqlLinkProvider linkProvider)
+    {
+        _linkProvider = linkProvider ?? throw new ArgumentNullException(nameof(linkProvider));
+        _notificationBroadcaster = new ContinueActionConsumer(SendNotificationsAsync);
+    }
+    ~PgSqlNotifyListener()
+    {
+        Debug.WriteLine($"Unexpected finalizer called on IDisposable object {nameof(PgSqlNotifyListener)}.");
+        Dispose(false);
+    }
+
+
+    public Task<bool> ListenAsync(string channel) => ListenAsync(new[] { channel });
+    public async Task<bool> ListenAsync(params string[] channels)
+    {
+        CheckDispose();
+
+        var changes = new List<string>(channels.Length);
+
+        lock (_channels)
+            changes.AddRange(channels.Where(_channels.Add));
+
+        if (changes.Count == 0)
+            return false;
+
+        await _semaphore.WaitAsync();
+        try
         {
-            Debug.WriteLine($"Unexpected finalizer called on IDisposable object {nameof(PgSqlNotifyListener)}.");
-            Dispose(false);
-        }
+            await StopListenerAsync();
 
-
-        public Task<bool> ListenAsync(string channel) => ListenAsync(new[] { channel });
-        public async Task<bool> ListenAsync(params string[] channels)
-        {
-            CheckDispose();
-
-            await _listenerSemaphore.WaitAsync().ConfigureAwait(false);
-            try
-            {
-                var changes = channels.Where(x => !_channels.Contains(x)).ToArray();
-                if (changes.Length == 0)
-                    return false;
-
-                await StopListenerAsync().ConfigureAwait(false);
-                {
-                    PrepareLink();
-                    _link.Listen(changes);
-                }
-                StartListener();
-
-                foreach (var change in changes)
-                    _channels.Add(change);
-
-                return true;
-            }
-            finally
-            {
-                _listenerSemaphore.Release();
-            }
-        }
-
-        public Task<bool> UnlistenAsync(string channel) => UnlistenAsync(new[] { channel });
-        public async Task<bool> UnlistenAsync(params string[] channels)
-        {
-            CheckDispose();
-
-            await _listenerSemaphore.WaitAsync().ConfigureAwait(false);
-            try
-            {
-                var changes = channels.Where(_channels.Remove).ToArray();
-                if (changes.Length == 0)
-                    return false;
-
-                await StopListenerAsync().ConfigureAwait(false);
-                {
-                    _link.Unlisten(changes);
-                }
-                if (_channels.Count > 0)
-                    StartListener();
-
-                return true;
-            }
-            finally
-            {
-                _listenerSemaphore.Release();
-            }
-        }
-
-        private void StartListener()
-        {
-            if (!_enabled)
-            {
-                try
-                {
-                    _enabled = true;
-                    _listenerCancellationToken = new CancellationTokenSource();
-                    _listenerTask = _link.ConnectionContext.StartNotifyListenerTask(_listenerCancellationToken.Token);
-                }
-                catch
-                {
-                    DisposeListener();
-                    throw;
-                }
-            }
-        }
-        private async Task StopListenerAsync()
-        {
-            if (_enabled)
-            {
-                try
-                {
-                    _listenerCancellationToken?.Cancel();
-                    _listenerCancellationToken?.Dispose();
-
-                    if (_listenerTask != null)
-                        await _listenerTask.ConfigureAwait(false);
-                }
-                catch
-                {
-                    // Ignored
-                }
-                finally
-                {
-                    _listenerCancellationToken = null;
-                    _listenerTask = null;
-                    _enabled = false;
-                }
-            }
-        }
-
-        private void PrepareLink()
-        {
             if (_link == null)
             {
-                _link = _linkProvider.CreateExclusiveNotifyLink();
-                _link.ConnectionContext.ConnectionOpened += LinkConnectionOpened;
-                _link.ConnectionContext.ConnectionLost += Link_ConnectionLost;
-                _link.ConnectionContext.Notification += Link_Notification;
+                PrepareLink();
+                _link!.Force(); // Listen during connection open
             }
+            else
+                _link!.Listen(changes.ToArray());
+
+            StartListener();
         }
-        private void LinkConnectionOpened(object sender, EventArgs e)
+        finally
         {
-            if (_channels.Count > 0)
-                _link.Listen(_channels.ToArray());
+            _semaphore.Release();
         }
-        private void Link_ConnectionLost(object sender, DbLinkConnectionLostEventArgs e)
+
+        return true;
+    }
+
+    public Task<bool> UnlistenAsync(string channel) => UnlistenAsync(new[] { channel });
+    public async Task<bool> UnlistenAsync(params string[] channels)
+    {
+        CheckDispose();
+
+        var changes = new List<string>(channels.Length);
+        bool anyLeft;
+
+        lock (_channels)
         {
-            if (!e.Reconnect)
+            changes.AddRange(channels.Where(_channels.Remove));
+            anyLeft = _channels.Count > 0;
+        }
+
+        if (changes.Count == 0)
+            return false;
+
+        await _semaphore.WaitAsync();
+        try
+        {
+            await StopListenerAsync();
+            _link!.Unlisten(changes.ToArray());
+
+            if (anyLeft)
+                StartListener();
+
+            return true;
+        }
+        finally
+        {
+            _semaphore.Release();
+        }
+    }
+
+    private void StartListener()
+    {
+        if (!_enabled)
+        {
+            try
             {
-                Thread.Sleep(1000);
-                e.Reconnect = true;
+                _enabled = true;
+                _listenerCancellationToken = new CancellationTokenSource();
+                _listenerTask = _link!.ConnectionContext.StartNotifyListenerTask(_listenerCancellationToken.Token);
             }
-        }
-        private void Link_Notification(object sender, PgSqlNotificationEventArgs e)
-        {
-            if (_enabled)
-                Notification?.Invoke(this, e);
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        private void Dispose(bool _)
-        {
-            if (_linkProvider == null)
-                return;
-
-            DisposeListener();
-
-            if (_link != null)
+            catch
             {
-                try { _link.Dispose(); }
-                finally { _link = null; }
+                DisposeListener();
+                throw;
             }
-
-            _linkProvider = null;
-            _listenerSemaphore.Dispose();
         }
-        private void DisposeListener()
+    }
+    private async Task StopListenerAsync()
+    {
+        if (_enabled)
         {
             try
             {
                 _listenerCancellationToken?.Cancel();
                 _listenerCancellationToken?.Dispose();
+
+                if (_listenerTask != null)
+                    await _listenerTask;
             }
             catch
             {
@@ -200,11 +164,128 @@ namespace TagBites.DB.Postgres
                 _enabled = false;
             }
         }
+    }
 
-        private void CheckDispose()
+    private void PrepareLink()
+    {
+        if (_link == null)
         {
-            if (_linkProvider == null)
-                throw new ObjectDisposedException(nameof(PgSqlNotifyListener));
+            _link = _linkProvider!.CreateExclusiveNotifyLink();
+
+            _link.ConnectionContext.ConnectionOpened += OnConnectionOpened;
+            _link.ConnectionContext.ConnectionLost += OnConnectionLost;
+
+            _link.ConnectionContext.NotificationHandlerInternal = OnNotification;
         }
+    }
+    private void OnConnectionOpened(object sender, EventArgs e)
+    {
+        ConnectionOpened?.Invoke(sender, e);
+
+        string[] channels;
+
+        lock (_channels)
+        {
+            if (_channels.Count == 0)
+                return;
+
+            channels = _channels.ToArray();
+        }
+
+        _link!.Listen(channels);
+    }
+    private void OnConnectionLost(object sender, DbLinkConnectionLostEventArgs e)
+    {
+        ConnectionLost?.Invoke(sender, e);
+
+        if (!e.Reconnect)
+        {
+            Thread.Sleep(1000);
+            e.Reconnect = true;
+        }
+    }
+
+    private void OnNotification(in PgSqlNotification notification)
+    {
+        lock (_pendingNotifications)
+            _pendingNotifications.Add(notification);
+
+        try
+        {
+            _ = _notificationBroadcaster.ProcessAsync();
+        }
+        catch
+        {
+            // ignored
+        }
+    }
+    private async Task SendNotificationsAsync()
+    {
+        // Wait for more notify
+        await Task.Delay(BroadcastDelay);
+
+        // Get current batch
+        PgSqlNotification[] notifications;
+
+        lock (_pendingNotifications)
+        {
+            notifications = _pendingNotifications.ToArray();
+            _pendingNotifications.Clear();
+        }
+
+        // Broadcast
+        BatchNotification?.Invoke(this, new PgSqlBatchNotificationEventArgs(notifications));
+
+        if (Notification is { } n)
+        {
+            foreach (var item in notifications)
+                n(this, new PgSqlNotificationEventArgs(item.ProcessId, item.Channel, item.Message));
+        }
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+    private void Dispose(bool _)
+    {
+        if (_linkProvider == null)
+            return;
+
+        DisposeListener();
+
+        if (_link != null)
+        {
+            try { _link.Dispose(); }
+            finally { _link = null; }
+        }
+
+        _linkProvider = null;
+        _semaphore.Dispose();
+    }
+    private void DisposeListener()
+    {
+        try
+        {
+            _listenerCancellationToken?.Cancel();
+            _listenerCancellationToken?.Dispose();
+        }
+        catch
+        {
+            // Ignored
+        }
+        finally
+        {
+            _listenerCancellationToken = null;
+            _listenerTask = null;
+            _enabled = false;
+        }
+    }
+
+    private void CheckDispose()
+    {
+        if (_linkProvider == null)
+            throw new ObjectDisposedException(nameof(PgSqlNotifyListener));
     }
 }
