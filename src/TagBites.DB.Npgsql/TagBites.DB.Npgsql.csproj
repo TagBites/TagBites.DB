@@ -21,8 +21,7 @@
 
   <!-- Targets -->
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net462</TargetFrameworks>
-    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeReferencedProjectInPackage</TargetsForTfmSpecificContentInPackage>
+    <TargetFrameworks>netstandard2.0;net462;net7.0;net8.0</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -32,40 +31,14 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!--<PackageReference Include="Npgsql" Version="4.1.2" />-->
+    <PackageReference Include="Npgsql" Version="8.0.2">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="8.0.0" Condition=" '$(Configuration)' == 'Debug' "/>
   </ItemGroup>
-
-  <!-- For custom Npgsql -->
-  <ItemGroup>
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.0" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net462' ">
-    <Reference Include="System.Transactions" Pack="false" />
-    <Reference Include="System.DirectoryServices" Pack="false" />
-    <Reference Include="Npgsql" HintPath="..\..\lib\net462\Npgsql.dll" Private="true" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'netstandard2.0' ">
-    <Reference Include="Npgsql" HintPath="..\..\lib\netstandard2.0\Npgsql.dll" Private="true" />
-    <PackageReference Include="System.Memory" Version="4.5.3" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.5.3" />
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="1.1.0" />
-  </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net462' OR '$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1' ">
-    <PackageReference Include="System.Text.Json" Version="4.7.0" />
-    <PackageReference Include="System.Threading.Channels" Version="4.7.0" />
-  </ItemGroup>
-
-  <Target Name="IncludeReferencedProjectInPackage">
-    <ItemGroup>
-      <TfmSpecificPackageFile Include="$(OutputPath)\Npgsql.dll" PackagePath="lib/$(TargetFramework)" />
-    </ItemGroup>
-  </Target>
 
   <ItemGroup>
     <ProjectReference Include="..\TagBites.DB.Postgres\TagBites.DB.Postgres.csproj" />
-    <ProjectReference Include="..\TagBites.DB\TagBites.DB.csproj" />
-  </ItemGroup>
-  
+  </ItemGroup>  
 
 </Project>

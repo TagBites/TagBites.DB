@@ -1,4 +1,4 @@
-using TagBites.DB;
+using Npgsql;
 using TagBites.DB.Npgsql;
 using TagBites.DB.Postgres;
 using TagBites.DB.SqlServer;
@@ -9,7 +9,7 @@ namespace TagBites
     {
         public static PgSqlLinkProvider CreateNpgsqlProvider(bool pooling = true, int minPoolSize = 1, int maxPoolSize = 4)
         {
-            var arguments = new DbConnectionArguments()
+            var arguments = new NpgsqlConnectionStringBuilder()
             {
                 Host = "192.168.33.110",
                 Port = 5434,
@@ -17,12 +17,15 @@ namespace TagBites
                 Username = "axuser",
                 Password = "abaxpmags",
 
-                UsePooling = pooling,
+                Pooling = pooling,
                 MinPoolSize = minPoolSize,
-                MaxPoolSize = maxPoolSize
+                MaxPoolSize = maxPoolSize,
+
+                ArrayNullabilityMode = ArrayNullabilityMode.Always,
+                SslMode = SslMode.Allow
             };
 
-            return new NpgsqlLinkProvider(arguments)
+            return new NpgsqlLinkProvider(arguments.ToString())
             {
                 Configuration = { UseSystemTransactions = false, ImplicitCreateTransactionScopeIfNotExists = true }
             };

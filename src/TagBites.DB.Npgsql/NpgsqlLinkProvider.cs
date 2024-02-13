@@ -1,5 +1,5 @@
-﻿using Npgsql;
-using Npgsql.Logging;
+using Microsoft.Extensions.Logging;
+using Npgsql;
 using TagBites.DB.Postgres;
 
 namespace TagBites.DB.Npgsql
@@ -7,7 +7,7 @@ namespace TagBites.DB.Npgsql
     public class NpgsqlLinkProvider : PgSqlLinkProvider
     {
 #if DEBUG
-        private static readonly object s_npgsqlLogManagerSynchRoot = new();
+        private static readonly object s_npgsqlLogManagerSyncRoot = new();
 #endif
 
         public NpgsqlLinkProvider(string connectionString)
@@ -17,8 +17,11 @@ namespace TagBites.DB.Npgsql
             : base(new NpgsqlLinkAdapter(), arguments)
         {
 #if DEBUG
-            lock (s_npgsqlLogManagerSynchRoot)
-                NpgsqlLogManager.Provider ??= new ConsoleLoggingProvider(NpgsqlLogLevel.Debug, true, true);
+            lock (s_npgsqlLogManagerSyncRoot)
+            {
+                var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+                NpgsqlLoggingConfiguration.InitializeLogging(loggerFactory, true);
+            }
 #endif
         }
 
