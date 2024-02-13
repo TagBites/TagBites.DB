@@ -48,7 +48,7 @@ namespace TagBites.DB.Postgres
         public void ArrayBoundsAlwaysFromZeroTest()
         {
             using var link = NpgsqlProvider.CreateLink();
-            var result = (int[])link.ExecuteScalar("SELECT '[4:6]={5,null,6}'::int[]");
+            var result = link.ExecuteScalar<int[]>("SELECT '[4:6]={5,null,6}'::int[]");
 
             Assert.Equal(7, result.Length);
             Assert.Equal(new[] { 0, 0, 0, 0, 5, 0, 6 }, result);
