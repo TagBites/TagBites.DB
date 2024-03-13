@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Transactions;
+using TagBites.DB.Configuration;
 using TagBites.Utils;
 
 namespace TagBites.DB
@@ -452,7 +453,9 @@ namespace TagBites.DB
                     recordsAffected = null;
 
                     using var command = _provider.LinkAdapter.CreateCommand(_connection, TransactionInternal, q);
-                    return command.ExecuteScalar();
+                    var scalar = command.ExecuteScalar();
+                    scalar = DbLinkDataConverter.Default.FromDbType(scalar);
+                    return scalar;
                 });
             }
         }

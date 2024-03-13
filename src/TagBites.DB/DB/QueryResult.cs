@@ -34,7 +34,7 @@ namespace TagBites.DB
         }
         public T GetValue<T>(int rowIndex, int columnIndex)
         {
-            var value = GetValueCore(rowIndex, columnIndex);
+            var value = GetValue(rowIndex, columnIndex);
             return DbLinkDataConverter.Default.ChangeType<T>(value);
         }
 

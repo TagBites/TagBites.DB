@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
@@ -79,6 +79,7 @@ namespace TagBites.DB
                     for (var i = 0; i < reader.FieldCount; i++)
                     {
                         var value = reader.GetValue(i);
+                        value = DbLinkDataConverter.Default.FromDbType(value);
                         items.Add(DbLinkDataConverter.Default.ChangeType<T>(value));
                     }
                 }
@@ -126,6 +127,7 @@ namespace TagBites.DB
                 while (reader.Read() && reader.FieldCount > 0)
                 {
                     var value = reader.GetValue(0);
+                    value = DbLinkDataConverter.Default.FromDbType(value);
                     items.Add(DbLinkDataConverter.Default.ChangeType<T>(value));
                 }
 
