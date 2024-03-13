@@ -26,6 +26,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TagBites.DB.Postgres", "src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TagBites.DB.SqlServer", "src\TagBites.DB.SqlServer\TagBites.DB.SqlServer.csproj", "{AD19EBC8-E32C-4531-82C1-BA03A5BA7620}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TagBites.DB.Sqlite", "src\TagBites.DB.Sqlite\TagBites.DB.Sqlite.csproj", "{9D5D91E6-D572-4AB1-B6B9-D7725F1363E9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,6 +54,10 @@ Global
 		{AD19EBC8-E32C-4531-82C1-BA03A5BA7620}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AD19EBC8-E32C-4531-82C1-BA03A5BA7620}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AD19EBC8-E32C-4531-82C1-BA03A5BA7620}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9D5D91E6-D572-4AB1-B6B9-D7725F1363E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9D5D91E6-D572-4AB1-B6B9-D7725F1363E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9D5D91E6-D572-4AB1-B6B9-D7725F1363E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9D5D91E6-D572-4AB1-B6B9-D7725F1363E9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -62,6 +68,7 @@ Global
 		{F5CD7029-EDD9-4D57-9792-6DDE6CF2D3E2} = {89927951-8603-4371-BAE4-AA7BE43AC112}
 		{8710A285-F269-4F09-B435-D2612DF7522A} = {89927951-8603-4371-BAE4-AA7BE43AC112}
 		{AD19EBC8-E32C-4531-82C1-BA03A5BA7620} = {89927951-8603-4371-BAE4-AA7BE43AC112}
+		{9D5D91E6-D572-4AB1-B6B9-D7725F1363E9} = {89927951-8603-4371-BAE4-AA7BE43AC112}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3950865B-85F5-4D9C-AEDD-F9A848BD9057}

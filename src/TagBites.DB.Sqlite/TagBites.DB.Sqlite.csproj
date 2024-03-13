@@ -1,4 +1,4 @@
-<Project Sdk="MSBuild.Sdk.Extras/3.0.22">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <!-- Package info -->
   <PropertyGroup>
@@ -21,7 +21,7 @@
 
   <!-- Targets -->
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net462;MonoAndroid10.0;Xamarin.iOS10</TargetFrameworks>
+    <TargetFrameworks>net6.0;net462</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup>
