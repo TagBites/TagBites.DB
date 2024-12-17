@@ -1,9 +1,37 @@
-﻿using System;
+using System;
+using System.Linq;
 
 namespace TagBites.Sql
 {
     public class SqlClauseJoin : SqlClauseCollectionBase<SqlClauseJoinEntry>
     {
+        public SqlClauseJoinEntry Find(SqlClauseJoinEntryType type, SqlColumn joinColumn, SqlColumn otherTableColumn)
+        {
+            return this.FirstOrDefault(x => x.JoinType == type
+                                            && Equals(x.Table, joinColumn.Table)
+                                            && x.Condition is SqlConditionBinaryOperator { OperatorType: SqlConditionBinaryOperatorType.Equal, OperandLeft: SqlColumn c1, OperandRight: SqlColumn c2 }
+                                            && (c1.ColumnName == joinColumn.ColumnName && c2.ColumnName == otherTableColumn.ColumnName && Equals(c2.Table.Table, otherTableColumn.Table.Table)
+                                                || c2.ColumnName == joinColumn.ColumnName && c1.ColumnName == otherTableColumn.ColumnName && Equals(c1.Table.Table, otherTableColumn.Table.Table)));
+        }
+
+        public SqlTable AddOnOrGet(SqlClauseJoinEntryType type, SqlColumn joinColumn, SqlColumn otherTableColumn)
+        {
+            var t = Find(type, joinColumn, otherTableColumn);
+            if (t != null)
+            {
+                joinColumn.Table.Alias = t.Table.Alias;
+                return t.Table;
+            }
+
+            return AddOn(type, joinColumn, otherTableColumn);
+        }
+        public TSqlTable AddOnOrGet<TSqlTable>(SqlClauseJoinEntryType type, Func<TSqlTable, SqlColumn> joinTableColumnSelector, SqlColumn otherTableColumn) where TSqlTable : SqlTable, new()
+        {
+            var table = new TSqlTable();
+            AddOnOrGet(type, joinTableColumnSelector(table), otherTableColumn);
+            return table;
+        }
+
         public SqlTable AddOnExpression(SqlClauseJoinEntryType joinType, SqlTable joinTable, SqlCondition expression)
         {
             foreach (var entry in this)
@@ -16,8 +44,7 @@ namespace TagBites.Sql
                     throw new ArgumentException($"Join with alias '{joinTable.Alias}' already exists and has different condition.", nameof(joinTable));
                 }
 
-            if (joinTable.Alias == null)
-                joinTable.Alias = GetNextAlias();
+            joinTable.Alias ??= GetNextAlias();
 
             Add(new SqlClauseJoinEntry(joinType, joinTable, SqlClauseJoinEntryConditionType.On, expression));
             return joinTable;
