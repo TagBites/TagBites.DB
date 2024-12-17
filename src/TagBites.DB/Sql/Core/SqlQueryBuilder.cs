@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using TagBites.DB;
@@ -17,7 +17,7 @@ namespace TagBites.Sql
         public bool SupportParameters { get; set; } = true;
 
         public bool IsEmpty => m_buffor.Length == 0;
-        public string Query => m_buffor.ToString();
+        public string Query => m_buffor.ToString().TrimEnd();
         public IList<QueryParameter> Parameters => m_parameters;
 
 

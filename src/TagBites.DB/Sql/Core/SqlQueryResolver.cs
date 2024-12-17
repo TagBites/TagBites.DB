@@ -406,9 +406,12 @@ namespace TagBites.Sql
                     builder.Append(' ');
 
                 if (UseMultilineTrackingComment)
-                builder.Append($"/* {query.TrackingComment.Trim()} */");
+                    builder.Append($"/* {query.TrackingComment.Trim()} */");
                 else
+                {
                     builder.Append($"-- {query.TrackingComment.Trim().Replace("\r", "").Replace("\n", " -- ")}");
+                    builder.Append("\n");
+                }
             }
         }
 
