@@ -1,11 +1,11 @@
-﻿using System;
+using System;
 using TagBites.Utils;
 
 namespace TagBites.Sql
 {
     public class SqlTable : SqlExpression
     {
-        public object Table { get; }
+        public object Table { get; private set; }
         public string Alias { get; internal set; }
 
         protected SqlTable(string table)
@@ -54,27 +54,24 @@ namespace TagBites.Sql
             resolver.VisitExpression(this, builder);
         }
 
+        public TTable As<TTable>() where TTable : SqlTable, new()
+        {
+            return new TTable
+            {
+                Table = Table,
+                Alias = Alias
+            };
+        }
         public SqlColumn Column(string columnName)
         {
             return new SqlColumn(this, columnName);
         }
 
-        protected bool Equals(SqlTable other)
-        {
-            return Equals(Table, other.Table) && string.Equals(Alias, other.Alias);
-        }
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj))
-                return false;
-            if (ReferenceEquals(this, obj))
-                return true;
-            if (obj.GetType() != this.GetType())
-                return false;
-            return Equals((SqlTable)obj);
-        }
+        protected bool Equals(SqlTable other) => Equals(Table, other.Table) && string.Equals(Alias, other.Alias);
+        public override bool Equals(object obj) => ReferenceEquals(this, obj) || obj is SqlTable other && Equals(other);
         public override int GetHashCode()
         {
+            // ReSharper disable once NonReadonlyMemberInGetHashCode
             unchecked { return Table.GetHashCode() * 397; }
         }
 
