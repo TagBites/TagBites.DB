@@ -75,7 +75,8 @@ namespace TagBites.DB.Npgsql
         protected override bool IsConnectionBrokenException(Exception ex)
         {
             return base.IsConnectionBrokenException(ex)
-                || ex.Message == "The Connection is broken.";
+                || ex.Message == "The Connection is broken."
+                || ex is NpgsqlException ne && ne.Message?.StartsWith("Unknown message code:") == true;
         }
     }
 }
