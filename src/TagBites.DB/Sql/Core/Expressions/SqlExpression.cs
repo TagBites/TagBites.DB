@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -383,25 +383,34 @@ namespace TagBites.Sql
         {
             return new SqlSearchFilerRule(expression, adjustFunctionName);
         }
-        public static SqlCondition SearchFilter(string filter, IEnumerable<SqlSearchFilerRule> columns)
+        public static SqlCondition SearchFilter(string filter, IEnumerable<SqlExpression> expressions, bool ignoreCase = false)
+        {
+            return SearchFilter(filter, expressions.Select(x => SearchFilterRule(null, x)), ignoreCase);
+        }
+        public static SqlCondition SearchFilter(string filter, IEnumerable<SqlSearchFilerRule> columns) => SearchFilter(filter, columns, false);
+        public static SqlCondition SearchFilter(string filter, IEnumerable<SqlSearchFilerRule> columns, bool ignoreCase)
         {
             if (string.IsNullOrWhiteSpace(filter) || !columns.Any())
                 return null;
 
-            SqlCondition condition = null;
+            var items = filter.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                .Distinct()
+                .OrderByDescending(x => x.Length);
 
-            foreach (var item in filter.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Distinct().OrderByDescending(x => x.Length))
+            return items.Aggregate<string, SqlCondition>(null, (current, item) =>
             {
-                var word = item;
-                condition = And(
-                    condition,
-                    Or(columns.Select(
-                        x => new SqlConditionExpression(string.IsNullOrEmpty(x.AdjustFunction)
-                            ? LiteralExpression("{0} LIKE ('%' || {1} || '%')", Cast(x.ColumnExpression, typeof(string)), Argument(word))
-                            : LiteralExpression(x.AdjustFunction + "({0}) LIKE ('%' || " + x.AdjustFunction + "({1}) || '%')", Cast(x.ColumnExpression, typeof(string)), Argument(word))))));
-            }
-
-            return condition;
+                var conditions = columns.Select(x =>
+                {
+                    var operatorName = ignoreCase
+                        ? "ILIKE"
+                        : "LIKE";
+                    var expression = string.IsNullOrEmpty(x.AdjustFunction)
+                        ? LiteralExpression($"{{0}} {operatorName} ('%' || {{1}} || '%')", Cast(x.ColumnExpression, typeof(string)), Argument(item))
+                        : LiteralExpression($"{x.AdjustFunction}({{0}}) {operatorName} ('%' || {x.AdjustFunction}({{1}}) || '%')", Cast(x.ColumnExpression, typeof(string)), Argument(item));
+                    return new SqlConditionExpression(expression);
+                });
+                return And(current, Or(conditions));
+            });
         }
 
         public static SqlCondition And(SqlCondition leftOperand, SqlCondition rightOperand)
