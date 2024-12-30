@@ -56,11 +56,12 @@ namespace TagBites.Sql
 
         public TTable As<TTable>() where TTable : SqlTable, new()
         {
-            return new TTable
-            {
-                Table = Table,
-                Alias = Alias
-            };
+            return this as TTable
+                   ?? new TTable
+                   {
+                       Table = Table,
+                       Alias = Alias
+                   };
         }
         public SqlColumn Column(string columnName)
         {
