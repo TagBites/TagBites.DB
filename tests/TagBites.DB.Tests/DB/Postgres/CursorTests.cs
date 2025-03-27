@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -8,7 +10,7 @@ namespace TagBites.DB.Postgres
     [Collection("Cursors")]
     public class CursorTests : DbTests
     {
-        //[Fact]
+        [Fact]
         public async Task CursorSwitchTest()
         {
             if (!NpgsqlProvider.IsCursorSupported)
@@ -22,7 +24,7 @@ namespace TagBites.DB.Postgres
                 var q = new Query("SELECT * FROM generate_series(1, 2000)");
 
                 var c1 = cursorManager.CreateCursor(q);
-                await Task.Delay(100);
+                await Task.Delay(300);
                 var c2 = cursorManager.CreateCursor(q);
 
                 Assert.NotEqual(c1.Owner, c2.Owner);
@@ -189,6 +191,117 @@ namespace TagBites.DB.Postgres
                 await Task.WhenAll(ts);
 
                 Assert.Equal(0, cursorManager.CursorCount);
+            }
+        }
+
+        [Fact]
+        public async Task AutoCloseCursorsAsync()
+        {
+            if (!NpgsqlProvider.IsCursorSupported)
+                return;
+
+            var cursors = new List<(string Name, DateTime ExpiredTime)>();
+            var running = true;
+            var transactionOpenCount = 0;
+            var cursorsToAdd = 50;
+            var cursorsToAddDone = cursorsToAdd;
+            var random = new Random();
+
+            var provider = DbManager.CreateNpgsqlProvider(true, 1, 8);
+            provider.ContextCreated += (_, e) =>
+            {
+                e.LinkContext.TransactionBegan += (_, _) => Interlocked.Increment(ref transactionOpenCount);
+                e.LinkContext.TransactionClosed += (_, _) => Interlocked.Decrement(ref transactionOpenCount);
+            };
+
+            var cursorManager = provider.CreateCursorManager();
+            var q = new Query("SELECT * FROM generate_series(1, 2000)");
+
+            try
+            {
+                _ = Task.Run(CloseExpiredCursorsAsync);
+
+                cursorManager.ActiveTransactionLimit = 4;
+
+                for (var i = 0; i < 5; i++)
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        while (Interlocked.Decrement(ref cursorsToAdd) >= 0)
+                        {
+                            await Task.Delay(random.Next(50, 100));
+
+                            var cursor = cursorManager.CreateCursor(q);
+                            Debug.WriteLine($"CreateCursor: {cursor.Name}");
+
+                            lock (cursors)
+                                cursors.Add((cursor.Name, DateTime.UtcNow.AddMilliseconds(100)));
+
+                            Interlocked.Decrement(ref cursorsToAddDone);
+                        }
+                    });
+                }
+
+                while (cursorManager.CursorCount > 0 || cursorsToAddDone > 0)
+                    await Task.Delay(10);
+            }
+            finally
+            {
+                running = false;
+            }
+
+            await Task.Delay(200);
+
+            Assert.Equal(0, transactionOpenCount);
+
+            async Task CloseExpiredCursorsAsync()
+            {
+                // ReSharper disable once LoopVariableIsNeverChangedInsideLoop
+                // ReSharper disable once AccessToModifiedClosure
+                while (running)
+                {
+                    await Task.Delay(10);
+                    CloseExpiredCursorsCore();
+                }
+            }
+            void CloseExpiredCursorsCore()
+            {
+                List<string> cursorsToRemove = null;
+
+                lock (cursors)
+                {
+                    for (var i = cursors.Count - 1; i >= 0; i--)
+                    {
+                        var item = cursors[i];
+                        if (item.ExpiredTime < DateTime.UtcNow)
+                        {
+                            cursorsToRemove ??= new List<string>();
+                            cursorsToRemove.Add(item.Name);
+                            cursors.RemoveAt(i);
+                        }
+                    }
+                }
+
+                if (cursorsToRemove != null)
+                {
+                    Task.Run(() =>
+                    {
+                        foreach (var item in cursorsToRemove)
+                            try
+                            {
+                                var cursor = cursorManager.GetCursor(item);
+                                if (cursor != null)
+                                {
+                                    cursor.Dispose();
+                                    Debug.WriteLine($"CursorDispose: {cursor.Name}");
+                                }
+                            }
+                            catch
+                            {
+                                /* Ignored */
+                            }
+                    });
+                }
             }
         }
     }
