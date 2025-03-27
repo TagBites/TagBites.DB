@@ -22,7 +22,7 @@ namespace TagBites
                 MaxPoolSize = maxPoolSize,
 
                 ArrayNullabilityMode = ArrayNullabilityMode.Always,
-                SslMode = SslMode.Allow
+                SslMode = SslMode.Disable
             };
 
             return new NpgsqlLinkProvider(arguments.ToString())

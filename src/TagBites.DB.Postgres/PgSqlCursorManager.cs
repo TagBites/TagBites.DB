@@ -175,13 +175,13 @@ namespace TagBites.DB.Postgres
                 }
             }
 
-            // Create new connection outside of PoolSynchRoot to await deadlock when connection pool is exceeded in link provider
-            if (context.IsNew)
-                TryCreateConnection(context);
-
             // Execute
             try
             {
+                // Create new connection outside of PoolSynchRoot to await deadlock when connection pool is exceeded in link provider
+                if (context.IsNew)
+                    TryCreateConnection(context);
+
                 var cursor = context.CreateCursor(querySource, searchColumn, searchId, beforeCreateAction, cleanUpAction);
 
                 if (isNew && timeout > 0)
