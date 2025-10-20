@@ -813,7 +813,11 @@ namespace TagBites.DB
                             try
                             {
                                 OnTransactionBeforeCommit();
-                                _batchQueue.Flush();
+
+                                if (_transactionContext.Status != DbLinkTransactionStatus.RollingBack)
+                                    _batchQueue.Flush();
+                                else
+                                    _batchQueue.Cancel();
                             }
                             catch
                             {
@@ -821,22 +825,25 @@ namespace TagBites.DB
                                 throw;
                             }
 
-                        if (_transactionContext.DbTransactionInternal != null)
-                            try
-                            {
-                                _transactionContext.DbTransactionInternal.Commit();
-                            }
-                            catch (Exception e)
-                            {
-                                _transactionContext.Status = DbLinkTransactionStatus.RollingBack;
+                        if (_transactionContext.Status != DbLinkTransactionStatus.RollingBack)
+                        {
+                            if (_transactionContext.DbTransactionInternal != null)
+                                try
+                                {
+                                    _transactionContext.DbTransactionInternal.Commit();
+                                }
+                                catch (Exception e)
+                                {
+                                    _transactionContext.Status = DbLinkTransactionStatus.RollingBack;
 
-                                var ex = OnFormatException(e);
-                                if (e == ex)
-                                    throw;
-                                throw ex;
-                            }
+                                    var ex = OnFormatException(e);
+                                    if (e == ex)
+                                        throw;
+                                    throw ex;
+                                }
 
-                        _transactionContext.Status = DbLinkTransactionStatus.Committing;
+                            _transactionContext.Status = DbLinkTransactionStatus.Committing;
+                        }
                     }
                 }
                 // Rollback
@@ -1267,7 +1274,18 @@ namespace TagBites.DB
         }
         protected virtual void OnTransactionBeforeCommit()
         {
-            _transactionCommiting?.Invoke(this, EventArgs.Empty);
+            if (_transactionCommiting?.GetInvocationList() is { } events)
+            {
+                // ReSharper disable once ForCanBeConvertedToForeach
+                for (var i = 0; i < events.Length; i++)
+                {
+                    var action = (EventHandler)events[i];
+                    action(this, EventArgs.Empty);
+
+                    if (_transactionContext.Status == DbLinkTransactionStatus.RollingBack)
+                        break;
+                }
+            }
         }
 
         protected virtual void OnConnectionCreated() { }

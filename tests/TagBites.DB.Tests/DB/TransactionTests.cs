@@ -126,7 +126,8 @@ namespace TagBites.DB
                         transaction2.Commit();
                     }
                 }
-            };
+            }
+            ;
 
             Assert.Equal(1, count1);
             Assert.Equal(1, count2);
@@ -198,6 +199,58 @@ namespace TagBites.DB
                 Assert.Equal(0, beforeCommit);
                 Assert.Equal(0, close);
             }
+        }
+
+        [Fact]
+        public void ErrorOnCommittingTest()
+        {
+            using var link = DefaultProvider.CreateLink();
+
+            using (var t = link.Begin())
+            {
+                link.Force();
+
+                link.TransactionContext.TransactionCommiting += (obj, args) =>
+                {
+                    using var l = DefaultProvider.CreateLink();
+
+                    Assert.Equal(DbLinkTransactionStatus.Open, l.TransactionStatus);
+
+                    try
+                    {
+                        l.ExecuteNonQuery("DO $$ BEGIN RAISE EXCEPTION 'error'; END; $$;");
+                    }
+                    catch
+                    {
+                        // ignored
+                    }
+
+                    Assert.Equal(DbLinkTransactionStatus.RollingBack, l.TransactionStatus);
+                };
+
+                link.TransactionContext.TransactionClosed += (obj, args) =>
+                {
+                    Assert.Equal(DbLinkTransactionCloseReason.Rollback, args.CloseReason);
+                };
+                link.TransactionContext.TransactionContextClosed += (obj, args) =>
+                {
+                    Assert.Equal(DbLinkTransactionCloseReason.Rollback, args.CloseReason);
+                };
+
+                try
+                {
+                    t.Commit();
+                }
+                catch
+                {
+                    // ignored
+                }
+
+                Assert.Equal(DbLinkTransactionStatus.RollingBack, link.TransactionStatus);
+            }
+
+            Assert.Equal(DbLinkTransactionStatus.None, link.TransactionStatus);
+            link.ExecuteScalar("SELECT 1");
         }
     }
 }
