@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data.Common;
 
 namespace TagBites.DB
@@ -219,7 +219,21 @@ namespace TagBites.DB
 
         private void OnTransactionBeginning(object sender, EventArgs e) => _transactionBeginning?.Invoke(this, e);
         private void OnTransactionBegan(object sender, EventArgs e) => _transactionBegan?.Invoke(this, e);
-        private void OnTransactionCommiting(object sender, EventArgs e) => _transactionCommiting?.Invoke(this, e);
+        private void OnTransactionCommiting(object sender, EventArgs e)
+        {
+            if (_transactionCommiting?.GetInvocationList() is { } events)
+            {
+                // ReSharper disable once ForCanBeConvertedToForeach
+                for (var i = 0; i < events.Length; i++)
+                {
+                    var action = (EventHandler)events[i];
+                    action(this, EventArgs.Empty);
+
+                    if (Status == DbLinkTransactionStatus.RollingBack)
+                        break;
+                }
+            }
+        }
         private void OnTransactionClosed(object sender, DbLinkTransactionCloseEventArgs e) => _transactionClosed?.Invoke(this, e);
         private void OnTransactionContextClosed(object sender, DbLinkTransactionContextCloseEventArgs e) => _transactionContextClosed?.Invoke(this, e);
     }
