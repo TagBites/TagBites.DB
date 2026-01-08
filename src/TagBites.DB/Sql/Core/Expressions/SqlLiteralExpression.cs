@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 
 namespace TagBites.Sql
@@ -25,10 +25,6 @@ namespace TagBites.Sql
         protected internal override void Accept(SqlQueryResolver resolver, SqlQueryBuilder builder)
         {
             resolver.VisitExpression(this, builder);
-        }
-        public override string ToString()
-        {
-            return $"Format: {Format}, Args: {Args}";
         }
 
         protected bool Equals(SqlLiteralExpression other)
