@@ -57,6 +57,7 @@ namespace TagBites.DB
         public void Dispose()
         {
             GC.SuppressFinalize(this);
+            Action closeEvents = null;
 
             lock (_locker)
             {
@@ -77,7 +78,7 @@ namespace TagBites.DB
                             }
                             finally
                             {
-                                _context.CloseTransaction(_nestingLevel);
+                                closeEvents = _context.CloseTransaction(_nestingLevel);
                             }
                     }
                     finally
@@ -86,6 +87,8 @@ namespace TagBites.DB
                     }
                 }
             }
+
+            closeEvents?.Invoke();
         }
     }
 }
