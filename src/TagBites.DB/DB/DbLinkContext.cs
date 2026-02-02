@@ -780,7 +780,8 @@ namespace TagBites.DB
                     }
                     finally
                     {
-                        CloseTransaction(0);
+                        var closeEvents = CloseTransaction(0);
+                        closeEvents();
                     }
                 }
                 finally
@@ -860,7 +861,7 @@ namespace TagBites.DB
                 }
             }
         }
-        internal void CloseTransaction(int level)
+        internal Action CloseTransaction(int level)
         {
             Exception ex = null;
             Action closeTransactionEvent = null;
@@ -923,32 +924,35 @@ namespace TagBites.DB
                     _transactionContext.Status = DbLinkTransactionStatus.None;
                     _transactionContext.ForceRelease();
                     _transactionContext = null;
+                }
+            }
 
-                    // Transaction Closed
-                    try
-                    {
-                        closeTransactionEvent?.Invoke();
-                    }
-                    catch (Exception ex2)
-                    {
-                        ex = ToAggregateException("Exception occurred while executing TransactionClose event.", ex, ex2);
-                    }
+            return () =>
+            {
+                // Transaction Closed
+                try
+                {
+                    closeTransactionEvent?.Invoke();
+                }
+                catch (Exception ex2)
+                {
+                    ex = ToAggregateException("Exception occurred while executing TransactionClose event.", ex, ex2);
+                }
 
-                    // Transaction Context Closed
-                    try
-                    {
-                        closeTransactionContextEvent?.Invoke();
-                    }
-                    catch (Exception ex2)
-                    {
-                        ex = ToAggregateException("Exception occurred while executing TransactionContextClose event.", ex, ex2);
-                    }
+                // Transaction Context Closed
+                try
+                {
+                    closeTransactionContextEvent?.Invoke();
+                }
+                catch (Exception ex2)
+                {
+                    ex = ToAggregateException("Exception occurred while executing TransactionContextClose event.", ex, ex2);
                 }
 
                 // Throw exception
                 if (ex != null)
                     throw ex;
-            }
+            };
         }
 
         private T ExecuteInner<T>(IQuerySource source, ExecuteQueryWithRowCountDelegate<T> action)

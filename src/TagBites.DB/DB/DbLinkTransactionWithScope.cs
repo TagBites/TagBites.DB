@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.Transactions;
 using TagBites.Utils;
@@ -77,7 +77,8 @@ namespace TagBites.DB
                 if (m_transactionScope != null)
                     try
                     {
-                        m_context.CloseTransaction(m_nestingLevel);
+                        var closeEvents = m_context.CloseTransaction(m_nestingLevel);
+                        closeEvents();
                     }
                     finally
                     {
