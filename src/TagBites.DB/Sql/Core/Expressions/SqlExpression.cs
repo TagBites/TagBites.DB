@@ -401,12 +401,10 @@ namespace TagBites.Sql
             {
                 var conditions = columns.Select(x =>
                 {
-                    var operatorName = ignoreCase
-                        ? "ILIKE"
-                        : "LIKE";
+                    var opr = new SqlOperatorExpression(ignoreCase ? SqlConditionBinaryOperatorType.ILike : SqlConditionBinaryOperatorType.Like);
                     var expression = string.IsNullOrEmpty(x.AdjustFunction)
-                        ? LiteralExpression($"{{0}} {operatorName} ('%' || {{1}} || '%')", Cast(x.ColumnExpression, typeof(string)), Argument(item))
-                        : LiteralExpression($"{x.AdjustFunction}({{0}}) {operatorName} ('%' || {x.AdjustFunction}({{1}}) || '%')", Cast(x.ColumnExpression, typeof(string)), Argument(item));
+                        ? LiteralExpression($"{{0}} {{2}} ('%' || {{1}} || '%')", Cast(x.ColumnExpression, typeof(string)), Argument(item), opr)
+                        : LiteralExpression($"{x.AdjustFunction}({{0}}) {{2}} ('%' || {x.AdjustFunction}({{1}}) || '%')", Cast(x.ColumnExpression, typeof(string)), Argument(item), opr);
                     return new SqlConditionExpression(expression);
                 });
                 return And(current, Or(conditions));

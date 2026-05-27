@@ -179,7 +179,7 @@ namespace TagBites.Sql
                 Visit(expression.Operands[0], builder);
             else
             {
-                var connect = expression.OperatorType == SqlConditionGroupOperatorType.And ? ") AND (" : ") OR (";
+                var connect = $") {GetOperatorTypeString(expression.OperatorType)} (";
                 builder.Append('(');
 
                 for (var i = 0; i < expression.Operands.Count; i++)
@@ -194,7 +194,7 @@ namespace TagBites.Sql
         }
         protected internal virtual void VisitExpression(SqlConditionBinaryOperator expression, SqlQueryBuilder builder)
         {
-            if (expression.OperatorType < SqlConditionBinaryOperatorType.Like || expression.OperatorType > SqlConditionBinaryOperatorType.EndsWith)
+            if ((expression.OperatorType < SqlConditionBinaryOperatorType.Like || expression.OperatorType > SqlConditionBinaryOperatorType.EndsWith) && expression.OperatorType != SqlConditionBinaryOperatorType.ILike)
             {
                 builder.Append('(');
                 Visit(expression.OperandLeft, builder);
@@ -208,9 +208,11 @@ namespace TagBites.Sql
             }
             else
             {
+                var opr = GetOperatorTypeString(expression.OperatorType == SqlConditionBinaryOperatorType.ILike ? SqlConditionBinaryOperatorType.ILike : SqlConditionBinaryOperatorType.Like);
+
                 builder.Append('(');
                 Visit(expression.OperandLeft, builder);
-                builder.Append(") LIKE (");
+                builder.Append($") {opr} (");
 
                 if (expression.OperatorType == SqlConditionBinaryOperatorType.Contains || expression.OperatorType == SqlConditionBinaryOperatorType.EndsWith)
                     builder.Append("'%' || ");
@@ -322,6 +324,10 @@ namespace TagBites.Sql
         protected internal virtual void VisitExpression(SqlExpressionQuery expression, SqlQueryBuilder builder)
         {
             Visit(expression.Query, builder);
+        }
+        protected internal virtual void VisitExpression(SqlOperatorExpression expression, SqlQueryBuilder builder)
+        {
+            builder.Append(GetOperatorTypeString(expression.Operator));
         }
 
         protected internal virtual void VisitQuery(SqlQuerySelect query, SqlQueryBuilder builder)
@@ -975,6 +981,17 @@ namespace TagBites.Sql
             return functionName;
         }
 
+        internal string GetOperatorTypeString(Enum operatorType)
+        {
+            return operatorType switch
+            {
+                SqlExpressionUnaryOperatorType opr => GetOperatorTypeString(opr),
+                SqlExpressionBinaryOperatorType opr => GetOperatorTypeString(opr),
+                SqlConditionBinaryOperatorType opr => GetOperatorTypeString(opr),
+                SqlConditionGroupOperatorType opr => GetOperatorTypeString(opr),
+                _ => throw new NotSupportedException($"Operator type {operatorType} is not supported.")
+            };
+        }
         protected virtual string GetOperatorTypeString(SqlExpressionUnaryOperatorType operatorType)
         {
             switch (operatorType)
@@ -1015,6 +1032,16 @@ namespace TagBites.Sql
                 case SqlConditionBinaryOperatorType.Less: return "<";
                 case SqlConditionBinaryOperatorType.LessOrEqual: return "<=";
                 case SqlConditionBinaryOperatorType.Like: return " LIKE ";
+                case SqlConditionBinaryOperatorType.ILike: return " ILIKE ";
+                default: throw new NotSupportedException($"Operator type {operatorType} is not supported.");
+            }
+        }
+        protected virtual string GetOperatorTypeString(SqlConditionGroupOperatorType operatorType)
+        {
+            switch (operatorType)
+            {
+                case SqlConditionGroupOperatorType.And: return " AND ";
+                case SqlConditionGroupOperatorType.Or: return " OR ";
                 default: throw new NotSupportedException($"Operator type {operatorType} is not supported.");
             }
         }

@@ -1,8 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace TagBites.Sql
 {
     public abstract class SqlExpressionVisitor : ISqlExpressionVisitor
@@ -59,6 +54,9 @@ namespace TagBites.Sql
 
         }
         public virtual void VisitExpression(SqlExpressionQuery expression)
+        {
+        }
+        public virtual void VisitExpression(SqlOperatorExpression expression)
         {
         }
     }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using TagBites.Utils;
 
 namespace TagBites.Sql.Sqlite
@@ -73,6 +73,14 @@ namespace TagBites.Sql.Sqlite
                 builder.AppendKeyword(keyword);
 
             VisitTableDeclaration(builder, table, false, keyword != "INSERT INTO" && keyword != "DELETE FROM" && keyword != "UPDATE");
+        }
+
+        protected override string GetOperatorTypeString(SqlConditionBinaryOperatorType operatorType)
+        {
+            if (operatorType == SqlConditionBinaryOperatorType.ILike)
+                operatorType = SqlConditionBinaryOperatorType.Like;
+
+            return base.GetOperatorTypeString(operatorType);
         }
 
         protected override string ToDateTimeParameterString(DateTime value)
