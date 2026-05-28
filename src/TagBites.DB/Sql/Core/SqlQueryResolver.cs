@@ -557,7 +557,8 @@ namespace TagBites.Sql
                     if (i > 0)
                         builder.Append(", ");
 
-                    builder.Append(clause[i]);
+                    var columnName = clause[i];
+                    builder.Append(QuoteIdentifierIfNeeded(columnName));
                 }
                 builder.Append(')');
             }
