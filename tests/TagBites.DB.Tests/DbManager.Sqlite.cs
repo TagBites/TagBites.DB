@@ -10,7 +10,7 @@ namespace TagBites
         {
             var arguments = new DbConnectionArguments()
             {
-                Database = "D:/db.sqlite",
+                Database = ConnectionSettings.Current.SqliteDatabase,
 
                 UsePooling = true,
                 MinPoolSize = 1,

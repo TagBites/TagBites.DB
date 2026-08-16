@@ -9,13 +9,14 @@ namespace TagBites
     {
         public static PgSqlLinkProvider CreateNpgsqlProvider(bool pooling = true, int minPoolSize = 1, int maxPoolSize = 4)
         {
+            var postgres = ConnectionSettings.Current.Postgres;
             var arguments = new NpgsqlConnectionStringBuilder()
             {
-                Host = "localhost",
-                Port = 5434,
-                Database = "newrr",
-                Username = "postgres",
-                Password = "postgres",
+                Host = postgres.Host,
+                Port = postgres.Port,
+                Database = postgres.Database,
+                Username = postgres.Username,
+                Password = postgres.Password,
 
                 Pooling = pooling,
                 MinPoolSize = minPoolSize,
@@ -33,7 +34,7 @@ namespace TagBites
 
         public static SqlServerLinkProvider CreateSqlServerProvider()
         {
-            return new SqlServerLinkProvider("Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=master;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False");
+            return new SqlServerLinkProvider(ConnectionSettings.Current.SqlServerConnectionString);
         }
     }
 }

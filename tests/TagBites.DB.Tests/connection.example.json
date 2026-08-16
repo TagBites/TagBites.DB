@@ -1,0 +1,11 @@
+{
+  "postgres": {
+    "host": "localhost",
+    "port": 5432,
+    "database": "tagbites_db_tests",
+    "username": "postgres",
+    "password": ""
+  },
+  "sqlServerConnectionString": "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=master;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False;Application Intent=ReadWrite;Multi Subnet Failover=False",
+  "sqliteDatabase": "tagbites_db_tests.sqlite"
+}

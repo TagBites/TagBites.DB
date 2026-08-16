@@ -11,6 +11,12 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <!-- Connection settings -->
+  <ItemGroup>
+    <None Update="connection.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="connection.example.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <!-- References -->
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />

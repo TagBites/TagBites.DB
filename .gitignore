@@ -1,6 +1,7 @@
 # User-specific files
 *.DotSettings
 *.user
+connection.json
 
 # Folders
 /Build/keys
