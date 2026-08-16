@@ -1,44 +1,31 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Package info -->
-  <PropertyGroup>
-    <PackageId>TagBites.DB</PackageId>
-    <Product>TagBites.DB</Product>
-    <Title>TagBites.DB</Title>
-
-    <Description></Description>
-    <PackageTags></PackageTags>
-
-    <PackageProjectUrl>https://www.tagbites.com/db</PackageProjectUrl>
-    <PackageIconUrl>https://www.tagbites.com/db/icon.png</PackageIconUrl>
-
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <PackageLicenseUrl>https://www.tagbites.com/db/license.txt</PackageLicenseUrl>
-
-    <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/TagBites/TagBites.DB-Docs.git</RepositoryUrl>
-  </PropertyGroup>
-
   <!-- Targets -->
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
-  </PropertyGroup>
-
-  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>TagBites</RootNamespace>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Nullable>disable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net462' ">
-    <Reference Include="System.Transactions" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <Compile Remove="SQLiteLinkAdapter.cs" />
-    <Compile Remove="SQLiteLinkProvider.cs" />
-  </ItemGroup>
+  <!-- Build -->
+  <PropertyGroup>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
 
+  <!-- Warnings -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+
+  <!-- Package info -->
+  <PropertyGroup>
+    <Description>Database access layer for .NET which manages connections, transactions and query execution. Provides the provider independent API used by the PostgreSQL, SQLite and SQL Server packages.</Description>
+    <PackageTags>database; ado.net; sql; data-access; connection-pool; transactions; query-builder</PackageTags>
+    <PackageProjectUrl>https://tagbites.com/db/</PackageProjectUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <!-- References -->
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.2.32">
       <PrivateAssets>all</PrivateAssets>

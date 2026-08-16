@@ -1,28 +1,3 @@
 <Project>
-
-  <ItemGroup>
-    <PackageReference Include="GitInfo" Version="2.1.2">
-      <PrivateAssets>All</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="MinVer" Version="2.5.0">
-      <PrivateAssets>All</PrivateAssets>
-    </PackageReference>
-  </ItemGroup>
-
-  <!-- Copy package to local packages repository -->
-  <Target Name="CopyPackage" AfterTargets="Pack" Condition="exists('$(SolutionDir)..\LocalPackages\')">
-    <Message Text="Copy '$(PackageOutputPath)$(PackageId).$(PackageVersion).nupkg' to '$(SolutionDir)..\LocalPackages\'" Importance="high"/>
-    <Copy 
-      SourceFiles="$(PackageOutputPath)$(PackageId).$(PackageVersion).nupkg"
-      DestinationFolder="$(SolutionDir)..\LocalPackages\" 
-      ContinueOnError="false" /> 
-      
-    <Message
-      Condition="exists('C:\Users\$([System.Environment]::UserName)\.nuget\packages\$(PackageId)\$(PackageVersion)')"
-      Text="Delete local package folder 'C:\Users\$([System.Environment]::UserName)\.nuget\packages\$(PackageId)\$(PackageVersion)'" Importance="high"/>
-    <RemoveDir 
-      Condition="exists('C:\Users\$([System.Environment]::UserName)\.nuget\packages\$(PackageId)\$(PackageVersion)')"
-      Directories="C:\Users\$([System.Environment]::UserName)\.nuget\packages\$(PackageId)\$(PackageVersion)" />
-  </Target>
-
+  <Import Project="Sdk.targets" Sdk="TagBites.Sdk" />
 </Project>

@@ -1,35 +1,31 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Package info -->
-  <PropertyGroup>
-    <PackageId>TagBites.DB.Npgsql</PackageId>
-    <Product>TagBites.DB.Npgsql</Product>
-    <Title>TagBites.DB.Npgsql</Title>
-
-    <Description></Description>
-    <PackageTags></PackageTags>
-
-    <PackageProjectUrl>https://www.tagbites.com/db</PackageProjectUrl>
-    <PackageIconUrl>https://www.tagbites.com/db/icon.png</PackageIconUrl>
-
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <PackageLicenseUrl>https://www.tagbites.com/db/license.txt</PackageLicenseUrl>
-
-    <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/TagBites/TagBites.DB-Docs.git</RepositoryUrl>
-  </PropertyGroup>
-
   <!-- Targets -->
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net462;net7.0;net8.0</TargetFrameworks>
-  </PropertyGroup>
-
-  <PropertyGroup>
     <RootNamespace>TagBites.DB.Npgsql</RootNamespace>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Nullable>disable</Nullable>
   </PropertyGroup>
 
+  <!-- Build -->
+  <PropertyGroup>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <!-- Warnings -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+
+  <!-- Package info -->
+  <PropertyGroup>
+    <Description>Npgsql driver for TagBites.DB.Postgres. Connects the PostgreSQL support in TagBites.DB to the Npgsql ADO.NET provider.</Description>
+    <PackageTags>database; postgresql; postgres; npgsql; sql; data-access</PackageTags>
+    <PackageProjectUrl>https://tagbites.com/db/</PackageProjectUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <!-- References -->
   <ItemGroup>
     <PackageReference Include="Npgsql" Version="8.0.2">
       <PrivateAssets>all</PrivateAssets>
@@ -41,6 +37,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\TagBites.DB.Postgres\TagBites.DB.Postgres.csproj" />
-  </ItemGroup>  
+  </ItemGroup>
 
 </Project>

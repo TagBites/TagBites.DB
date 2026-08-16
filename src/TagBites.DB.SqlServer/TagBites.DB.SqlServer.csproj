@@ -1,38 +1,37 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Package info -->
-  <PropertyGroup>
-    <PackageId>TagBites.DB.SqlServer</PackageId>
-    <Product>TagBites.DB.SqlServer</Product>
-    <Title>TagBites.DB.SqlServer</Title>
-
-    <Description></Description>
-    <PackageTags></PackageTags>
-
-    <PackageProjectUrl>https://www.tagbites.com/db</PackageProjectUrl>
-    <PackageIconUrl>https://www.tagbites.com/db/icon.png</PackageIconUrl>
-
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <PackageLicenseUrl>https://www.tagbites.com/db/license.txt</PackageLicenseUrl>
-
-    <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/TagBites/TagBites.DB-Docs.git</RepositoryUrl>
-  </PropertyGroup>
-
   <!-- Targets -->
   <PropertyGroup>
     <TargetFrameworks>net462;net6.0-windows</TargetFrameworks>
+    <RootNamespace>TagBites.DB.SqlServer</RootNamespace>
+    <Nullable>disable</Nullable>
   </PropertyGroup>
 
+  <!-- Build -->
   <PropertyGroup>
-    <RootNamespace>TagBites.DB.SqlServer</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
+
+  <!-- Warnings -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+
+  <!-- Package info -->
+  <PropertyGroup>
+    <Description>SQL Server support for TagBites.DB, built on Microsoft.Data.SqlClient.</Description>
+    <PackageTags>database; sqlserver; mssql; sql; data-access</PackageTags>
+    <PackageProjectUrl>https://tagbites.com/db/</PackageProjectUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <!-- References -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\TagBites.DB\TagBites.DB.csproj" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1" />
   </ItemGroup>
 
 </Project>

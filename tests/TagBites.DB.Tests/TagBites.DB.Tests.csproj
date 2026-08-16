@@ -1,34 +1,32 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-
-    <IsPackable>false</IsPackable>
-  </PropertyGroup>
-
-  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>TagBites</RootNamespace>
+    <Nullable>disable</Nullable>
   </PropertyGroup>
 
+  <!-- Usings -->
   <ItemGroup>
-    <Reference Include="System.Transactions" />
+    <Using Include="Xunit" />
+  </ItemGroup>
 
-    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  <!-- References -->
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-
     <PackageReference Include="Npgsql" Version="8.0.7" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\TagBites.DB.Npgsql\TagBites.DB.Npgsql.csproj" />
-    <ProjectReference Include="..\..\src\TagBites.DB.Postgres\TagBites.DB.Postgres.csproj" />
-    <ProjectReference Include="..\..\src\TagBites.DB.SqlServer\TagBites.DB.SqlServer.csproj" />
     <ProjectReference Include="..\..\src\TagBites.DB\TagBites.DB.csproj" />
+    <ProjectReference Include="..\..\src\TagBites.DB.Postgres\TagBites.DB.Postgres.csproj" />
+    <ProjectReference Include="..\..\src\TagBites.DB.Npgsql\TagBites.DB.Npgsql.csproj" />
+    <ProjectReference Include="..\..\src\TagBites.DB.SqlServer\TagBites.DB.SqlServer.csproj" />
   </ItemGroup>
 
 </Project>

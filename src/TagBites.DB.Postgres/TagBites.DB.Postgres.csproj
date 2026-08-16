@@ -1,35 +1,31 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!-- Package info -->
-  <PropertyGroup>
-    <PackageId>TagBites.DB.Postgres</PackageId>
-    <Product>TagBites.DB.Postgres</Product>
-    <Title>TagBites.DB.Postgres</Title>
-
-    <Description></Description>
-    <PackageTags></PackageTags>
-
-    <PackageProjectUrl>https://www.tagbites.com/db</PackageProjectUrl>
-    <PackageIconUrl>https://www.tagbites.com/db/icon.png</PackageIconUrl>
-
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <PackageLicenseUrl>https://www.tagbites.com/db/license.txt</PackageLicenseUrl>
-
-    <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/TagBites/TagBites.DB-Docs.git</RepositoryUrl>
-  </PropertyGroup>
-
   <!-- Targets -->
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
-  </PropertyGroup>
-  
-  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>TagBites.DB.Postgres</RootNamespace>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Nullable>disable</Nullable>
   </PropertyGroup>
 
+  <!-- Build -->
+  <PropertyGroup>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <!-- Warnings -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+
+  <!-- Package info -->
+  <PropertyGroup>
+    <Description>PostgreSQL support for TagBites.DB, with cursors, notifications and array types. Needs a driver package such as TagBites.DB.Npgsql.</Description>
+    <PackageTags>database; postgresql; postgres; sql; data-access; cursor; notify</PackageTags>
+    <PackageProjectUrl>https://tagbites.com/db/</PackageProjectUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <!-- References -->
   <ItemGroup>
     <ProjectReference Include="..\TagBites.DB\TagBites.DB.csproj" />
   </ItemGroup>

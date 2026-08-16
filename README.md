@@ -1,7 +1,7 @@
 # TagBites.DB
 
 [![Nuget](https://img.shields.io/nuget/v/TagBites.DB.svg)](https://www.nuget.org/packages/TagBites.DB/)
-[![License](http://img.shields.io/github/license/TagBites/TagBites.DB)](https://github.com/TagBites/TagBites.DB/blob/master/LICENSE)
+[![License](http://img.shields.io/github/license/TagBites/TagBites.DB)](https://github.com/TagBites/TagBites.DB/blob/master/LICENSE.md)
 
 TagBites.DB is a library that simplifies query execution in .NET applications. It efficiently manages database connections, executes queries, and handles transactions. The library supports multiple database providers, including PostgreSQL and SQLite.
 

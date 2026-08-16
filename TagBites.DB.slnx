@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/.github/">
+    <File Path=".github/workflows/build-and-test.yml" />
+    <File Path=".github/workflows/publish-preview.yml" />
+    <File Path=".github/workflows/publish.yml" />
+  </Folder>
+  <Folder Name="/.root/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Build.targets" />
+    <File Path="global.json" />
+    <File Path="LICENSE.md" />
+    <File Path="README.md" />
+  </Folder>
+  <Project Path="src/TagBites.DB/TagBites.DB.csproj" />
+  <Project Path="src/TagBites.DB.Postgres/TagBites.DB.Postgres.csproj" />
+  <Project Path="src/TagBites.DB.Npgsql/TagBites.DB.Npgsql.csproj" />
+  <Project Path="src/TagBites.DB.Sqlite/TagBites.DB.Sqlite.csproj" />
+  <Project Path="src/TagBites.DB.SqlServer/TagBites.DB.SqlServer.csproj" />
+  <Project Path="tests/TagBites.DB.Tests/TagBites.DB.Tests.csproj" />
+</Solution>
