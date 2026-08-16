@@ -1,13 +1,10 @@
-using System;
-using System.Linq;
 using TagBites.Sql;
-using Xunit;
 
 namespace TagBites.DB.Postgres
 {
     public class CustomTypesTests : DbTests
     {
-        [Fact]
+        [CompatibleNpgsqlFact]
         public void LargeDecimalTest()
         {
             using var link = NpgsqlProvider.CreateLink();
@@ -25,7 +22,7 @@ namespace TagBites.DB.Postgres
             }
         }
 
-        [Fact]
+        [PostgresFact]
         public void AutoDetectParameterTypeTest()
         {
             using var link = NpgsqlProvider.CreateLink();
@@ -44,7 +41,7 @@ namespace TagBites.DB.Postgres
             transaction.Rollback();
         }
 
-        [Fact]
+        [CompatibleNpgsqlFact]
         public void ArrayBoundsAlwaysFromZeroTest()
         {
             using var link = NpgsqlProvider.CreateLink();
@@ -54,7 +51,7 @@ namespace TagBites.DB.Postgres
             Assert.Equal(new[] { 0, 0, 0, 0, 5, 0, 6 }, result);
         }
 
-        [Fact]
+        [StockNpgsqlFact]
         public void SupportsArrayTypeTest()
         {
             using var link = NpgsqlProvider.CreateLink();
@@ -120,7 +117,7 @@ namespace TagBites.DB.Postgres
             }
         }
 
-        [Fact]
+        [CompatibleNpgsqlFact]
         public void SupportsUnknownTypeTest()
         {
             using var link = NpgsqlProvider.CreateLink();
@@ -129,7 +126,7 @@ namespace TagBites.DB.Postgres
             Assert.Equal("1/2", mpq);
         }
 
-        [Fact]
+        [PostgresFact]
         public void NullableTypeTest()
         {
             var q = "SELECT 1 AS NullableInt";
@@ -141,7 +138,7 @@ namespace TagBites.DB.Postgres
             Assert.Equal(1, result[0].NullableInt);
         }
 
-        [Fact]
+        [CompatibleNpgsqlFact]
         public void ArrayTest()
         {
             var q = "SELECT Array[1,2]::int[] AS IntArray, Array['x','y']::text[] AS TextArray";

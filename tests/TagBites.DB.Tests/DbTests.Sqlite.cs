@@ -1,12 +1,10 @@
-#if SQLITE
-
 using TagBites.DB.Sqlite;
 
 namespace TagBites
 {
     partial class DbTests
     {
-        private SqliteLinkProvider _mSqliteProvider;
+        private SqliteLinkProvider _sqliteProvider;
 
         public SqliteLinkProvider SqliteProvider
         {
@@ -14,14 +12,12 @@ namespace TagBites
             {
                 lock (m_locker)
                 {
-                    if (_mSqliteProvider == null)
-                        _mSqliteProvider = DbManager.CreateSQLiteProvider();
+                    if (_sqliteProvider == null)
+                        _sqliteProvider = DbManager.CreateSqliteProvider();
 
-                    return _mSqliteProvider;
+                    return _sqliteProvider;
                 }
             }
         }
     }
 }
-
-#endif

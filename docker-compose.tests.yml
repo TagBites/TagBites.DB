@@ -1,0 +1,18 @@
+# PostgreSQL used by the tests in tests/TagBites.DB.Tests. The connection matches
+# tests/TagBites.DB.Tests/connection.default.json, so `docker compose -f docker-compose.tests.yml up -d`
+# followed by `dotnet test` needs no further setup. Stop it with `... down -v`.
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: tagbites
+      POSTGRES_PASSWORD: tagbites
+      POSTGRES_DB: tagbites_db_tests
+    ports:
+      # Not 5432, so a PostgreSQL already installed on the host keeps working.
+      - "55432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U tagbites -d tagbites_db_tests" ]
+      interval: 2s
+      timeout: 3s
+      retries: 30

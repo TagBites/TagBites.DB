@@ -28,7 +28,7 @@ namespace TagBites
         }
         public SqlServerLinkProvider SqlServerProvider { get; set; } = DbManager.CreateSqlServerProvider();
 
-        public DbLinkProvider DefaultProvider => NpgsqlProvider;
+        public DbLinkProvider DefaultProvider => TestEnvironment.IsSqlite ? SqliteProvider : NpgsqlProvider;
 
 
         protected virtual void InitializeConnectionProvider(PgSqlLinkProvider connectionProvider) { }

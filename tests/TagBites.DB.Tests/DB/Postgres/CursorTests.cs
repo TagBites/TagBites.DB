@@ -10,7 +10,7 @@ namespace TagBites.DB.Postgres
     [Collection("Cursors")]
     public class CursorTests : DbTests
     {
-        [Fact]
+        [PostgresFact]
         public async Task CursorSwitchTest()
         {
             if (!NpgsqlProvider.IsCursorSupported)
@@ -38,7 +38,7 @@ namespace TagBites.DB.Postgres
             }
         }
 
-        [Fact]
+        [PostgresFact]
         public void CursorTest()
         {
             if (!NpgsqlProvider.IsCursorSupported)
@@ -69,7 +69,7 @@ namespace TagBites.DB.Postgres
             }
         }
 
-        [Fact]
+        [PostgresFact]
         public void CursorSearchTest()
         {
             if (!NpgsqlProvider.IsCursorSupported)
@@ -95,7 +95,7 @@ namespace TagBites.DB.Postgres
             }
         }
 
-        [Fact]
+        [PostgresFact]
         public void IteratorTest()
         {
             if (!NpgsqlProvider.IsCursorSupported)
@@ -117,7 +117,7 @@ namespace TagBites.DB.Postgres
             }
         }
 
-        [Fact]
+        [PostgresFact]
         public void CursorActionTest()
         {
             if (!NpgsqlProvider.IsCursorSupported)
@@ -156,7 +156,7 @@ namespace TagBites.DB.Postgres
             Assert.Equal(2, afterHitCount);
         }
 
-        [Fact]
+        [PostgresFact]
         public async Task ConcurrentCursorsTestAsync()
         {
             if (!NpgsqlProvider.IsCursorSupported)
@@ -194,7 +194,7 @@ namespace TagBites.DB.Postgres
             }
         }
 
-        [Fact]
+        [PostgresFact]
         public async Task AutoCloseCursorsAsync()
         {
             if (!NpgsqlProvider.IsCursorSupported)

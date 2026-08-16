@@ -5,7 +5,7 @@ namespace TagBites.DB.Postgres
 {
     public class ConnectionLostTests : DbTests
     {
-        [Fact]
+        [PostgresFact]
         public void ReconnectAfterBreakWithAttemptsTest()
         {
             using (var link = NpgsqlProvider.CreateLink())
@@ -27,7 +27,7 @@ namespace TagBites.DB.Postgres
             }
         }
 
-        [Fact]
+        [PostgresFact]
         public void ReconnectAfterBreakWithTryCatchTest()
         {
             var openCount = 0;
@@ -66,7 +66,7 @@ namespace TagBites.DB.Postgres
             }
         }
 
-        [Fact]
+        [PostgresFact]
         public void ReconnectAfterBreakOnDifferentConnectionTest()
         {
             var reconnectAttempts = 0;
@@ -85,7 +85,7 @@ namespace TagBites.DB.Postgres
             }
         }
 
-        [Fact]
+        [PostgresFact]
         public void ConnectionIsNotBreakTest()
         {
             using (var link = NpgsqlProvider.CreateExclusiveLink())

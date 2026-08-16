@@ -1,8 +1,16 @@
 <Solution>
+  <Configurations>
+    <BuildType Name="Debug" />
+    <BuildType Name="Debug-CompatibleNpgsql" />
+    <BuildType Name="Release" />
+  </Configurations>
   <Folder Name="/.github/">
     <File Path=".github/workflows/build-and-test.yml" />
     <File Path=".github/workflows/publish-preview.yml" />
     <File Path=".github/workflows/publish.yml" />
+  </Folder>
+  <Folder Name="/.docker/">
+    <File Path="docker-compose.tests.yml" />
   </Folder>
   <Folder Name="/.root/">
     <File Path=".editorconfig" />

@@ -5,7 +5,7 @@ namespace TagBites;
 public class ConnectionSettings
 {
     private const string FileName = "connection.json";
-    private const string ExampleFileName = "connection.example.json";
+    private const string DefaultFileName = "connection.default.json";
 
     private static readonly JsonSerializerOptions s_serializerOptions = new() { PropertyNameCaseInsensitive = true };
     private static ConnectionSettings s_current;
@@ -21,7 +21,10 @@ public class ConnectionSettings
     {
         var path = Path.Combine(AppContext.BaseDirectory, FileName);
         if (!File.Exists(path))
-            throw new InvalidOperationException($"Test connection settings are missing. Copy '{ExampleFileName}' to '{FileName}' in the test project and fill in the values.");
+            path = Path.Combine(AppContext.BaseDirectory, DefaultFileName);
+
+        if (!File.Exists(path))
+            throw new InvalidOperationException($"Neither '{FileName}' nor '{DefaultFileName}' was found next to the test assembly.");
 
         var settings = JsonSerializer.Deserialize<ConnectionSettings>(File.ReadAllText(path), s_serializerOptions);
         if (settings == null)

@@ -8,7 +8,7 @@ connection.json
 /Build/*.exe
 /Build/*.dll
 /Build/*.nupkg
-/TestResults
+TestResults/
 .vs/
 packages/
 [Bb]in/

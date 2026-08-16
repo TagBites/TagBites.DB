@@ -6,7 +6,7 @@ namespace TagBites.DB.Postgres
 {
     public class NotifyTests : DbTests
     {
-        [Fact]
+        [PostgresFact]
         public void NotifyWithSingleLink()
         {
             using (var link = NpgsqlProvider.CreateExclusiveLink())
@@ -31,7 +31,7 @@ namespace TagBites.DB.Postgres
             }
         }
 
-        [Fact]
+        [PostgresFact]
         public void NotifyWithTwoLinks()
         {
             using (var sender = NpgsqlProvider.CreateExclusiveLink())
@@ -50,7 +50,7 @@ namespace TagBites.DB.Postgres
             }
         }
 
-        [Fact]
+        [PostgresFact]
         public void NotifyAtTheEndOfTransaction()
         {
             var x2 = 0;
@@ -71,7 +71,7 @@ namespace TagBites.DB.Postgres
             Assert.Equal(3, x2);
         }
 
-        [Fact]
+        [PostgresFact]
         public void NotifyAtTheEndOfTransactionWithSeparateConnections()
         {
             NpgsqlProvider.Configuration.ImplicitCreateTransactionScopeIfNotExists = false;
@@ -103,7 +103,7 @@ namespace TagBites.DB.Postgres
             }
         }
 
-        [Fact]
+        [PostgresFact]
         public async Task NotifyManager()
         {
             using (var notifyManager = new PgSqlNotifyListener(NpgsqlProvider))
@@ -160,7 +160,7 @@ namespace TagBites.DB.Postgres
             }
         }
 
-        [Fact]
+        [PostgresFact]
         public async Task NotifyManagerWithTransaction()
         {
             var expectedX5 = 20;
@@ -204,7 +204,7 @@ namespace TagBites.DB.Postgres
             }
         }
 
-        [Fact]
+        [PostgresFact]
         public async Task NotifyManagerConnectionLost()
         {
             var x6 = 0;

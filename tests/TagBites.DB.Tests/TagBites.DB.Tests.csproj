@@ -11,10 +11,21 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <!-- Compatible Npgsql -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug-CompatibleNpgsql'">
+    <CompatibleNpgsqlPath Condition="'$(CompatibleNpgsqlPath)' == ''">$(TagBitesRepositoryRoot)..\..\Vendo.CompatibleNpgsql\src\Npgsql\bin\Debug\net8.0\Npgsql.dll</CompatibleNpgsqlPath>
+  </PropertyGroup>
+
+  <Target Name="SwapNpgsql" AfterTargets="Build" Condition="'$(CompatibleNpgsqlPath)' != ''">
+    <Error Condition="!Exists('$(CompatibleNpgsqlPath)')" Text="Compatible Npgsql not found at '$(CompatibleNpgsqlPath)'. Build Vendo.CompatibleNpgsql first, or set CompatibleNpgsqlPath." />
+    <Copy SourceFiles="$(CompatibleNpgsqlPath)" DestinationFolder="$(OutDir)" />
+    <Message Importance="high" Text="Npgsql.dll replaced with $(CompatibleNpgsqlPath)" />
+  </Target>
+
   <!-- Connection settings -->
   <ItemGroup>
     <None Update="connection.json" CopyToOutputDirectory="PreserveNewest" />
-    <None Update="connection.example.json" CopyToOutputDirectory="PreserveNewest" />
+    <None Update="connection.default.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!-- References -->
@@ -32,6 +43,7 @@
     <ProjectReference Include="..\..\src\TagBites.DB\TagBites.DB.csproj" />
     <ProjectReference Include="..\..\src\TagBites.DB.Postgres\TagBites.DB.Postgres.csproj" />
     <ProjectReference Include="..\..\src\TagBites.DB.Npgsql\TagBites.DB.Npgsql.csproj" />
+    <ProjectReference Include="..\..\src\TagBites.DB.Sqlite\TagBites.DB.Sqlite.csproj" />
     <ProjectReference Include="..\..\src\TagBites.DB.SqlServer\TagBites.DB.SqlServer.csproj" />
   </ItemGroup>
 

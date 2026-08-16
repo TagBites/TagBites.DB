@@ -1,12 +1,10 @@
-#if SQLITE
-
 using Xunit;
 
 namespace TagBites.DB.Sqlite
 {
     public class CursorTests : DbTests
     {
-        [Fact]
+        [SqliteFact]
         public void CursorTest()
         {
             if (!SqliteProvider.IsCursorSupported)
@@ -44,7 +42,7 @@ namespace TagBites.DB.Sqlite
             Assert.Equal(1, openCount);
         }
 
-        [Fact]
+        [SqliteFact]
         public void IteratorTest()
         {
             if (!SqliteProvider.IsCursorSupported)
@@ -67,5 +65,3 @@ namespace TagBites.DB.Sqlite
         }
     }
 }
-
-#endif

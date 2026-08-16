@@ -1,3 +1,7 @@
 <Project>
   <Import Project="Sdk.props" Sdk="TagBites.Sdk" />
+
+  <PropertyGroup>
+    <Configurations>Debug;Release;Debug-CompatibleNpgsql</Configurations>
+  </PropertyGroup>
 </Project>
