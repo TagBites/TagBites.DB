@@ -1,11 +1,6 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using TagBites.DB.Configuration;
 using TagBites.DB.Entity;
-using TagBites.Sql;
 using TagBites.Utils;
 
 namespace TagBites.DB
@@ -183,17 +178,6 @@ namespace TagBites.DB
         public static QueryObjectResult<T> Execute<T>(this IDbLink link, IQuerySource query, QueryObjectResultPropertyResolver customPropertyResolver, QueryObjectResultItemFiller<T> additionalFiller)
         {
             return link.Execute(query).ToObjects<T>(customPropertyResolver, additionalFiller);
-        }
-
-        public static IOrderedQueryable<TSource> EntityQuery<TSource>(this IDbLink link)
-        {
-            return new EntityQuery<TSource>(new EntityQueryProvider(link));
-        }
-        public static SqlQuerySelect ParseEntityQuery<TSource>(this IDbLink link, IQueryable<TSource> queryable)
-        {
-            var provider = queryable.Provider as IDbLinkEntityQueryProvider
-                           ?? new EntityQueryProvider(link);
-            return provider.GetQuery(queryable.Expression);
         }
 
         public static T GetByKey<T>(this IDbLink link, object key) where T : class, new()

@@ -1,7 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using Xunit;
 
 namespace TagBites.DB.Entity
 {
@@ -13,10 +11,12 @@ namespace TagBites.DB.Entity
             using (var link = NpgsqlProvider.CreateLink())
             using (var transaction = link.Begin())
             {
-                link.ExecuteNonQuery("CREATE TABLE tmp ( id SERIAL PRIMARY KEY, value TEXT )");
+                link.ExecuteNonQuery("CREATE TEMPORARY TABLE tmp ( id SERIAL PRIMARY KEY, value TEXT )");
 
-                var entity = new Entity();
-                entity.Value = "V";
+                var entity = new Entity
+                {
+                    Value = "V"
+                };
 
                 entity = link.UpsertReturning(entity);
                 Assert.Equal("V", entity.Value);
@@ -31,7 +31,7 @@ namespace TagBites.DB.Entity
                 Assert.Equal("V2", entity.Value);
                 Assert.Equal(1, entity2.Id);
 
-                var entity3 = link.EntityQuery<Entity>().FirstOrDefault(x => x.Id == 1);
+                var entity3 = link.GetByKey<Entity>(1);
                 Assert.Equal(entity.Value, entity3?.Value);
 
                 link.DeleteByKey<Entity>(1);
