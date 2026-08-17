@@ -7,7 +7,7 @@ namespace TagBites
 {
     public static partial class DbManager
     {
-        public static PgSqlLinkProvider CreateNpgsqlProvider(bool pooling = true, int minPoolSize = 1, int maxPoolSize = 4)
+        public static PgSqlLinkProvider CreateNpgsqlProvider(bool pooling, int minPoolSize, int maxPoolSize)
         {
             var postgres = ConnectionSettings.Current.Postgres;
             var arguments = new NpgsqlConnectionStringBuilder()

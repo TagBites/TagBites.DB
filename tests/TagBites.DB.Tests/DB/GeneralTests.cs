@@ -1,9 +1,6 @@
-using System;
 using System.Text;
-using System.Threading.Tasks;
 using System.Transactions;
 using TagBites.DB.Configuration;
-using Xunit;
 
 namespace TagBites.DB
 {
@@ -287,7 +284,7 @@ namespace TagBites.DB
             var beginTransactionContextCounter = 0;
             var closeTransactionContextCounter = 0;
 
-            var cp = DbManager.CreateNpgsqlProvider(false);
+            var cp = DbManager.CreateNpgsqlProvider(false, 1, 4);
             cp.ContextCreated += (sender, args) => ++contextCreateCounter;
 
             using (var link = cp.CreateLink())

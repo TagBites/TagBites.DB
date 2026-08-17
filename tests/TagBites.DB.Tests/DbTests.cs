@@ -18,7 +18,7 @@ namespace TagBites
                 {
                     if (m_npgsqlProvider == null)
                     {
-                        m_npgsqlProvider = DbManager.CreateNpgsqlProvider();
+                        m_npgsqlProvider = DbManager.CreateNpgsqlProvider(true, 1, 4);
                         InitializeConnectionProvider(m_npgsqlProvider);
                     }
 
@@ -50,5 +50,7 @@ namespace TagBites
             using (var link = CreateLink())
                 return link.ExecuteScalar<T>(q);
         }
+
+
     }
 }

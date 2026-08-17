@@ -399,7 +399,7 @@ namespace TagBites.DB
                 {
                     lock (SynchRootForContextCollections)
                     {
-                        if (m_poolContexts.Count < MinPoolSize)
+                        if (m_poolContexts.Count < MaxPoolSize)
                         {
                             m_poolContexts.Push(context);
                             released = false;

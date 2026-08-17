@@ -1,7 +1,3 @@
-using System.Linq;
-using System.Threading.Tasks;
-using Xunit;
-
 // ReSharper disable AccessToModifiedClosure
 
 namespace TagBites.DB
@@ -12,7 +8,7 @@ namespace TagBites.DB
         public void StressTest()
         {
             int done = 0;
-            var p = DbManager.CreateNpgsqlProvider(maxPoolSize: 100);
+            var p = DbManager.CreateNpgsqlProvider(true, 1, maxPoolSize: 100);
 
             var tasks = Enumerable.Range(1, 10).Select(x => Task.Run(() =>
             {
