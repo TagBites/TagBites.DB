@@ -1057,7 +1057,7 @@ namespace TagBites.Sql
         internal static string QuoteIdentifierIfNeeded(string name)
         {
             return NeedQuoteIdentifier(name)
-                ? "\"" + name + "\""
+                ? "\"" + name.Replace("\"", "\"\"") + "\""
                 : name;
         }
         internal static string QuoteTableNameIfNeeded(string tableName)
