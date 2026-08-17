@@ -204,7 +204,6 @@ namespace TagBites.DB.Postgres
             var running = true;
             var transactionOpenCount = 0;
             var cursorsToAdd = 50;
-            var cursorsToAddDone = cursorsToAdd;
             var random = new Random();
 
             var provider = DbManager.CreateNpgsqlProvider(true, 1, 8);
@@ -216,33 +215,20 @@ namespace TagBites.DB.Postgres
 
             var cursorManager = provider.CreateCursorManager();
             var q = new Query("SELECT * FROM generate_series(1, 2000)");
+            var closing = Task.Run(CloseExpiredCursorsAsync);
 
             try
             {
-                _ = Task.Run(CloseExpiredCursorsAsync);
-
                 cursorManager.ActiveTransactionLimit = 4;
 
+                var creating = new List<Task>();
+
                 for (var i = 0; i < 5; i++)
-                {
-                    _ = Task.Run(async () =>
-                    {
-                        while (Interlocked.Decrement(ref cursorsToAdd) >= 0)
-                        {
-                            await Task.Delay(random.Next(50, 100));
+                    creating.Add(Task.Run(CreateCursorsAsync));
 
-                            var cursor = cursorManager.CreateCursor(q);
-                            Debug.WriteLine($"CreateCursor: {cursor.Name}");
+                await Task.WhenAll(creating);
 
-                            lock (cursors)
-                                cursors.Add((cursor.Name, DateTime.UtcNow.AddMilliseconds(100)));
-
-                            Interlocked.Decrement(ref cursorsToAddDone);
-                        }
-                    });
-                }
-
-                while (cursorManager.CursorCount > 0 || cursorsToAddDone > 0)
+                while (cursorManager.CursorCount > 0)
                     await Task.Delay(10);
             }
             finally
@@ -250,10 +236,24 @@ namespace TagBites.DB.Postgres
                 running = false;
             }
 
+            await closing;
             await Task.Delay(200);
 
             Assert.Equal(0, transactionOpenCount);
 
+            async Task CreateCursorsAsync()
+            {
+                while (Interlocked.Decrement(ref cursorsToAdd) >= 0)
+                {
+                    await Task.Delay(random.Next(50, 100));
+
+                    var cursor = cursorManager.CreateCursor(q);
+                    Debug.WriteLine($"CreateCursor: {cursor.Name}");
+
+                    lock (cursors)
+                        cursors.Add((cursor.Name, DateTime.UtcNow.AddMilliseconds(100)));
+                }
+            }
             async Task CloseExpiredCursorsAsync()
             {
                 // ReSharper disable once LoopVariableIsNeverChangedInsideLoop
