@@ -207,20 +207,7 @@ namespace TagBites.DB.Postgres
                 }
                 catch
                 {
-                    try
-                    {
-                        _link?.Dispose();
-                    }
-                    catch
-                    {
-                        // ignored
-                    }
-                    finally
-                    {
-                        _link = null;
-                        _transaction = null;
-                    }
-
+                    Dispose();
                     throw;
                 }
 

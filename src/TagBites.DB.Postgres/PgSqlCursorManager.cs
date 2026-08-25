@@ -100,12 +100,11 @@ namespace TagBites.DB.Postgres
             // Create context
             PgSqlCursorConnectionContext context = null;
             var isNew = false;
-            var isWaiting = false;
 
             while (true)
             {
-                if (isWaiting)
-                    Thread.Yield();
+                List<PgSqlCursorConnectionContext> deadConnections = null;
+                var isWaiting = false;
 
                 lock (_poolSynchRoot)
                 {
@@ -129,8 +128,25 @@ namespace TagBites.DB.Postgres
                             if (connection.IsNew)
                                 continue;
 
-                            // Inactive or waiting for timeout
-                            if (!connection.IsActive || timeout > 0 && connection.StartDateTime.AddMilliseconds(timeout / 2d) <= DateTime.Now)
+                            // Inactive
+                            if (!connection.IsActive)
+                            {
+                                connections.RemoveAt(i);
+
+                                if (ShouldDispose(connection))
+                                {
+                                    lock (_connections)
+                                        _connections.Remove(connection);
+
+                                    deadConnections ??= new List<PgSqlCursorConnectionContext>();
+                                    deadConnections.Add(connection);
+                                }
+
+                                continue;
+                            }
+
+                            // Waiting for timeout
+                            if (timeout > 0 && connection.StartDateTime.AddMilliseconds(timeout / 2d) <= DateTime.Now)
                             {
                                 connections.RemoveAt(i);
                                 continue;
@@ -155,24 +171,31 @@ namespace TagBites.DB.Postgres
                         // Maximum number of connections reached
                         if (maxConnections > 0)
                             lock (_connections)
-                                if (_connections.Count >= maxConnections * (timeout > 0 ? 2 : 1))
-                                {
-                                    isWaiting = true;
-                                    continue;
-                                }
+                                isWaiting = _connections.Count >= maxConnections * (timeout > 0 ? 2 : 1);
 
-                        //
-                        context = new PgSqlCursorConnectionContext(this);
-                        isNew = true;
+                        if (!isWaiting)
+                        {
+                            context = new PgSqlCursorConnectionContext(this);
+                            isNew = true;
 
-                        lock (_connections)
-                            _connections.Add(context);
+                            lock (_connections)
+                                _connections.Add(context);
+                        }
                     }
 
                     // Pending
-                    ++context.PendingCreateCursor;
-                    break;
+                    if (!isWaiting)
+                        ++context.PendingCreateCursor;
                 }
+
+                if (deadConnections != null)
+                    foreach (var connection in deadConnections)
+                        connection.Dispose();
+
+                if (!isWaiting)
+                    break;
+
+                Thread.Yield();
             }
 
             // Execute
@@ -218,16 +241,16 @@ namespace TagBites.DB.Postgres
 
         public void Clear()
         {
+            List<PgSqlCursorConnectionContext> connections;
+
             lock (_connections)
             {
-                for (var i = _connections.Count - 1; i >= 0; i--)
-                {
-                    var connection = _connections[i];
-                    _connections.RemoveAt(i);
-
-                    connection.Dispose();
-                }
+                connections = _connections.ToList();
+                _connections.Clear();
             }
+
+            foreach (var connection in connections)
+                connection.Dispose();
         }
 
         private void TryCreateConnection(PgSqlCursorConnectionContext context)
