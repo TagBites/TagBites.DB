@@ -20,5 +20,13 @@ namespace TagBites.Sql
         {
             Assert.Equal(expected, SqlQueryResolver.QuoteIdentifierIfNeeded(name));
         }
+
+        [Theory]
+        [InlineData("a[1]", "\"a[1]\"")]
+        [InlineData("[dbo]", "\"[dbo]\"")]
+        public void QuotesBrackets(string name, string expected)
+        {
+            Assert.Equal(expected, SqlQueryResolver.QuoteIdentifierIfNeeded(name));
+        }
     }
 }

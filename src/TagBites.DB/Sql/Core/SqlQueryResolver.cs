@@ -1049,10 +1049,8 @@ namespace TagBites.Sql
 
         internal static bool NeedQuoteIdentifier(string name)
         {
-            // TODO verify
             return (name.Length > 0 && char.IsNumber(name[0]))
-                   || name.Any(x => char.IsUpper(x) || (!char.IsLetterOrDigit(x) && !(x == '_' || x == '[' || x == ']')))
-                   || (name.StartsWith("\"") && name.EndsWith("\""));
+                   || name.Any(x => char.IsUpper(x) || (!char.IsLetterOrDigit(x) && x != '_'));
         }
         internal static string QuoteIdentifierIfNeeded(string name)
         {
