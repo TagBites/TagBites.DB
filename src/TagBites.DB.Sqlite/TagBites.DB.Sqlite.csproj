@@ -28,7 +28,7 @@
 
   <!-- References -->
   <ItemGroup>
-    <PackageReference Include="System.Data.SQLite" Version="1.0.110" />
+    <PackageReference Include="System.Data.SQLite" Version="1.0.119" />
   </ItemGroup>
 
   <ItemGroup>
