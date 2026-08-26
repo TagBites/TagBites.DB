@@ -57,7 +57,7 @@ namespace TagBites.Sql.Postgres
 
         protected override string GetCastString(object value, string typeName)
         {
-            return value is string ? $"'{value}'::{typeName}" : $"({value})::{typeName}";
+            return value is string text ? $"{ToEscapedString(text)}::{typeName}" : $"({value})::{typeName}";
         }
 
         protected override string GetBuildInFunctionName(string functionName)

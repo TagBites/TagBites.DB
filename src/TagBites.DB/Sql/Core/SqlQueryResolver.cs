@@ -973,8 +973,8 @@ namespace TagBites.Sql
         }
         protected virtual string GetCastString(object value, string typeName)
         {
-            return value is string
-                ? $"CAST('{value}' AS {typeName})"
+            return value is string text
+                ? $"CAST({ToEscapedString(text)} AS {typeName})"
                 : $"CAST(({value}) AS {typeName})";
         }
         protected virtual string GetBuildInFunctionName(string functionName)

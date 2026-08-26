@@ -14,8 +14,8 @@ namespace TagBites.Sql.TransactSql
 
         protected override string GetCastString(object value, string typeName)
         {
-            return value is string
-                ? $"CONVERT({typeName}, '{value}')"
+            return value is string text
+                ? $"CONVERT({typeName}, {ToEscapedString(text)})"
                 : $"CONVERT({typeName}, {value})";
         }
 
