@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
 using TagBites.Collections;
 
 namespace TagBites.DB
@@ -36,8 +33,9 @@ namespace TagBites.DB
             // Prepare query
             var queries = new List<Query>(items.Count * 2 + 1);
             var ids = new List<string>();
+            var useTransaction = items.Count > 1 && m_context.TransactionStatus == DbLinkTransactionStatus.None;
 
-            if (items.Count > 1 && m_context.TransactionStatus == DbLinkTransactionStatus.None)
+            if (useTransaction)
                 queries.Add(new Query("begin; -- ..."));
 
             for (var i = 0; i < items.Count; i++)
@@ -53,12 +51,34 @@ namespace TagBites.DB
                 queries.Add(query.Query);
             }
 
-            if (items.Count > 1 && m_context.TransactionStatus == DbLinkTransactionStatus.None)
+            if (useTransaction)
                 queries.Add(new Query("commit;"));
 
             var batchQuery = Query.Concat(queries);
 
             // Execute
+            try
+            {
+                ExecuteAndSetResults(batchQuery, items, ids);
+            }
+            catch (Exception e)
+            {
+                foreach (var item in items)
+                    if (!item.IsCompleted)
+                        item.SetResult(null, e, false);
+
+                if (useTransaction)
+                {
+                    try
+                    { m_context.ExecuteNonQuery(new Query("rollback;")); }
+                    catch { /* ignored */ }
+                }
+
+                throw;
+            }
+        }
+        private void ExecuteAndSetResults(Query batchQuery, List<DelayedBatchQueryResult> items, List<string> ids)
+        {
             m_context.ExecuteOnReader(batchQuery, x =>
             {
                 QueryResult[] results;

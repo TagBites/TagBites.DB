@@ -1,5 +1,3 @@
-using Xunit;
-
 namespace TagBites.DB
 {
     public class DelayedBatchTests : DbTests
@@ -108,6 +106,22 @@ namespace TagBites.DB
                 link.ExecuteScalar("Select 'a'");
                 Assert.True(result.HasResult);
             }
+        }
+        [Fact]
+        public void FailedBatchDoesNotLeaveTransactionOpen()
+        {
+            using var link = DefaultProvider.CreateLink();
+
+            var failing = link.DelayedBatchExecute(new Query("Select no_column"));
+            link.DelayedBatchExecute("Select 1");
+
+            Assert.ThrowsAny<Exception>(() => failing.Result);
+
+            var r1 = link.DelayedBatchExecute("Select 1");
+            var r2 = link.DelayedBatchExecute("Select 2");
+
+            Assert.Equal(1, r1.Result.ToScalar<int>());
+            Assert.Equal(2, r2.Result.ToScalar<int>());
         }
     }
 }
