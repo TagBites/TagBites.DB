@@ -14,7 +14,6 @@ public class ConnectionSettings
 
     public PostgresConnectionSettings Postgres { get; set; }
     public string SqlServerConnectionString { get; set; }
-    public string SqliteDatabase { get; set; }
 
 
     private static ConnectionSettings Load()

@@ -5,16 +5,16 @@ namespace TagBites
 {
     public static partial class DbManager
     {
+        private const string SqliteDirectoryName = "sqlite";
+
+        private static readonly string s_sqliteDirectory = PrepareSqliteDirectory();
+
+
         public static SqliteLinkProvider CreateSqliteProvider()
         {
-            var database = ConnectionSettings.Current.SqliteDatabase;
-            if (!Path.IsPathRooted(database))
-                database = Path.Combine(AppContext.BaseDirectory, database);
+            var database = Path.Combine(s_sqliteDirectory, $"{Guid.NewGuid():N}.sqlite");
 
-            if (File.Exists(database))
-                File.Delete(database);
-
-            var arguments = new DbConnectionArguments()
+            var arguments = new DbConnectionArguments
             {
                 Database = database,
 
@@ -24,6 +24,23 @@ namespace TagBites
             };
 
             return new SqliteLinkProvider(arguments);
+        }
+
+        private static string PrepareSqliteDirectory()
+        {
+            var directory = Path.Combine(AppContext.BaseDirectory, SqliteDirectoryName);
+            Directory.CreateDirectory(directory);
+
+            // Clear files from previous run
+            foreach (var file in Directory.GetFiles(directory, "*.sqlite"))
+                try
+                { File.Delete(file); }
+                catch
+                {
+                    // ignored
+                }
+
+            return directory;
         }
     }
 }
