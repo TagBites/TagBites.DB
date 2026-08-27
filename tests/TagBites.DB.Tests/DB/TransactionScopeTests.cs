@@ -245,7 +245,7 @@ namespace TagBites.DB
             }
         }
 
-        [Fact]
+        [PostgresFact]
         public async Task TransactionScopeWithConcurrentTasksTest()
         {
             using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))

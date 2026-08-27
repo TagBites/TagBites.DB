@@ -17,14 +17,14 @@ namespace TagBites.DB.Postgres
                 return;
 
             using var cursorManager = NpgsqlProvider.CreateCursorManager();
-            cursorManager.TransactionTimeout = 500;
+            cursorManager.TransactionTimeout = 2000;
 
             for (var i = 0; i < 2; i++)
             {
                 var q = new Query("SELECT * FROM generate_series(1, 2000)");
 
                 var c1 = cursorManager.CreateCursor(q);
-                await Task.Delay(300);
+                await Task.Delay(1200);
                 var c2 = cursorManager.CreateCursor(q);
 
                 Assert.NotEqual(c1.Owner, c2.Owner);

@@ -140,6 +140,8 @@ namespace TagBites.Sql
             Assert.False(ExecuteScalar<bool>(AreNotDistinct(Argument(1), Null)));
             Assert.False(ExecuteScalar<bool>(AreNotDistinct(Argument(1), Argument(2))));
             Assert.True(ExecuteScalar<bool>(AreNotDistinct(Argument(1), Argument(1))));
+            Assert.False(ExecuteScalar<bool>(AreDistinct(Null, Null)));
+            Assert.True(ExecuteScalar<bool>(AreNotDistinct(Null, Null)));
         }
 
         [Fact]
