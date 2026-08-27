@@ -1049,18 +1049,18 @@ namespace TagBites.Sql
             }
         }
 
-        internal static bool NeedQuoteIdentifier(string name)
+        protected internal virtual bool NeedQuoteIdentifier(string name)
         {
             return (name.Length > 0 && char.IsNumber(name[0]))
                    || name.Any(x => char.IsUpper(x) || (!char.IsLetterOrDigit(x) && x != '_'));
         }
-        internal static string QuoteIdentifierIfNeeded(string name)
+        protected internal virtual string QuoteIdentifierIfNeeded(string name)
         {
             return NeedQuoteIdentifier(name)
                 ? "\"" + name.Replace("\"", "\"\"") + "\""
                 : name;
         }
-        internal static string QuoteTableNameIfNeeded(string tableName)
+        protected internal virtual string QuoteTableNameIfNeeded(string tableName)
         {
             var index = tableName.IndexOf('.');
             if (index == -1)

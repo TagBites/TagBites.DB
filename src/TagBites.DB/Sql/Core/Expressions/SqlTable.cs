@@ -8,7 +8,7 @@ namespace TagBites.Sql
         public object Table { get; private set; }
         public string Alias { get; internal set; }
 
-        protected SqlTable(string table)
+        protected internal SqlTable(string table)
         {
             Guard.ArgumentNotNullOrEmpty(table, "table");
             Table = table;

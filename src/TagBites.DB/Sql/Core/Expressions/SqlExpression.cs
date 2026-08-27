@@ -45,7 +45,7 @@ namespace TagBites.Sql
         }
         public static SqlExpression Column(string tableAlias, string columnName)
         {
-            return new SqlLiteral($"{SqlQueryResolver.QuoteIdentifierIfNeeded(tableAlias)}.{SqlQueryResolver.QuoteIdentifierIfNeeded(columnName)}");
+            return new SqlColumn(new SqlTable(tableAlias, tableAlias), columnName);
         }
         public static SqlExpression Function(string name)
         {

@@ -9,7 +9,7 @@ namespace TagBites.Sql
     {
         public void Add(string column, string alias)
         {
-            Add(SqlExpression.Literal(SqlQueryResolver.QuoteIdentifierIfNeeded(column)), alias);
+            Add(new SqlColumn(new SqlTable(column), column), alias);
         }
     }
 }

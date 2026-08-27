@@ -12,6 +12,18 @@ namespace TagBites.Sql.TransactSql
             base.VisitExpression(expression, builder);
         }
 
+        protected internal override bool NeedQuoteIdentifier(string name)
+        {
+            return !IsQuoted(name) && base.NeedQuoteIdentifier(name);
+        }
+        protected internal override string QuoteIdentifierIfNeeded(string name)
+        {
+            return NeedQuoteIdentifier(name)
+                ? QuoteIdentifier(name)
+                : name;
+        }
+        private static bool IsQuoted(string name) => name.Length > 1 && name[0] == '[' && name[name.Length - 1] == ']';
+
         protected override string GetCastString(object value, string typeName)
         {
             return value is string text
