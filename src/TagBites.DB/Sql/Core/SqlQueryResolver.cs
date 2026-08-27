@@ -600,7 +600,10 @@ namespace TagBites.Sql
             if (!(entry.Query is SqlQueryBase) && !(entry.Query is SqlExpressionQuery) || entry.RecursiveQuery != null)
                 builder.Append('(');
 
-            Visit(entry.Query, builder);
+            if (entry.RecursiveQuery != null)
+                VisitUnionBranch(entry.Query, builder);
+            else
+                Visit(entry.Query, builder);
 
             if (entry.RecursiveQuery != null)
             {
@@ -609,7 +612,7 @@ namespace TagBites.Sql
                 if (!(entry.RecursiveQuery is SqlQueryBase) && !(entry.RecursiveQuery is SqlExpressionQuery))
                     builder.Append(" )");
 
-                Visit(entry.RecursiveQuery, builder);
+                VisitUnionBranch(entry.RecursiveQuery, builder);
 
                 if (!(entry.RecursiveQuery is SqlQueryBase) && !(entry.RecursiveQuery is SqlExpressionQuery))
                     builder.Append(" )");
@@ -716,8 +719,10 @@ namespace TagBites.Sql
         protected internal virtual void VisitClauseEntry(SqlClauseUnionEntry entry, SqlQueryBuilder builder)
         {
             builder.AppendKeyword(entry.Type == SqlClauseUnionEntryType.Default ? "UNION" : "UNION ALL");
-            Visit(entry.Select, builder);
+            VisitUnionBranch(entry.Select, builder);
         }
+
+        protected virtual void VisitUnionBranch(object query, SqlQueryBuilder builder) => Visit(query, builder);
 
         protected virtual void VisitLimitOffset(int? limit, int? offset, SqlQueryBuilder builder)
         {

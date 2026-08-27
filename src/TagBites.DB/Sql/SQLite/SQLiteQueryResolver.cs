@@ -37,6 +37,15 @@ namespace TagBites.Sql.Sqlite
 
             base.VisitQuery(query, builder);
         }
+        protected override void VisitUnionBranch(object query, SqlQueryBuilder builder)
+        {
+            // No parentheses between UNION keywords
+            if (query is SqlQueryBase queryBase)
+                queryBase.Accept(this, builder);
+            else
+                base.VisitUnionBranch(query, builder);
+        }
+
         private void MoveToWithIfNeeded(SqlClauseFrom fromClause, SqlClauseWith withClause)
         {
             for (int i = fromClause.Count - 1; i >= 0; i--)
