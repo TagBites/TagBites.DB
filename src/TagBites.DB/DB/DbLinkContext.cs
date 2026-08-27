@@ -1,9 +1,6 @@
-using System;
 using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
-using System.IO;
-using System.Linq;
 using System.Net.Sockets;
 using System.Transactions;
 using TagBites.DB.Configuration;
@@ -431,6 +428,11 @@ namespace TagBites.DB
                     var result = reader.ReadResult();
                     rowCount = result.RowCount;
                     recordsAffected = reader.RecordsAffected;
+
+                    // Force SQLite to execute additional statements
+                    while (reader.NextResult())
+                    { }
+
                     return result;
                 });
             }
