@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Globalization;
-using System.Linq;
 using TagBites.DB;
 using TagBites.DB.Configuration;
 using TagBites.Utils;
@@ -376,7 +373,7 @@ namespace TagBites.Sql
             else
                 VisitClause(((SqlQueryInsertValues)query).Values, "VALUES", builder, query.Columns);
 
-            VisitClause(query.Returning, "RETURNING", builder);
+            VisitReturningClause(query.Returning, builder);
         }
         protected internal virtual void VisitQuery(SqlQueryUpdate query, SqlQueryBuilder builder)
         {
@@ -389,7 +386,7 @@ namespace TagBites.Sql
             VisitClause(query.From, "FROM", builder);
             VisitClause(query.Join, builder);
             VisitClause(query.Where, "WHERE", builder);
-            VisitClause(query.Returning, "RETURNING", builder);
+            VisitReturningClause(query.Returning, builder);
         }
         protected internal virtual void VisitQuery(SqlQueryDelete query, SqlQueryBuilder builder)
         {
@@ -398,7 +395,7 @@ namespace TagBites.Sql
             VisitClause(query.Using, "USING", builder);
             VisitClause(query.Join, builder);
             VisitClause(query.Where, "WHERE", builder);
-            VisitClause(query.Returning, "RETURNING", builder);
+            VisitReturningClause(query.Returning, builder);
         }
         internal void PostVisitQuery(SqlQueryBase query, SqlQueryBuilder builder)
         {
@@ -723,7 +720,7 @@ namespace TagBites.Sql
         }
 
         protected virtual void VisitUnionBranch(object query, SqlQueryBuilder builder) => Visit(query, builder);
-
+        protected virtual void VisitReturningClause(SqlClauseSelect clause, SqlQueryBuilder builder) => VisitClause(clause, "RETURNING", builder);
         protected virtual void VisitLimitOffset(int? limit, int? offset, SqlQueryBuilder builder)
         {
             if (limit.HasValue)

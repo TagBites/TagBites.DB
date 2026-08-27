@@ -1,14 +1,11 @@
-using System;
 using TagBites.Utils;
 
 namespace TagBites.Sql.Sqlite
 {
     public class SqliteQueryResolver : SqlQueryResolver
     {
-        public override bool SupportReturningClause => false;
-
-        protected override string TrueLiteral { get; } = "1";
-        protected override string FalseLiteral { get; } = "0";
+        protected override string TrueLiteral => "1";
+        protected override string FalseLiteral => "0";
 
 
         protected internal override void VisitQuery(SqlQuerySelect query, SqlQueryBuilder builder)
@@ -20,7 +17,6 @@ namespace TagBites.Sql.Sqlite
         protected internal override void VisitQuery(SqlQueryUpdate query, SqlQueryBuilder builder)
         {
             MoveToWithIfNeeded(query.From, query.With);
-            query.Table.Alias = null;
 
             base.VisitQuery(query, builder);
         }
@@ -36,6 +32,27 @@ namespace TagBites.Sql.Sqlite
             query.Into.Alias = null;
 
             base.VisitQuery(query, builder);
+        }
+        protected override void VisitReturningClause(SqlClauseSelect clause, SqlQueryBuilder builder)
+        {
+            // Table qualifier on a RETURNING column is not supported
+            var columns = new SqlClauseSelect();
+
+            foreach (var entry in clause)
+                if (entry.Expression is SqlColumn column)
+                    columns.Add(SqlExpression.Literal(QuoteIdentifierIfNeeded(column.ColumnName)), entry.Alias);
+                else
+                    columns.Add(entry.Expression, entry.Alias);
+
+            base.VisitReturningClause(columns, builder);
+        }
+        protected override void VisitLimitOffset(int? limit, int? offset, SqlQueryBuilder builder)
+        {
+            // OFFSET must follow a LIMIT (-1 means no limit)
+            if (!limit.HasValue && offset.HasValue)
+                limit = -1;
+
+            base.VisitLimitOffset(limit, offset, builder);
         }
         protected override void VisitUnionBranch(object query, SqlQueryBuilder builder)
         {
@@ -81,7 +98,8 @@ namespace TagBites.Sql.Sqlite
             if (keyword != null)
                 builder.AppendKeyword(keyword);
 
-            VisitTableDeclaration(builder, table, false, keyword != "INSERT INTO" && keyword != "DELETE FROM" && keyword != "UPDATE");
+            // Alias is not supported for INSERT INTO and DELETE FROM
+            VisitTableDeclaration(builder, table, false, keyword != "INSERT INTO" && keyword != "DELETE FROM");
         }
 
         protected override string GetOperatorTypeString(SqlConditionBinaryOperatorType operatorType)
