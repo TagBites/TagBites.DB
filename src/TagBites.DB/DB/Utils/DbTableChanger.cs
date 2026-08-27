@@ -1,7 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using TagBites.Sql;
 using TagBites.Utils;
 
@@ -77,7 +73,8 @@ namespace TagBites.DB.Utils
             var withReturning = link.ConnectionContext.Provider.QueryResolver.SupportReturningClause;
 
             // Transactions
-            using (var transaction = link.Begin())
+            var transaction = link.Begin();
+            try
             {
                 //
                 // Update
@@ -298,6 +295,15 @@ namespace TagBites.DB.Utils
                 }
 
                 transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
+            finally
+            {
+                transaction.Dispose();
             }
 
             return affectedRows;

@@ -91,5 +91,22 @@ namespace TagBites.DB
                 transaction.Rollback();
             }
         }
+        [Fact]
+        public void FailedChangeKeepsItsOwnErrorTest()
+        {
+            using (var link = DefaultProvider.CreateLink())
+            using (var transaction = link.Begin())
+            {
+                var changer = new DbTableChanger("no_such_table_xyz", "id", true);
+                var record = changer.Records.Add();
+                record["v1"] = "1";
+
+                var exception = Assert.ThrowsAny<Exception>(() => changer.Execute(link));
+
+                Assert.DoesNotContain("Missing Commit/Rollback", exception.Message);
+
+                transaction.Rollback();
+            }
+        }
     }
 }
