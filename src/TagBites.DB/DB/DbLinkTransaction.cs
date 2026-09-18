@@ -38,7 +38,7 @@ namespace TagBites.DB
             lock (_locker)
             {
                 if (_disposed)
-                    throw new ObjectDisposedException("DbLinkTransactionWithScope");
+                    throw new ObjectDisposedException(nameof(DbLinkTransaction));
 
                 if (_executed)
                     throw new InvalidOperationException("Commit/Rollback was already executed.");

@@ -48,37 +48,43 @@ namespace TagBites.DB
         }
         private void CloseTransaction(bool rollback)
         {
-            if (m_context == null)
-                throw new ObjectDisposedException("DbLinkTransactionWithScope");
+            Transaction transaction;
+            TransactionScope transactionScope;
 
-            if (m_executed)
-                throw new InvalidOperationException("Commit/Rollback was already executed.");
-
-            if (m_context.TransactionStatus == DbLinkTransactionStatus.RollingBack && !rollback)
-                throw new InvalidOperationException("Can not commit already rollback transaction.");
-
-            try
+            lock (m_synchRoot)
             {
-                if (rollback)
-                    m_transaction.Rollback();
-                else
-                    m_transactionScope.Complete();
-            }
-            finally
-            {
+                if (m_context == null)
+                    throw new ObjectDisposedException(nameof(DbLinkTransactionWithScope));
+
+                if (m_executed)
+                    throw new InvalidOperationException("Commit/Rollback was already executed.");
+
+                if (m_context.TransactionStatus == DbLinkTransactionStatus.RollingBack && !rollback)
+                    throw new InvalidOperationException("Can not commit already rollback transaction.");
+
                 m_executed = true;
+                transaction = m_transaction;
+                transactionScope = m_transactionScope;
             }
+
+            // System.Transactions calls the enlistment back, and that callback takes the same lock, so this stays outside it.
+            if (rollback)
+                transaction.Rollback();
+            else
+                transactionScope.Complete();
         }
 
         public void Dispose()
         {
+            GC.SuppressFinalize(this);
+            Action closeEvents = null;
+
             lock (m_synchRoot)
             {
                 if (m_transactionScope != null)
                     try
                     {
-                        var closeEvents = m_context.CloseTransaction(m_nestingLevel);
-                        closeEvents();
+                        closeEvents = m_context.CloseTransaction(m_nestingLevel);
                     }
                     finally
                     {
@@ -95,7 +101,7 @@ namespace TagBites.DB
                     }
             }
 
-            GC.SuppressFinalize(this);
+            closeEvents?.Invoke();
         }
     }
 }
