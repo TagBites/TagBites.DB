@@ -33,6 +33,13 @@ namespace TagBites
 
         protected virtual void InitializeConnectionProvider(PgSqlLinkProvider connectionProvider) { }
 
+        protected static DbLinkProvider CreateDefaultProvider()
+        {
+            return TestEnvironment.IsSqlite
+                ? DbManager.CreateSqliteProvider()
+                : DbManager.CreateNpgsqlProvider(true, 1, 4);
+        }
+
         protected virtual IDbLink CreateLink()
         {
             return DefaultProvider.CreateLink();

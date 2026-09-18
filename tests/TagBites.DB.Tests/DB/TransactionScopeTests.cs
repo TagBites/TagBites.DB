@@ -12,12 +12,12 @@ namespace TagBites.DB
         [Fact]
         public void UncommitedTransactionScopeTest()
         {
-            if (!NpgsqlProvider.Configuration.AllowMissingRollbackInNestedTransaction)
-                return;
+            var provider = CreateDefaultProvider();
+            provider.Configuration.AllowMissingRollbackInNestedTransaction = true;
 
             using (var ts = new TransactionScope())
             {
-                using (var link = DefaultProvider.CreateLink())
+                using (var link = provider.CreateLink())
                 {
                     using (var t2 = link.Begin())
                     {
@@ -51,36 +51,36 @@ namespace TagBites.DB
         [Fact]
         public void SuppressTransactionScopeTest()
         {
-            if (!DefaultProvider.Configuration.UseSystemTransactions)
-                return;
+            var provider = CreateDefaultProvider();
+            provider.Configuration.UseSystemTransactions = true;
 
             using (new TransactionScope())
             {
                 using (new TransactionScope(TransactionScopeOption.Suppress))
                 {
-                    using (var link = DefaultProvider.CreateLink())
+                    using (var link = provider.CreateLink())
                         Assert.Equal(DbLinkTransactionStatus.None, link.TransactionStatus);
                 }
 
-                using (var link = DefaultProvider.CreateLink())
+                using (var link = provider.CreateLink())
                     Assert.Equal(DbLinkTransactionStatus.Pending, link.TransactionStatus);
             }
 
             // Two Links
-            DefaultProvider.Configuration.LinkCreateOnDifferentSystemTransaction = DbLinkCreateOnDifferentSystemTransaction.CreateLinkWithNewContextOrAssigedToCurrentTransaction;
+            provider.Configuration.LinkCreateOnDifferentSystemTransaction = DbLinkCreateOnDifferentSystemTransaction.CreateLinkWithNewContextOrAssigedToCurrentTransaction;
 
             using (new TransactionScope())
-            using (var link = DefaultProvider.CreateLink())
+            using (var link = provider.CreateLink())
             {
                 var tr = Transaction.Current;
 
                 using (new TransactionScope(TransactionScopeOption.Suppress))
-                using (var link2 = DefaultProvider.CreateLink())
+                using (var link2 = provider.CreateLink())
                 {
                     Assert.NotEqual(link.ConnectionContext, link2.ConnectionContext);
 
                     using (new TransactionScope(tr.DependentClone(DependentCloneOption.BlockCommitUntilComplete)))
-                    using (var link3 = DefaultProvider.CreateLink())
+                    using (var link3 = provider.CreateLink())
                     {
                         Assert.Equal(link.ConnectionContext, link3.ConnectionContext);
                     }
@@ -88,14 +88,14 @@ namespace TagBites.DB
             }
 
             // Two Links 2
-            DefaultProvider.Configuration.LinkCreateOnDifferentSystemTransaction = DbLinkCreateOnDifferentSystemTransaction.TryToMoveTransactionOrThrowException;
+            provider.Configuration.LinkCreateOnDifferentSystemTransaction = DbLinkCreateOnDifferentSystemTransaction.TryToMoveTransactionOrThrowException;
 
             using (new TransactionScope())
-            using (var link = DefaultProvider.CreateLink())
+            using (var link = provider.CreateLink())
             {
                 using (new TransactionScope(TransactionScopeOption.Suppress))
                 {
-                    using (var link2 = DefaultProvider.CreateLink())
+                    using (var link2 = provider.CreateLink())
                     {
                         Assert.Equal(link.ConnectionContext, link2.ConnectionContext);
                         Assert.NotNull(Transaction.Current);
@@ -104,15 +104,15 @@ namespace TagBites.DB
             }
 
             // Two Links 3
-            DefaultProvider.Configuration.LinkCreateOnDifferentSystemTransaction = DbLinkCreateOnDifferentSystemTransaction.ThrowException;
+            provider.Configuration.LinkCreateOnDifferentSystemTransaction = DbLinkCreateOnDifferentSystemTransaction.ThrowException;
 
             using (new TransactionScope())
-            using (var link = DefaultProvider.CreateLink())
+            using (var link = provider.CreateLink())
             {
                 using (new TransactionScope(TransactionScopeOption.Suppress))
                     try
                     {
-                        using (var link2 = DefaultProvider.CreateLink())
+                        using (var link2 = provider.CreateLink())
                             Assert.True(false, "Should Throw Exception");
                     }
                     catch { }
@@ -122,21 +122,21 @@ namespace TagBites.DB
         [Fact]
         public void TransactionScopeTest()
         {
-            if (!DefaultProvider.Configuration.UseSystemTransactions)
-                return;
+            var provider = CreateDefaultProvider();
+            provider.Configuration.UseSystemTransactions = true;
 
             using (var scope = new TransactionScope())
             {
-                using (var link = DefaultProvider.CreateLink())
+                using (var link = provider.CreateLink())
                 using (var transaction = link.Begin())
                 {
-                    Assert.Equal(DefaultProvider.Configuration.ForceOnLinkCreate || DefaultProvider.Configuration.ForceOnTransactionBegin ? DbLinkTransactionStatus.Open : DbLinkTransactionStatus.Pending, link.TransactionStatus);
+                    Assert.Equal(provider.Configuration.ForceOnLinkCreate || provider.Configuration.ForceOnTransactionBegin ? DbLinkTransactionStatus.Open : DbLinkTransactionStatus.Pending, link.TransactionStatus);
                     link.ExecuteNonQuery("Select 1");
                     transaction.Commit();
                     Assert.Equal(DbLinkTransactionStatus.Open, link.TransactionStatus);
                 }
 
-                using (var link = DefaultProvider.CreateLink())
+                using (var link = provider.CreateLink())
                 using (var transaction = link.Begin())
                 {
                     Assert.Equal(DbLinkTransactionStatus.Open, link.TransactionStatus);
@@ -150,14 +150,14 @@ namespace TagBites.DB
 
             using (var scope = new TransactionScope())
             {
-                using (var link = DefaultProvider.CreateLink())
+                using (var link = provider.CreateLink())
                 {
                     Assert.Equal(DbLinkTransactionStatus.Pending, link.TransactionStatus);
                     link.ExecuteNonQuery("Select 1");
                     Assert.Equal(DbLinkTransactionStatus.Open, link.TransactionStatus);
                 }
 
-                using (var link = DefaultProvider.CreateLink())
+                using (var link = provider.CreateLink())
                 {
                     Assert.Equal(DbLinkTransactionStatus.Open, link.TransactionStatus);
                     link.ExecuteNonQuery("Select 1");

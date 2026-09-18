@@ -131,20 +131,20 @@ namespace TagBites.DB
             }
         }
 
-        [Fact]
+        [PostgresFact]
         public void RollbackTest()
         {
-            if (!NpgsqlProvider.Configuration.AllowMissingRollbackInNestedTransaction)
-                return;
+            var provider = DbManager.CreateNpgsqlProvider(true, 1, 4);
+            provider.Configuration.AllowMissingRollbackInNestedTransaction = true;
 
-            using (var link = NpgsqlProvider.CreateLink())
+            using (var link = provider.CreateLink())
             using (var transaction = link.Begin())
             {
                 link.ExecuteNonQuery("SELECT 1");
 
                 try
                 {
-                    using (var link2 = NpgsqlProvider.CreateLink())
+                    using (var link2 = provider.CreateLink())
                     using (var transaction2 = link2.Begin())
                     {
                         link.ExecuteNonQuery("SELECT 2");

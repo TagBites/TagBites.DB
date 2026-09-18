@@ -45,11 +45,11 @@ namespace TagBites.DB
             };
         }
 
-        [Fact]
+        [PostgresFact]
         public void OneTransactionAtTheTimeTest()
         {
-            if (!DefaultProvider.Configuration.UseSystemTransactions)
-                return;
+            var provider = DbManager.CreateNpgsqlProvider(true, 1, 4);
+            provider.Configuration.UseSystemTransactions = true;
 
             Func<bool> isNewTransactionBlocked = () =>
             {
@@ -59,7 +59,7 @@ namespace TagBites.DB
                     {
                         using (var sc = new TransactionScope())
                         {
-                            using (var linkt = NpgsqlProvider.CreateLink())
+                            using (var linkt = provider.CreateLink())
                             using (var transactiont = linkt.Begin())
                             {
                                 transactiont.Commit();
@@ -77,7 +77,7 @@ namespace TagBites.DB
                 {
                     using (var sc = new TransactionScope())
                     {
-                        using (var link = NpgsqlProvider.CreateLink())
+                        using (var link = provider.CreateLink())
                         using (var t = link.Begin())
                         {
                             Assert.True(isNewTransactionBlocked());
