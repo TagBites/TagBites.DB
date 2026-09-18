@@ -1,5 +1,5 @@
-using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using TagBites.Utils;
 
 namespace TagBites.DB
@@ -58,6 +58,7 @@ namespace TagBites.DB
         {
             GC.SuppressFinalize(this);
             Action closeEvents = null;
+            var missingClose = false;
 
             lock (_locker)
             {
@@ -70,10 +71,8 @@ namespace TagBites.DB
                             {
                                 if (!_executed)
                                 {
+                                    missingClose = _nestingLevel > 1 && !_context.Provider.Configuration.AllowMissingRollbackInNestedTransaction;
                                     Rollback();
-
-                                    if (_nestingLevel > 1 && !_context.Provider.Configuration.AllowMissingRollbackInNestedTransaction)
-                                        throw new InvalidOperationException("Missing Commit/Rollback for nested transaction.");
                                 }
                             }
                             finally
@@ -89,6 +88,11 @@ namespace TagBites.DB
             }
 
             closeEvents?.Invoke();
+
+            if (missingClose && !IsUnwinding())
+                throw new InvalidOperationException("Missing Commit/Rollback for nested transaction.");
         }
+
+        private static bool IsUnwinding() => Marshal.GetExceptionPointers() != IntPtr.Zero;
     }
 }

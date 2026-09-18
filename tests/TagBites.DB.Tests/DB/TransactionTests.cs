@@ -248,5 +248,84 @@ namespace TagBites.DB
             Assert.Equal(DbLinkTransactionStatus.None, link.TransactionStatus);
             link.ExecuteScalar("SELECT 1");
         }
+
+        [Fact]
+        public void NestedTransactionKeepsOriginalExceptionTest()
+        {
+            using (var link = DefaultProvider.CreateLink())
+            using (var transaction = link.Begin())
+            {
+                var exception = Assert.ThrowsAny<Exception>(() =>
+                {
+                    using (link.Begin())
+                        throw new InvalidOperationException("Query failed.");
+                });
+
+                Assert.Equal("Query failed.", exception.Message);
+
+                transaction.Rollback();
+            }
+        }
+
+        [Fact]
+        public void NestedTransactionWithoutCloseReportsAtBlockEndTest()
+        {
+            using (var link = DefaultProvider.CreateLink())
+            using (var transaction = link.Begin())
+            {
+                link.ExecuteNonQuery("SELECT 1");
+
+                var exception = Assert.Throws<InvalidOperationException>(() =>
+                {
+                    using (link.Begin())
+                    { }
+                });
+
+                Assert.Equal("Missing Commit/Rollback for nested transaction.", exception.Message);
+            }
+        }
+
+        [Fact]
+        public void NestedTransactionWithHandledErrorReportsAtBlockEndTest()
+        {
+            using (var link = DefaultProvider.CreateLink())
+            using (var transaction = link.Begin())
+            {
+                link.ExecuteNonQuery("SELECT 1");
+
+                var exception = Assert.Throws<InvalidOperationException>(() =>
+                {
+                    using (link.Begin())
+                        try
+                        {
+                            throw new InvalidOperationException("Query failed.");
+                        }
+                        catch (InvalidOperationException)
+                        { }
+                });
+
+                Assert.Equal("Missing Commit/Rollback for nested transaction.", exception.Message);
+            }
+        }
+
+        [Fact]
+        public void NestedTransactionInterruptedByExceptionBlocksFurtherCommandsTest()
+        {
+            using (var link = DefaultProvider.CreateLink())
+            using (var transaction = link.Begin())
+            {
+                link.ExecuteNonQuery("SELECT 1");
+
+                try
+                {
+                    using (link.Begin())
+                        throw new InvalidOperationException("Query failed.");
+                }
+                catch (InvalidOperationException)
+                { }
+
+                Assert.Throws<InvalidOperationException>(() => link.ExecuteScalar<int>("SELECT 1"));
+            }
+        }
     }
 }
