@@ -32,7 +32,8 @@ namespace TagBites.DB.Sqlite
             var sb = new SQLiteConnectionStringBuilder
             {
                 Pooling = false,
-                SyncMode = SynchronizationModes.Full
+                SyncMode = SynchronizationModes.Full,
+                Enlist = false
             };
             sb["busytimeout"] = 1000;
 
