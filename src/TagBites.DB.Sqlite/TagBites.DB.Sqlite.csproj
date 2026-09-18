@@ -2,7 +2,7 @@
 
   <!-- Targets -->
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net462</TargetFrameworks>
+    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>TagBites.DB.Sqlite</RootNamespace>
     <Nullable>disable</Nullable>
     <DefineConstants>$(DefineConstants);NUGET</DefineConstants>

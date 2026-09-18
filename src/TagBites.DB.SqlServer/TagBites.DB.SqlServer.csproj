@@ -2,7 +2,7 @@
 
   <!-- Targets -->
   <PropertyGroup>
-    <TargetFrameworks>net462;net6.0-windows</TargetFrameworks>
+    <TargetFramework>net8.0</TargetFramework>
     <RootNamespace>TagBites.DB.SqlServer</RootNamespace>
     <Nullable>disable</Nullable>
   </PropertyGroup>
