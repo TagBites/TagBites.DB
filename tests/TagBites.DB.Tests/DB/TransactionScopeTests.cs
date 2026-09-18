@@ -317,5 +317,39 @@ namespace TagBites.DB
                 }
             }
         }
+        [Fact]
+        public void CommitClosesImplicitlyCreatedScopeTest()
+        {
+            Assert.Equal(DbLinkTransactionCloseReason.Commit, CloseImplicitlyCreatedScope(true));
+        }
+
+        [Fact]
+        public void DisposeRollsBackImplicitlyCreatedScopeTest()
+        {
+            Assert.Equal(DbLinkTransactionCloseReason.Rollback, CloseImplicitlyCreatedScope(false));
+        }
+
+        private static DbLinkTransactionCloseReason CloseImplicitlyCreatedScope(bool commit)
+        {
+            var provider = CreateDefaultProvider();
+            provider.Configuration.UseSystemTransactions = true;
+
+            var reason = default(DbLinkTransactionCloseReason);
+
+            using (var link = provider.CreateLink())
+            {
+                link.ConnectionContext.TransactionClosed += (sender, e) => reason = e.CloseReason;
+
+                using (var transaction = link.Begin())
+                {
+                    link.ExecuteNonQuery("SELECT 1");
+
+                    if (commit)
+                        transaction.Commit();
+                }
+            }
+
+            return reason;
+        }
     }
 }
