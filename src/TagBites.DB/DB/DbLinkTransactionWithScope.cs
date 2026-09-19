@@ -77,28 +77,35 @@ namespace TagBites.DB
         public void Dispose()
         {
             GC.SuppressFinalize(this);
-            Action closeEvents = null;
 
-            lock (m_synchRoot)
+            Action closeEvents = null;
+            TransactionScope transactionScope = null;
+
+            try
             {
-                if (m_transactionScope != null)
+                lock (m_synchRoot)
+                {
+                    if (m_transactionScope == null)
+                        return;
+
+                    transactionScope = m_transactionScope;
+
                     try
                     {
                         closeEvents = m_context.CloseTransaction(m_nestingLevel);
                     }
                     finally
                     {
-                        try
-                        {
-                            m_transactionScope.Dispose();
-                        }
-                        finally
-                        {
-                            m_context = null;
-                            m_transaction = null;
-                            m_transactionScope = null;
-                        }
+                        m_context = null;
+                        m_transaction = null;
+                        m_transactionScope = null;
                     }
+                }
+            }
+            finally
+            {
+                // Disposing the scope commits or aborts the system transaction, and those callbacks take the same lock.
+                transactionScope?.Dispose();
             }
 
             closeEvents?.Invoke();

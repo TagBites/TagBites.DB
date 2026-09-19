@@ -769,9 +769,11 @@ namespace TagBites.DB
         }
         private void SystemTransactionCompleted(object sender, TransactionEventArgs e)
         {
-            lock (SynchRoot)
+            Action closeEvents = null;
+
+            try
             {
-                try
+                lock (SynchRoot)
                 {
                     try
                     {
@@ -785,14 +787,15 @@ namespace TagBites.DB
                     }
                     finally
                     {
-                        var closeEvents = CloseTransaction(0);
-                        closeEvents();
+                        closeEvents = CloseTransaction(0);
                     }
                 }
-                finally
-                {
-                    Release(); // Attach in EnlistTransaction.
-                }
+
+                closeEvents?.Invoke();
+            }
+            finally
+            {
+                Release(); // Attach in EnlistTransaction.
             }
         }
         internal void MarkTransaction(bool rollback, bool rollbackCalled = false)
