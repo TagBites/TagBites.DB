@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace TagBites.DB.Postgres
 {
     public abstract class PgSqlLinkProvider : DbLinkProvider
     {
+        internal bool CursorSearchFunctionReadyInternal { get; set; }
+
         protected PgSqlLinkProvider(DbLinkAdapter adapter, string connectionString)
             : this(adapter, new DbConnectionArguments(connectionString))
         { }

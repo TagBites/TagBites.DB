@@ -95,6 +95,25 @@ namespace TagBites.DB.Postgres
             }
         }
 
+        [PostgresTheory]
+        [InlineData(1, 0)]
+        [InlineData(3, 2)]
+        [InlineData(4, 3)]
+        [InlineData(9, null)]
+        public void CursorSearchCountsEveryRowTest(int searchId, int? expectedPosition)
+        {
+            if (!NpgsqlProvider.IsCursorSupported)
+                return;
+
+            var q = new Query("SELECT * FROM (SELECT 1 AS id UNION SELECT 2 UNION SELECT 3 UNION SELECT 4) AS t ORDER BY id");
+
+            using var cursorManager = NpgsqlProvider.CreateCursorManager();
+            using var cursor = cursorManager.CreateCursor(q, "id", searchId);
+
+            Assert.Equal(4, cursor.RecordCount);
+            Assert.Equal(expectedPosition, cursor.SearchResultPosition);
+        }
+
         [PostgresFact]
         public void IteratorTest()
         {
