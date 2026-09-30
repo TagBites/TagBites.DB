@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Threading;
 using TagBites.DB.Configuration;
 using TagBites.Sql;
 
@@ -284,12 +280,14 @@ namespace TagBites.DB
 
         public DbLink CreateExclusiveLink() => CreateExclusiveLink(null);
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public DbLink CreateExclusiveLink(Action<DbConnectionArguments> connectionStringAdapter)
+        public DbLink CreateExclusiveLink(Action<DbConnectionArguments> connectionStringAdapter) => CreateExclusiveLink(connectionStringAdapter, null);
+        protected DbLink CreateExclusiveLink(Action<DbConnectionArguments> connectionStringAdapter, Action<DbLinkBag> bagInitializer)
         {
             m_createContextSemaphore.WaitOne();
 
             var context = CreateLinkContext();
             context.ConnectionStringAdapter = connectionStringAdapter;
+            bagInitializer?.Invoke(context.Bag);
 
             lock (SynchRootForContextCollections)
                 m_activeConnections.Add(context);
