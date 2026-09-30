@@ -32,8 +32,8 @@ namespace TagBites.DB.Npgsql
             {
                 x[nameof(NpgsqlConnectionStringBuilder.KeepAlive)] = "0";
                 x[nameof(NpgsqlConnectionStringBuilder.TcpKeepAlive)] = "true";
-                x[nameof(NpgsqlConnectionStringBuilder.TcpKeepAliveTime)] = "1";
-                x[nameof(NpgsqlConnectionStringBuilder.TcpKeepAliveInterval)] = "50";
+                x[nameof(NpgsqlConnectionStringBuilder.TcpKeepAliveTime)] = "30";
+                x[nameof(NpgsqlConnectionStringBuilder.TcpKeepAliveInterval)] = "5";
                 x[nameof(NpgsqlConnectionStringBuilder.Pooling)] = "false";
                 // The connection only receives notifications, so it skips the query that loads the database types
                 x[nameof(NpgsqlConnectionStringBuilder.ServerCompatibilityMode)] = nameof(ServerCompatibilityMode.NoTypeLoading);
