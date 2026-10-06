@@ -155,7 +155,7 @@ namespace TagBites.DB
             }
 
 
-            public override int GetColumnIndex(string columnName) => _namesMap.TryGetValue(columnName.ToLower(), out var index) ? index : -1;
+            public override int GetColumnIndex(string columnName) => _namesMap.TryGetValue(columnName, out var index) ? index : -1;
             public override string GetColumnName(int column) => _columns[column];
 
             protected override object GetValueCore(int row, int column) => _rows[row][column];

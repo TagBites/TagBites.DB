@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Globalization;
@@ -10,20 +11,19 @@ internal static class DbDataReaderExtensions
     {
         // Names
         var names = new List<string>();
-        var namesMap = new Dictionary<string, int>();
+        var namesMap = new Dictionary<string, int>(reader.FieldCount, StringComparer.OrdinalIgnoreCase);
         var listNonUnique = new List<int>();
 
         for (var i = 0; i < reader.FieldCount; i++)
         {
             var name = reader.GetName(i);
-            var lowerName = name.ToLower();
 
             names.Add(name);
 
-            if (namesMap.ContainsKey(lowerName))
+            if (namesMap.ContainsKey(name))
                 listNonUnique.Add(i);
             else
-                namesMap.Add(lowerName, i);
+                namesMap.Add(name, i);
         }
 
         // ReSharper disable once ForCanBeConvertedToForeach
@@ -31,17 +31,14 @@ internal static class DbDataReaderExtensions
         {
             var i = listNonUnique[index];
             var name = names[i];
-            var lowerName = name.ToLower();
+            var uniqueName = name;
             var nameSuffixIndex = 0;
 
-            while (namesMap.TryGetValue(lowerName, out _))
-                lowerName = name.ToLower() + (++nameSuffixIndex).ToString(CultureInfo.InvariantCulture);
+            while (namesMap.ContainsKey(uniqueName))
+                uniqueName = name + (++nameSuffixIndex).ToString(CultureInfo.InvariantCulture);
 
-            if (nameSuffixIndex > 0)
-                name += nameSuffixIndex.ToString(CultureInfo.InvariantCulture);
-
-            names[i] = name;
-            namesMap.Add(lowerName, i);
+            names[i] = uniqueName;
+            namesMap.Add(uniqueName, i);
         }
 
         // Rows
