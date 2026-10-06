@@ -82,7 +82,12 @@ internal sealed class QueryObjectBinder
                 ? Expression.Unbox(item, declaringType)
                 : Expression.Convert(item, declaringType);
 
-            var body = Expression.Call(instance, property.SetMethod!, Expression.Convert(value, property.PropertyType));
+            var propertyType = property.PropertyType;
+            var converted = propertyType.IsValueType && Nullable.GetUnderlyingType(propertyType) == null
+                ? Expression.Condition(Expression.Equal(value, Expression.Constant(null)), Expression.Default(propertyType), Expression.Convert(value, propertyType))
+                : (Expression)Expression.Convert(value, propertyType);
+
+            var body = Expression.Call(instance, property.SetMethod!, converted);
 
             return Expression.Lambda<Action<object, object>>(body, item, value).Compile();
         }

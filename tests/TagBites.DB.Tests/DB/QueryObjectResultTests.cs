@@ -136,6 +136,27 @@ namespace TagBites.DB
             }
         }
 
+        [Fact]
+        public void FillsDefaultWhenConverterReturnsNullTest()
+        {
+            var original = DbLinkDataConverter.Default;
+            DbLinkDataConverter.Default = new RejectingConverter(original);
+
+            try
+            {
+                using var link = CreateLink();
+
+                var item = link.Execute("SELECT 'not a value' AS Rejected, 4 AS Number").ToObjects<RejectedHolder>()[0];
+
+                Assert.Equal(0, item.Rejected.Value);
+                Assert.Equal(4, item.Number);
+            }
+            finally
+            {
+                DbLinkDataConverter.Default = original;
+            }
+        }
+
         private static object ResolverMethod(PropertyInfo property, QueryResultRow resultRow)
         {
             if (property.Name == "ItemInner")
@@ -181,6 +202,28 @@ namespace TagBites.DB
         {
             public Marker Marker { get; set; }
         }
+        private class RejectedHolder
+        {
+            public RejectedValue Rejected { get; set; } = new() { Value = 9 };
+            public int Number { get; set; }
+        }
+        private sealed class RejectingConverter : IDbLinkDataConverter
+        {
+            private readonly IDbLinkDataConverter _inner;
+
+            public RejectingConverter(IDbLinkDataConverter inner) => _inner = inner;
+
+
+            public object ToDbType(object value) => _inner.ToDbType(value);
+            public object FromDbType(object value) => _inner.FromDbType(value);
+            public T ChangeType<T>(object value) => _inner.ChangeType<T>(value);
+            public object ChangeType(object value, Type conversionType)
+            {
+                return conversionType == typeof(RejectedValue) && value != null
+                    ? null
+                    : _inner.ChangeType(value, conversionType);
+            }
+        }
 
         private sealed class MarkerConverter : IDbLinkDataConverter
         {
@@ -215,6 +258,10 @@ namespace TagBites.DB
             public string Label { get; set; }
 
             public LabeledStruct() => Label = "created";
+        }
+        private struct RejectedValue
+        {
+            public int Value { get; set; }
         }
         private struct Marker
         {
