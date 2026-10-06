@@ -38,7 +38,10 @@ namespace TagBites.DB
         #region Pooling Properties
 
         private readonly Semaphore m_createContextSemaphore;
-        private readonly Stack<DbLinkContext> m_poolContexts;
+        private readonly LinkedList<DbLinkContext> m_poolContexts;
+        private readonly long m_connectionIdleLifetime;
+        private readonly TimeSpan m_connectionPruningInterval;
+        private PeriodicTimer m_pruningTimer;
         private readonly List<DbLinkContext> m_activeConnections = new List<DbLinkContext>();
 
         public bool UsePooling { get; }
@@ -129,7 +132,10 @@ namespace TagBites.DB
             m_createContextSemaphore = new Semaphore(MaxPoolSize, MaxPoolSize);
 
             if (UsePooling)
-                m_poolContexts = new Stack<DbLinkContext>();
+                m_poolContexts = new LinkedList<DbLinkContext>();
+
+            m_connectionIdleLifetime = arguments.ConnectionIdleLifetime * 1000L;
+            m_connectionPruningInterval = TimeSpan.FromSeconds(arguments.ConnectionPruningInterval);
 
             LinkAdapter = linkAdapter;
             ConnectionString = linkAdapter.CreateConnectionString(arguments);
@@ -238,7 +244,8 @@ namespace TagBites.DB
                             {
                                 if (m_poolContexts.Count > 0)
                                 {
-                                    context = m_poolContexts.Pop();
+                                    context = m_poolContexts.Last!.Value;
+                                    m_poolContexts.RemoveLast();
                                     isNewContext = false;
                                 }
                             }
@@ -399,8 +406,13 @@ namespace TagBites.DB
                     {
                         if (m_poolContexts.Count < MaxPoolSize)
                         {
-                            m_poolContexts.Push(context);
+                            context.PooledSinceInternal = Environment.TickCount64;
+                            context.KeepOpenWhenIdleInternal = context.Bag[DbLinkBagKeys.KeepOpenWhenIdle] is true;
+                            m_poolContexts.AddLast(context);
                             released = false;
+
+                            if (m_poolContexts.Count > MinPoolSize)
+                                StartPruning();
                         }
                     }
                 }
@@ -408,6 +420,72 @@ namespace TagBites.DB
 
             m_createContextSemaphore.Release(1);
             return released;
+        }
+
+        private void StartPruning()
+        {
+            if (m_pruningTimer != null || m_connectionIdleLifetime <= 0 || m_connectionPruningInterval <= TimeSpan.Zero)
+                return;
+
+            m_pruningTimer = new PeriodicTimer(m_connectionPruningInterval);
+
+            // Fire-and-forget, the loop ends once no idle connection is left to close
+            using (ExecutionContext.SuppressFlow())
+                _ = PruneIdleContextsAsync(m_pruningTimer);
+        }
+        private async Task PruneIdleContextsAsync(PeriodicTimer timer)
+        {
+            while (await timer.WaitForNextTickAsync().ConfigureAwait(false))
+                PruneIdleContexts();
+        }
+        private void PruneIdleContexts()
+        {
+            List<DbLinkContext> contexts = null;
+
+            lock (SynchRootForContextCollections)
+            {
+                var now = Environment.TickCount64;
+                var node = m_poolContexts.First;
+
+                while (node != null && m_poolContexts.Count > MinPoolSize && now - node.Value.PooledSinceInternal >= m_connectionIdleLifetime)
+                {
+                    var next = node.Next;
+
+                    if (!node.Value.KeepOpenWhenIdleInternal)
+                    {
+                        (contexts ??= []).Add(node.Value);
+                        m_poolContexts.Remove(node);
+                    }
+
+                    node = next;
+                }
+
+                if (!HasClosablePoolContexts())
+                {
+                    m_pruningTimer?.Dispose();
+                    m_pruningTimer = null;
+                }
+            }
+
+            if (contexts == null)
+                return;
+
+            foreach (var context in contexts)
+            {
+                try { context.ClosePooledInternal(); }
+                catch { /* ignored */ }
+            }
+        }
+        private bool HasClosablePoolContexts()
+        {
+            if (m_poolContexts.Count <= MinPoolSize)
+                return false;
+
+            foreach (var context in m_poolContexts)
+                if (!context.KeepOpenWhenIdleInternal)
+                    return true;
+
+            return false;
         }
 
         #endregion

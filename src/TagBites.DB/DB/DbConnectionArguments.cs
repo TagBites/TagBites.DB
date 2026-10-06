@@ -20,6 +20,8 @@ namespace TagBites.DB
         public bool UsePooling { get => bool.TryParse(this[nameof(UsePooling)], out var usePooling) && usePooling; set => this[nameof(UsePooling)] = value.ToString(); }
         public int MinPoolSize { get => int.TryParse(this[nameof(MinPoolSize)], out var v) ? v : 0; set => this[nameof(MinPoolSize)] = value.ToString(); }
         public int MaxPoolSize { get => int.TryParse(this[nameof(MaxPoolSize)], out var v) ? v : 0; set => this[nameof(MaxPoolSize)] = value.ToString(); }
+        public int ConnectionIdleLifetime { get => int.TryParse(this[nameof(ConnectionIdleLifetime)], out var v) ? v : 60; set => this[nameof(ConnectionIdleLifetime)] = value.ToString(); }
+        public int ConnectionPruningInterval { get => int.TryParse(this[nameof(ConnectionPruningInterval)], out var v) ? v : 5; set => this[nameof(ConnectionPruningInterval)] = value.ToString(); }
 
         public string this[string name]
         {
@@ -90,6 +92,12 @@ namespace TagBites.DB
                 MaxPoolSize = DataHelper.TryChangeTypeDefault(sb["MAXIMUM POOL SIZE"], 100);
             else
                 MaxPoolSize = 100;
+
+            if (sb.ContainsKey("CONNECTION IDLE LIFETIME"))
+                ConnectionIdleLifetime = DataHelper.TryChangeTypeDefault(sb["CONNECTION IDLE LIFETIME"], 60);
+
+            if (sb.ContainsKey("CONNECTION PRUNING INTERVAL"))
+                ConnectionPruningInterval = DataHelper.TryChangeTypeDefault(sb["CONNECTION PRUNING INTERVAL"], 5);
         }
         public DbConnectionArguments(string host, int port, string database, string username, string password)
             : this()

@@ -7,7 +7,8 @@ namespace TagBites
 {
     public static partial class DbManager
     {
-        public static PgSqlLinkProvider CreateNpgsqlProvider(bool pooling, int minPoolSize, int maxPoolSize)
+        public static PgSqlLinkProvider CreateNpgsqlProvider(bool pooling, int minPoolSize, int maxPoolSize) => CreateNpgsqlProvider(pooling, minPoolSize, maxPoolSize, 60, 5);
+        public static PgSqlLinkProvider CreateNpgsqlProvider(bool pooling, int minPoolSize, int maxPoolSize, int connectionIdleLifetime, int connectionPruningInterval)
         {
             var postgres = ConnectionSettings.Current.Postgres;
             var arguments = new NpgsqlConnectionStringBuilder()
@@ -21,6 +22,8 @@ namespace TagBites
                 Pooling = pooling,
                 MinPoolSize = minPoolSize,
                 MaxPoolSize = maxPoolSize,
+                ConnectionIdleLifetime = connectionIdleLifetime,
+                ConnectionPruningInterval = connectionPruningInterval,
 
                 ArrayNullabilityMode = ArrayNullabilityMode.Always,
                 SslMode = SslMode.Disable

@@ -296,6 +296,8 @@ namespace TagBites.DB
         IDbLinkProvider IDbLinkContext.Provider => _provider;
 
         internal DbLinkTransactionContext TransactionContextInternal => _transactionContext;
+        internal long PooledSinceInternal { get; set; }
+        internal bool KeepOpenWhenIdleInternal { get; set; }
         private DbTransaction TransactionInternal => _transactionContext?.DbTransactionInternal;
         private DbLinkTransactionStatus TransactionStatusInternal => _transactionContext?.Status ?? DbLinkTransactionStatus.None;
 
@@ -647,6 +649,27 @@ namespace TagBites.DB
             // Throw last exception
             if (ex != null)
                 throw ex;
+        }
+        internal void ClosePooledInternal()
+        {
+            EventHandler connectionClosed = null;
+
+            lock (SynchRoot)
+            {
+                if (_provider == null)
+                    return;
+
+                if (_connection != null)
+                {
+                    DisposeAndSetNull(ref _connection);
+                    OnConnectionDisposed();
+                    connectionClosed = _connectionClosed;
+                }
+
+                _provider = null;
+            }
+
+            connectionClosed?.Invoke(this, EventArgs.Empty);
         }
 
         public IDbLinkTransaction Begin()

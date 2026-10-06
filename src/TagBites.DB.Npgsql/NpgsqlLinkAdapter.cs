@@ -38,6 +38,8 @@ namespace TagBites.DB.Npgsql
 
             sb.Remove(nameof(NpgsqlConnectionStringBuilder.MinPoolSize));
             sb.Remove(nameof(NpgsqlConnectionStringBuilder.MaxPoolSize));
+            sb.Remove(nameof(NpgsqlConnectionStringBuilder.ConnectionIdleLifetime));
+            sb.Remove(nameof(NpgsqlConnectionStringBuilder.ConnectionPruningInterval));
 
             return sb.ToString();
         }
