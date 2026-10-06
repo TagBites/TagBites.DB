@@ -79,7 +79,7 @@ namespace TagBites.DB
 
         private T CreateItem(int rowIndex, QueryResultRow rowDataProvider)
         {
-            var item = (T)_binder.Factory();
+            var item = _binder.Factory();
             var properties = _binder.Properties;
 
             for (var i = 0; i < properties.Length; i++)
@@ -100,7 +100,7 @@ namespace TagBites.DB
                 }
             }
 
-            return item;
+            return (T)item;
         }
 
         #region IList<T>

@@ -25,11 +25,7 @@ internal sealed class QueryObjectBinder
 
     private static QueryObjectBinder Create(Type type)
     {
-        var constructor = type.GetTypeInfo().DeclaredConstructors.FirstOrDefault(x => x.IsPublic && x.GetParameters().Length == 0);
-        if (constructor == null)
-            throw new ArgumentException($"Type {type} has no public parameterless constructor.", nameof(type));
-
-        var factory = Expression.Lambda<Func<object>>(Expression.New(constructor)).Compile();
+        var factory = Expression.Lambda<Func<object>>(Expression.Convert(CreateInstance(type), typeof(object))).Compile();
 
         var properties = TypeUtils.GetProperties(type)
             .Where(CanFill)
@@ -37,6 +33,17 @@ internal sealed class QueryObjectBinder
             .ToArray();
 
         return new QueryObjectBinder(factory, properties);
+    }
+    private static NewExpression CreateInstance(Type type)
+    {
+        var constructor = type.GetTypeInfo().DeclaredConstructors.FirstOrDefault(x => x.IsPublic && x.GetParameters().Length == 0);
+        if (constructor != null)
+            return Expression.New(constructor);
+
+        if (type.IsValueType)
+            return Expression.New(type);
+
+        throw new ArgumentException($"Type {type} has no public parameterless constructor.", nameof(type));
     }
     private static bool CanFill(PropertyInfo property)
     {
@@ -63,10 +70,13 @@ internal sealed class QueryObjectBinder
             var item = Expression.Parameter(typeof(object), "item");
             var value = Expression.Parameter(typeof(object), "value");
 
-            var body = Expression.Call(
-                Expression.Convert(item, property.DeclaringType!),
-                property.SetMethod!,
-                Expression.Convert(value, property.PropertyType));
+            var declaringType = property.DeclaringType!;
+
+            var instance = declaringType.IsValueType
+                ? Expression.Unbox(item, declaringType)
+                : Expression.Convert(item, declaringType);
+
+            var body = Expression.Call(instance, property.SetMethod!, Expression.Convert(value, property.PropertyType));
 
             return Expression.Lambda<Action<object, object>>(body, item, value).Compile();
         }

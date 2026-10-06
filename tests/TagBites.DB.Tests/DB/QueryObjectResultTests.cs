@@ -77,6 +77,29 @@ namespace TagBites.DB
             Assert.ThrowsAny<Exception>(() => result.ToObjects<HiddenConstructorItem>()[0]);
         }
 
+        [Fact]
+        public void MapsStructTest()
+        {
+            using var link = CreateLink();
+
+            var result = link.Execute("SELECT 8 AS Number, NULL AS NullableNumber");
+            var item = result.ToObjects<NumberStruct>()[0];
+
+            Assert.Equal(8, item.Number);
+            Assert.Null(item.NullableNumber);
+        }
+
+        [Fact]
+        public void MapsStructThroughItsParameterlessConstructorTest()
+        {
+            using var link = CreateLink();
+
+            var item = link.Execute("SELECT 8 AS Number").ToObjects<LabeledStruct>()[0];
+
+            Assert.Equal(8, item.Number);
+            Assert.Equal("created", item.Label);
+        }
+
         private static object ResolverMethod(PropertyInfo property, QueryResultRow resultRow)
         {
             if (property.Name == "ItemInner")
@@ -113,6 +136,19 @@ namespace TagBites.DB
         {
             public int Item1 { get; set; }
             public int Item2 { get; set; }
+        }
+
+        private struct NumberStruct
+        {
+            public int Number { get; set; }
+            public int? NullableNumber { get; set; }
+        }
+        private struct LabeledStruct
+        {
+            public int Number { get; set; }
+            public string Label { get; set; }
+
+            public LabeledStruct() => Label = "created";
         }
     }
 }
