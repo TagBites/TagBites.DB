@@ -72,8 +72,13 @@ namespace TagBites.Sql
                     builder.Append(')');
                     break;
                 case Query query:
+                    var command = query.GetUnsafeEscapeString(this);
                     builder.Append('(');
-                    builder.Append(query.GetUnsafeEscapeString(this));
+                    builder.Append(command);
+
+                    if (command.LastIndexOf("--", StringComparison.Ordinal) > command.LastIndexOf('\n'))
+                        builder.Append('\n');
+
                     builder.Append(')');
                     break;
                 default:
