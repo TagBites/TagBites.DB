@@ -60,6 +60,44 @@ namespace TagBites.DB.Postgres
         }
 
         [PostgresFact]
+        public void ExclusiveContextReturnsToPoolTest()
+        {
+            var provider = DbManager.CreateNpgsqlProvider(true, MinPoolSize, MaxPoolSize);
+            DbLinkContext exclusiveContext;
+
+            using (var link = provider.CreateExclusiveLink(x => x["ApplicationName"] = "exclusive"))
+            {
+                link.ExecuteScalar<int>("SELECT 1");
+                exclusiveContext = (DbLinkContext)link.ConnectionContext;
+            }
+
+            Assert.Equal(1, provider.PoolConnectionsCount);
+            Assert.False(exclusiveContext.IsDisposed);
+        }
+
+        [PostgresFact]
+        public async Task NotifyContextDoesNotReturnToPoolTestAsync()
+        {
+            var provider = DbManager.CreateNpgsqlProvider(true, MinPoolSize, MaxPoolSize);
+            DbLinkContext notifyContext = null;
+            provider.ContextCreated += (_, e) =>
+            {
+                if (e.LinkContext.Bag[PgSqlBagKeys.IsNotifyContext] is true)
+                    notifyContext = (DbLinkContext)e.LinkContext;
+            };
+
+            using (var listener = new PgSqlNotifyListener(provider))
+                Assert.True(await listener.ListenAsync("pool_test"));
+
+            Assert.NotNull(notifyContext);
+            Assert.True(notifyContext.IsDisposed);
+            Assert.Equal(0, provider.PoolConnectionsCount);
+
+            using var shared = provider.CreateLink();
+            Assert.NotSame(notifyContext, shared.ConnectionContext);
+        }
+
+        [PostgresFact]
         public async Task PoolKeepsContextMarkedToStayOpenWhenIdleTestAsync()
         {
             const int burstSize = 4;

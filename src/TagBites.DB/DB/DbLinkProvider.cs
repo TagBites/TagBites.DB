@@ -287,12 +287,13 @@ namespace TagBites.DB
 
         public DbLink CreateExclusiveLink() => CreateExclusiveLink(null);
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public DbLink CreateExclusiveLink(Action<DbConnectionArguments> connectionStringAdapter) => CreateExclusiveLink(connectionStringAdapter, null);
-        protected DbLink CreateExclusiveLink(Action<DbConnectionArguments> connectionStringAdapter, Action<DbLinkBag> bagInitializer)
+        public DbLink CreateExclusiveLink(Action<DbConnectionArguments> connectionStringAdapter) => CreateExclusiveLink(connectionStringAdapter, null, false);
+        protected DbLink CreateExclusiveLink(Action<DbConnectionArguments> connectionStringAdapter, Action<DbLinkBag> bagInitializer, bool excludeFromPool)
         {
             m_createContextSemaphore.WaitOne();
 
             var context = CreateLinkContext();
+            context.IsExcludedFromPoolInternal = excludeFromPool;
             context.ConnectionStringAdapter = connectionStringAdapter;
             bagInitializer?.Invoke(context.Bag);
 
@@ -400,7 +401,7 @@ namespace TagBites.DB
                     CurrentContextKey = null;
 
                 // Clear Pooling
-                if (pooling)
+                if (pooling && !context.IsExcludedFromPoolInternal)
                 {
                     lock (SynchRootForContextCollections)
                     {

@@ -37,7 +37,7 @@ namespace TagBites.DB.Npgsql
                 x[nameof(NpgsqlConnectionStringBuilder.Pooling)] = "false";
                 // The connection only receives notifications, so it skips the query that loads the database types
                 x[nameof(NpgsqlConnectionStringBuilder.ServerCompatibilityMode)] = nameof(ServerCompatibilityMode.NoTypeLoading);
-            }, x => x[PgSqlBagKeys.IsNotifyContext] = true);
+            }, x => x[PgSqlBagKeys.IsNotifyContext] = true, excludeFromPool: true);
         }
     }
 }

@@ -298,6 +298,7 @@ namespace TagBites.DB
         internal DbLinkTransactionContext TransactionContextInternal => _transactionContext;
         internal long PooledSinceInternal { get; set; }
         internal bool KeepOpenWhenIdleInternal { get; set; }
+        internal bool IsExcludedFromPoolInternal { get; set; }
         private DbTransaction TransactionInternal => _transactionContext?.DbTransactionInternal;
         private DbLinkTransactionStatus TransactionStatusInternal => _transactionContext?.Status ?? DbLinkTransactionStatus.None;
 
