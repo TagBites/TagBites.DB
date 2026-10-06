@@ -3,6 +3,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using TagBites.DB.Configuration;
 using TagBites.Utils;
 
 namespace TagBites.DB;
@@ -56,12 +57,17 @@ internal sealed class QueryObjectBinder
         public PropertyInfo PropertyInfo { get; }
         public Type PropertyType { get; }
         public Action<object, object> Setter { get; }
+        public bool CanShareNullValue { get; }
+        public object NullValue { get; }
 
         public Property(PropertyInfo property)
         {
             PropertyInfo = property;
             PropertyType = property.PropertyType;
             Setter = CreateSetter(property);
+
+            CanShareNullValue = PropertyType.IsValueType && PropertyType.GetConstructor(Type.EmptyTypes) == null;
+            NullValue = CanShareNullValue ? DbLinkDataConverter.Default.ChangeType(null, PropertyType) : null;
         }
 
 

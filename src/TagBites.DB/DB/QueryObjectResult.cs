@@ -89,7 +89,12 @@ namespace TagBites.DB
 
                 if (columnIndex != -1)
                 {
-                    var value = DbLinkDataConverter.Default.ChangeType(_dataProvider[rowIndex, columnIndex], property.PropertyType);
+                    var value = _dataProvider[rowIndex, columnIndex];
+
+                    value = value == null && property.CanShareNullValue
+                        ? property.NullValue
+                        : DbLinkDataConverter.Default.ChangeType(value, property.PropertyType);
+
                     property.Setter(item, value);
                 }
                 else if (_customPropertyResolver != null)

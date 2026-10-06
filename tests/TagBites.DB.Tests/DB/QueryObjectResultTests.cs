@@ -1,5 +1,8 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Reflection;
+using System.Threading;
+using TagBites.DB.Configuration;
 using Xunit;
 
 namespace TagBites.DB
@@ -100,6 +103,39 @@ namespace TagBites.DB
             Assert.Equal("created", item.Label);
         }
 
+        [Fact]
+        public void BuildsNullStructPerRowTest()
+        {
+            using var link = CreateLink();
+
+            var items = link.Execute("SELECT NULL AS Counted UNION ALL SELECT NULL").ToObjects<CountedHolder>();
+
+            Assert.NotEqual(items[0].Counted.Sequence, items[1].Counted.Sequence);
+        }
+
+        [Fact]
+        public void AsksConverterOnceForNullColumnTest()
+        {
+            var original = DbLinkDataConverter.Default;
+            var converter = new MarkerConverter(original);
+            DbLinkDataConverter.Default = converter;
+
+            try
+            {
+                using var link = CreateLink();
+
+                var items = link.Execute("SELECT NULL AS Marker UNION ALL SELECT NULL").ToObjects<MarkerHolder>();
+
+                Assert.Equal(7, items[0].Marker.Value);
+                Assert.Equal(7, items[1].Marker.Value);
+                Assert.Equal(1, converter.MarkerNullCalls);
+            }
+            finally
+            {
+                DbLinkDataConverter.Default = original;
+            }
+        }
+
         private static object ResolverMethod(PropertyInfo property, QueryResultRow resultRow)
         {
             if (property.Name == "ItemInner")
@@ -137,6 +173,36 @@ namespace TagBites.DB
             public int Item1 { get; set; }
             public int Item2 { get; set; }
         }
+        private class CountedHolder
+        {
+            public CountedStruct Counted { get; set; }
+        }
+        private class MarkerHolder
+        {
+            public Marker Marker { get; set; }
+        }
+
+        private sealed class MarkerConverter : IDbLinkDataConverter
+        {
+            private readonly IDbLinkDataConverter _inner;
+
+            public int MarkerNullCalls { get; private set; }
+
+            public MarkerConverter(IDbLinkDataConverter inner) => _inner = inner;
+
+
+            public object ToDbType(object value) => _inner.ToDbType(value);
+            public object FromDbType(object value) => _inner.FromDbType(value);
+            public T ChangeType<T>(object value) => _inner.ChangeType<T>(value);
+            public object ChangeType(object value, Type conversionType)
+            {
+                if (value != null || conversionType != typeof(Marker))
+                    return _inner.ChangeType(value, conversionType);
+
+                ++MarkerNullCalls;
+                return new Marker { Value = 7 };
+            }
+        }
 
         private struct NumberStruct
         {
@@ -149,6 +215,18 @@ namespace TagBites.DB
             public string Label { get; set; }
 
             public LabeledStruct() => Label = "created";
+        }
+        private struct Marker
+        {
+            public int Value { get; set; }
+        }
+        private struct CountedStruct
+        {
+            private static int s_created;
+
+            public int Sequence { get; }
+
+            public CountedStruct() => Sequence = Interlocked.Increment(ref s_created);
         }
     }
 }
