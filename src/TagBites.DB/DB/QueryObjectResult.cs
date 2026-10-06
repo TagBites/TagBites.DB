@@ -1,7 +1,6 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using TagBites.DB.Configuration;
 using TagBites.Utils;
@@ -14,11 +13,12 @@ namespace TagBites.DB
 
     public class QueryObjectResult<T> : IList<T>, IList
     {
-        private QueryResult m_dataProvider;
-        private QueryObjectInitializer m_initializer;
-        private readonly QueryObjectResultPropertyResolver m_customPropertyResolver;
-        private readonly QueryObjectResultItemFiller<T> m_filler;
-        private readonly List<T> m_items;
+        private readonly QueryObjectBinder _binder;
+        private readonly int[] _columnIndexes;
+        private readonly QueryObjectResultPropertyResolver _customPropertyResolver;
+        private readonly QueryObjectResultItemFiller<T> _filler;
+        private readonly List<T> _items;
+        private QueryResult _dataProvider;
 
         public int Count { get; }
 
@@ -29,29 +29,25 @@ namespace TagBites.DB
                 if (index < 0 || index >= Count)
                     throw new IndexOutOfRangeException();
 
-                if (index >= m_items.Count)
+                if (index >= _items.Count)
                 {
-                    var rowDataProvider = new QueryResultRow(m_dataProvider, 0);
+                    var rowDataProvider = new QueryResultRow(_dataProvider, 0);
 
-                    for (int rowIndex = m_items.Count; rowIndex <= index; ++rowIndex)
+                    for (var rowIndex = _items.Count; rowIndex <= index; ++rowIndex)
                     {
                         rowDataProvider.RowIndex = rowIndex;
-                        T row = (T)CreateItem(m_initializer, rowIndex, rowDataProvider);
+                        var row = CreateItem(rowIndex, rowDataProvider);
 
-                        if (m_filler != null)
-                            m_filler(row, rowDataProvider);
+                        _filler?.Invoke(row, rowDataProvider);
 
-                        m_items.Add(row);
+                        _items.Add(row);
                     }
                 }
 
                 if (index + 1 == Count)
-                {
-                    m_initializer = null;
-                    m_dataProvider = null;
-                }
+                    _dataProvider = null;
 
-                return m_items[index];
+                return _items[index];
             }
         }
 
@@ -63,122 +59,48 @@ namespace TagBites.DB
         { }
         public QueryObjectResult(QueryResult dataProvider, QueryObjectResultPropertyResolver customPropertyResolver, QueryObjectResultItemFiller<T> filler)
         {
-            Guard.ArgumentNotNull(dataProvider, "dataProvider");
+            Guard.ArgumentNotNull(dataProvider, nameof(dataProvider));
 
-            m_dataProvider = dataProvider;
-            m_customPropertyResolver = customPropertyResolver;
-            m_filler = filler;
-            m_initializer = CreateInitializer(typeof(T));
-            m_items = new List<T>(m_dataProvider.RowCount);
+            _dataProvider = dataProvider;
+            _customPropertyResolver = customPropertyResolver;
+            _filler = filler;
+            _binder = QueryObjectBinder.Get(typeof(T));
+            _items = new List<T>(dataProvider.RowCount);
 
-            Count = m_dataProvider.RowCount;
-        }
-        internal QueryObjectResult(QueryResult dataProvider, QueryObjectInitializer initializer)
-        {
-            Guard.ArgumentNotNull(dataProvider, "dataProvider");
-            Guard.ArgumentNotNull(initializer, "initializer");
+            var properties = _binder.Properties;
+            _columnIndexes = new int[properties.Length];
 
-            m_dataProvider = dataProvider;
-            m_initializer = initializer;
-            m_items = new List<T>(m_dataProvider.RowCount);
+            for (var i = 0; i < properties.Length; i++)
+                _columnIndexes[i] = dataProvider.GetColumnIndex(properties[i].PropertyInfo.Name);
 
-            Count = m_dataProvider.RowCount;
+            Count = dataProvider.RowCount;
         }
 
 
-        private object CreateItem(QueryObjectInitializer initializer, int rowIndex, QueryResultRow rowDataProvider)
+        private T CreateItem(int rowIndex, QueryResultRow rowDataProvider)
         {
-            object[] parameters;
+            var item = (T)_binder.Factory();
+            var properties = _binder.Properties;
 
-            if (initializer.Parameters == null || initializer.Parameters.Length <= 0)
-                parameters = Array.Empty<object>();
-            else
+            for (var i = 0; i < properties.Length; i++)
             {
-                parameters = new object[initializer.Parameters.Length];
+                var property = properties[i];
+                var columnIndex = _columnIndexes[i];
 
-                for (int i = 0; i < initializer.Parameters.Length; i++)
+                if (columnIndex != -1)
                 {
-                    var queryObjectParameter = initializer.Parameters[i];
-                    if (queryObjectParameter.Initializer != null)
-                        parameters[i] = CreateItem(queryObjectParameter.Initializer, rowIndex, rowDataProvider);
-                    else if (queryObjectParameter.ColumnIndex != -1)
-                        parameters[i] = m_dataProvider[rowIndex, queryObjectParameter.ColumnIndex];
-                    else
-                        parameters[i] = queryObjectParameter.LocalValue;
+                    var value = DbLinkDataConverter.Default.ChangeType(_dataProvider[rowIndex, columnIndex], property.PropertyType);
+                    property.Setter(item, value);
                 }
-            }
-
-            var result = Activator.CreateInstance(initializer.Type, parameters);
-            for (int i = 0; i < initializer.Properties.Length; i++)
-            {
-                var queryObjectProperty = initializer.Properties[i];
-                // complex value
-                if (queryObjectProperty.Initializer != null)
+                else if (_customPropertyResolver != null)
                 {
-                    queryObjectProperty.PropertyInfo.SetValue(
-                        result,
-                        CreateItem(queryObjectProperty.Initializer, rowIndex, rowDataProvider),
-                        null);
-                }
-                // simple remote value
-                else if (queryObjectProperty.ColumnIndex != -1)
-                {
-                    queryObjectProperty.PropertyInfo.SetValue(
-                        result,
-                        DbLinkDataConverter.Default.ChangeType(
-                            m_dataProvider[rowIndex, queryObjectProperty.ColumnIndex],
-                            queryObjectProperty.PropertyInfo.PropertyType),
-                        null);
-                }
-                // 
-                else if (m_customPropertyResolver != null)
-                {
-                    var value = m_customPropertyResolver(queryObjectProperty.PropertyInfo, rowDataProvider);
+                    var value = _customPropertyResolver(property.PropertyInfo, rowDataProvider);
                     if (value != null)
-                        queryObjectProperty.PropertyInfo.SetValue(result, value, null);
-                }
-                // simple local value
-                else if (queryObjectProperty.PropertyInfo.CanWrite && queryObjectProperty.LocalValue != null)
-                {
-                    queryObjectProperty.PropertyInfo.SetValue(
-                        result,
-                        queryObjectProperty.LocalValue,
-                        null);
+                        property.Setter(item, value);
                 }
             }
 
-            return result;
-        }
-        private QueryObjectInitializer CreateInitializer(Type type)
-        {
-            var constructor = type.GetTypeInfo().DeclaredConstructors.FirstOrDefault(x => x.GetParameters().Length == 0);
-            if (constructor == null)
-                throw new Exception();
-
-            var parameterInfos = constructor.GetParameters();
-            if (parameterInfos.Length > 0)
-                throw new Exception();
-
-            var queryParameters = new QueryObjectParameter[parameterInfos.Length];
-            for (int i = 0; i < parameterInfos.Length; i++)
-            {
-                //var initializer = propertiesInfos[i].PropertyType.BaseType == typeof(object) && propertiesInfos[i].PropertyType.BaseType != typeof(string)
-                //    ? CreateInitializer(parameterInfos[i].ParameterType)
-                //    : null;
-                queryParameters[i] = new QueryObjectParameter(m_dataProvider.GetColumnIndex(parameterInfos[i].Name), parameterInfos[i], null);
-            }
-
-            var propertiesInfos = TypeUtils.GetProperties(type).ToList();
-            var queryProperties = new QueryObjectProperty[propertiesInfos.Count];
-            for (int i = 0; i < propertiesInfos.Count; i++)
-            {
-                //var initializer = propertiesInfos[i].PropertyType.BaseType == typeof(object) && propertiesInfos[i].PropertyType.BaseType != typeof(string)
-                //    ? CreateInitializer(propertiesInfos[i].PropertyType)
-                //    : null;
-                queryProperties[i] = new QueryObjectProperty(m_dataProvider.GetColumnIndex(propertiesInfos[i].Name), propertiesInfos[i], null);
-            }
-
-            return new QueryObjectInitializer(type, queryParameters, queryProperties);
+            return item;
         }
 
         #region IList<T>

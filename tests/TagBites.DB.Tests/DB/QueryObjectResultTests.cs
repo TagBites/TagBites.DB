@@ -31,6 +31,52 @@ namespace TagBites.DB
             }
         }
 
+        [Fact]
+        public void MapsNullIntoNullableAndValueTypeTest()
+        {
+            using var link = CreateLink();
+
+            var result = link.Execute("SELECT 5 AS Number, NULL AS NullableNumber, NULL AS MissingNumber");
+            var item = result.ToObjects<NumberItem>()[0];
+
+            Assert.Equal(5, item.Number);
+            Assert.Null(item.NullableNumber);
+            Assert.Equal(0, item.MissingNumber);
+        }
+
+        [Fact]
+        public void MatchesColumnNameIgnoringCaseTest()
+        {
+            using var link = CreateLink();
+
+            var result = link.Execute("SELECT 7 AS NUMBER");
+
+            Assert.Equal(7, result.ToObjects<NumberItem>()[0].Number);
+            Assert.Equal(7, result.GetValue<int>(0, "number"));
+        }
+
+        [Fact]
+        public void SkipsPropertyWithoutSetterTest()
+        {
+            using var link = CreateLink();
+
+            var result = link.Execute("SELECT 3 AS Number, 4 AS Computed");
+            var item = result.ToObjects<NumberItem>()[0];
+
+            Assert.Equal(3, item.Number);
+            Assert.Equal(0, item.Computed);
+        }
+
+        [Fact]
+        public void RejectsTypeWithoutPublicParameterlessConstructorTest()
+        {
+            using var link = CreateLink();
+
+            var result = link.Execute("SELECT 1 AS Number");
+
+            Assert.ThrowsAny<Exception>(() => result.ToObjects<HiddenConstructorItem>()[0]);
+        }
+
         private static object ResolverMethod(PropertyInfo property, QueryResultRow resultRow)
         {
             if (property.Name == "ItemInner")
@@ -49,6 +95,19 @@ namespace TagBites.DB
             public bool Item3 { get; set; }
             public string Item4 { get; set; }
             public ItemInner ItemInner { get; set; }
+        }
+        private class NumberItem
+        {
+            public int Number { get; set; }
+            public int? NullableNumber { get; set; }
+            public int MissingNumber { get; set; }
+            public int Computed { get; }
+        }
+        private class HiddenConstructorItem
+        {
+            public int Number { get; set; }
+
+            private HiddenConstructorItem() { }
         }
         private class ItemInner
         {
