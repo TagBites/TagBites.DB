@@ -79,11 +79,17 @@ namespace TagBites.DB
         public string GetUnsafeEscapeString(SqlQueryResolver resolver)
         {
             var stringBuilder = new StringBuilder(Command.Length + Parameters.Count * 32);
+
+            var parametersByName = new Dictionary<string, QueryParameter>(Parameters.Count, StringComparer.Ordinal);
+            foreach (var parameter in Parameters)
+                if (!parametersByName.ContainsKey(parameter.Name))
+                    parametersByName.Add(parameter.Name, parameter);
+
             ResolveSqlQueryParameters(stringBuilder, Command, ParameterPrefix[0], name =>
             {
-                name = "@" + name;
-                var arg = Parameters.FirstOrDefault(x => x.Name == name);
-                if (arg == null)
+                name = ParameterPrefix + name;
+
+                if (!parametersByName.TryGetValue(name, out var arg))
                     throw new Exception(string.Format("Argument \"{0}\" not found!", name));
 
                 return resolver.ToParameterString(arg.Value, true);
