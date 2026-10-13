@@ -123,5 +123,16 @@ namespace TagBites.DB
             Assert.Equal(1, r1.Result.ToScalar<int>());
             Assert.Equal(2, r2.Result.ToScalar<int>());
         }
+
+        [Fact]
+        public void IsExecutingStaysSetAfterDelayedBatchFlush()
+        {
+            using var link = DefaultProvider.CreateLink();
+            link.DelayedBatchExecute("Select 1");
+
+            var isExecuting = link.ExecuteOnReader(new Query("Select 2"), _ => link.ConnectionContext.IsExecuting);
+
+            Assert.True(isExecuting);
+        }
     }
 }
