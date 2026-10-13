@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Transactions;
 using TagBites.DB.Configuration;
@@ -384,6 +385,23 @@ namespace TagBites.DB
                     Assert.Equal(link.ConnectionContext, link2.ConnectionContext);
                 }
             }
+        }
+
+        [Fact]
+        public void TransactionBagIsAvailableDuringQuery()
+        {
+            using var link = DefaultProvider.CreateLink();
+            using var transaction = link.Begin();
+            var bag = transaction.Context.Bag;
+
+            var isBagAvailable = link.ExecuteOnReader(new Query("SELECT 1"), _ =>
+            {
+                var thread = new Thread(() => bag["AllowIdleTransaction"] = 1);
+                thread.Start();
+                return thread.Join(TimeSpan.FromSeconds(5));
+            });
+
+            Assert.True(isBagAvailable);
         }
 
         [Theory]
