@@ -13,15 +13,15 @@
 
   <Target Name="VersionFromGit" AfterTargets="MinVer">
     <PropertyGroup>
-      <VersionPrefix>$(MinVerMajor).$(MinVerMinor).$(MinVerPatch)</VersionPrefix>
-      <VersionSuffix>$(MinVerPreRelease)</VersionSuffix>
+      <VersionPrefix>1.0.37.1</VersionPrefix>
+      <VersionSuffix></VersionSuffix>
       <VersionFull Condition=" '$(VersionSuffix)' == '' ">$(VersionPrefix)</VersionFull>
       <VersionFull Condition=" '$(VersionSuffix)' != '' ">$(VersionPrefix)-$(VersionSuffix)</VersionFull>
 
       <Version>$(VersionFull)</Version>
       <PackageVersion>$(VersionFull)</PackageVersion>
-      <AssemblyVersion>$(VersionPrefix).0</AssemblyVersion>
-      <AssemblyFileVersion>$(VersionPrefix).0</AssemblyFileVersion>
+      <AssemblyVersion>$(VersionPrefix)</AssemblyVersion>
+      <AssemblyFileVersion>$(VersionPrefix)</AssemblyFileVersion>
       <InformationalVersion>$([System.String]::Copy("$(VersionFull) $(VersionDate)").Trim())</InformationalVersion>
     </PropertyGroup>
 
