@@ -1003,6 +1003,7 @@ namespace TagBites.DB
                 else if (TransactionStatusInternal == DbLinkTransactionStatus.RollingBack)
                     ThrowRollingBack();
 
+                var wasExecuting = IsExecuting;
                 IsExecuting = true;
                 try
                 {
@@ -1228,7 +1229,7 @@ namespace TagBites.DB
                 finally
                 {
                     LastExecuted = DateTime.Now;
-                    IsExecuting = false;
+                    IsExecuting = wasExecuting;
                 }
             }
         }

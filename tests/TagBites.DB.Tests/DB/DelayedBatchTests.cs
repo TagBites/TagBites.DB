@@ -109,5 +109,16 @@ namespace TagBites.DB
                 Assert.True(result.HasResult);
             }
         }
+
+        [Fact]
+        public void IsExecutingStaysSetAfterDelayedBatchFlush()
+        {
+            using var link = DefaultProvider.CreateLink();
+            link.DelayedBatchExecute("Select 1");
+
+            var isExecuting = link.ExecuteOnReader(new Query("Select 2"), _ => link.ConnectionContext.IsExecuting);
+
+            Assert.True(isExecuting);
+        }
     }
 }
