@@ -8,7 +8,7 @@ namespace TagBites.DB
 {
     public class DbLinkBag
     {
-        private readonly object _locker;
+        private readonly object _locker = new();
         private IDictionary<string, object> _cache;
 
         public object this[string name]
@@ -42,9 +42,6 @@ namespace TagBites.DB
             }
         }
 
-        internal DbLinkBag(object locker)
-        {
-            _locker = locker;
-        }
+        internal DbLinkBag() { }
     }
 }

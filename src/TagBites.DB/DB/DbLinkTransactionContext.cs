@@ -144,7 +144,7 @@ namespace TagBites.DB
 
         public DbLinkContext ConnectionContext => _context;
         IDbLinkContext IDbLinkTransactionContext.ConnectionContext => ConnectionContext;
-        public DbLinkBag Bag => _bag ??= new DbLinkBag(_locker);
+        public DbLinkBag Bag => LazyInitializer.EnsureInitialized(ref _bag, () => new DbLinkBag());
 
         public bool Started { get; internal set; }
         public Exception Exception { get; internal set; }

@@ -344,17 +344,7 @@ namespace TagBites.DB
         IDbLinkContext IDbLink.ConnectionContext => this;
         public IDbLinkTransactionContext TransactionContext => _transactionContext;
         public DbLinkTransactionStatus TransactionStatus => TransactionStatusInternal;
-        public DbLinkBag Bag
-        {
-            get
-            {
-                if (_bag == null)
-                    lock (SynchRoot)
-                        _bag ??= new DbLinkBag(SynchRoot);
-
-                return _bag;
-            }
-        }
+        public DbLinkBag Bag => LazyInitializer.EnsureInitialized(ref _bag, () => new DbLinkBag());
 
         protected internal DbLinkContext()
         {

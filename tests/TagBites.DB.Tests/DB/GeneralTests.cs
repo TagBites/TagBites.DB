@@ -383,6 +383,23 @@ namespace TagBites.DB
             }
         }
 
+        [Fact]
+        public void TransactionBagIsAvailableDuringQuery()
+        {
+            using var link = DefaultProvider.CreateLink();
+            using var transaction = link.Begin();
+            var bag = transaction.Context.Bag;
+
+            var isBagAvailable = link.ExecuteOnReader(new Query("SELECT 1"), _ =>
+            {
+                var thread = new Thread(() => bag["AllowIdleTransaction"] = 1);
+                thread.Start();
+                return thread.Join(TimeSpan.FromSeconds(5));
+            });
+
+            Assert.True(isBagAvailable);
+        }
+
         [Theory]
         [InlineData("select 1 as a, 2 as a, 3 as a", "a", "a1", "a2")]
         [InlineData("select 1 as a, 2 as \"A\", 3 as a", "a", "A1", "a2")]
