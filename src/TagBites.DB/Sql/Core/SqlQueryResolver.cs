@@ -319,6 +319,23 @@ namespace TagBites.Sql
             Visit(expression.Index, builder);
             builder.Append(']');
         }
+        protected internal virtual void VisitExpression(SqlExpressionSliceOperator expression, SqlQueryBuilder builder)
+        {
+            builder.Append('(');
+            Visit(expression.Operand, builder);
+            builder.Append(")[");
+            Visit(expression.LowerBound, builder);
+            builder.Append(':');
+            Visit(expression.UpperBound, builder);
+            builder.Append(']');
+        }
+        protected internal virtual void VisitExpression(SqlExpressionFieldOperator expression, SqlQueryBuilder builder)
+        {
+            builder.Append('(');
+            Visit(expression.Operand, builder);
+            builder.Append(").");
+            builder.Append(QuoteIdentifierIfNeeded(expression.FieldName));
+        }
         protected internal virtual void VisitExpression(SqlExpressionSelect expression, SqlQueryBuilder builder)
         {
             Visit(expression.Select, builder);
@@ -673,9 +690,47 @@ namespace TagBites.Sql
         }
         protected internal virtual void VisitClauseEntry(SqlClauseSetEntry entry, SqlQueryBuilder builder)
         {
-            builder.Append(QuoteIdentifierIfNeeded(entry.ColumnName));
+            if (entry.Target != null)
+                VisitSetTarget(entry.Target, builder);
+            else
+                builder.Append(QuoteIdentifierIfNeeded(entry.ColumnName));
+
             builder.Append(" = ");
             Visit(entry.Expression, builder);
+        }
+        protected virtual void VisitSetTarget(SqlExpression target, SqlQueryBuilder builder)
+        {
+            switch (target)
+            {
+                case SqlColumn column:
+                    builder.Append(QuoteIdentifierIfNeeded(column.ColumnName));
+                    break;
+
+                case SqlExpressionIndexerOperator indexer:
+                    VisitSetTarget(indexer.Operand, builder);
+                    builder.Append('[');
+                    Visit(indexer.Index, builder);
+                    builder.Append(']');
+                    break;
+
+                case SqlExpressionSliceOperator slice:
+                    VisitSetTarget(slice.Operand, builder);
+                    builder.Append('[');
+                    Visit(slice.LowerBound, builder);
+                    builder.Append(':');
+                    Visit(slice.UpperBound, builder);
+                    builder.Append(']');
+                    break;
+
+                case SqlExpressionFieldOperator field:
+                    VisitSetTarget(field.Operand, builder);
+                    builder.Append('.');
+                    builder.Append(QuoteIdentifierIfNeeded(field.FieldName));
+                    break;
+
+                default:
+                    throw new NotSupportedException($"Expression {target.GetType().Name} is not supported as a set target.");
+            }
         }
         protected internal virtual void VisitClauseEntry(SqlClauseJoinEntry entry, SqlQueryBuilder builder)
         {

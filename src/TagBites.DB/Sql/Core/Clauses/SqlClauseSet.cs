@@ -15,6 +15,14 @@ namespace TagBites.Sql
         {
             Add(new SqlClauseSetEntry(columnName, SqlExpression.ToExpression(query)));
         }
+        public void Add(SqlExpression target, SqlExpression expression)
+        {
+            Add(new SqlClauseSetEntry(target, expression));
+        }
+        public void Add(SqlExpression target, SqlQuerySelect query)
+        {
+            Add(new SqlClauseSetEntry(target, SqlExpression.ToExpression(query)));
+        }
 
         protected override void Accept(SqlQueryResolver resolver, SqlQueryBuilder builder)
         {

@@ -49,6 +49,13 @@ namespace TagBites.Sql
             expression.Index.Accept(this);
             expression.Operand.Accept(this);
         }
+        public virtual void VisitExpression(SqlExpressionSliceOperator expression)
+        {
+            expression.LowerBound.Accept(this);
+            expression.UpperBound.Accept(this);
+            expression.Operand.Accept(this);
+        }
+        public virtual void VisitExpression(SqlExpressionFieldOperator expression) => expression.Operand.Accept(this);
         public virtual void VisitExpression(SqlExpressionSelect expression)
         {
 

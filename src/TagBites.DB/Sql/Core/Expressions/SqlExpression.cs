@@ -22,6 +22,10 @@ namespace TagBites.Sql
         { }
 
 
+        public SqlExpression Slice(int lowerBound, int upperBound) => new SqlExpressionSliceOperator(this, Argument(lowerBound), Argument(upperBound));
+        public SqlExpression Slice(SqlExpression lowerBound, SqlExpression upperBound) => new SqlExpressionSliceOperator(this, lowerBound, upperBound);
+        public SqlExpression Field(string fieldName) => new SqlExpressionFieldOperator(this, fieldName);
+
         public SqlCondition ToCondition() => ToCondition(this);
 
         public abstract void Accept(ISqlExpressionVisitor visitor);

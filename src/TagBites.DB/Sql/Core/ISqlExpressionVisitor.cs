@@ -18,6 +18,8 @@ namespace TagBites.Sql
         void VisitExpression(SqlExpressionCastOperator expression);
         void VisitExpression(SqlExpressionUnaryOperator expression);
         void VisitExpression(SqlExpressionIndexerOperator expression);
+        void VisitExpression(SqlExpressionSliceOperator expression);
+        void VisitExpression(SqlExpressionFieldOperator expression);
         void VisitExpression(SqlExpressionSelect expression);
         void VisitExpression(SqlExpressionQuery expression);
         void VisitExpression(SqlOperatorExpression expression);
