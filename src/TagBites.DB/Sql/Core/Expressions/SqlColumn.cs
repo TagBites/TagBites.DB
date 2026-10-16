@@ -48,5 +48,18 @@ namespace TagBites.Sql
         {
             unchecked { return (Table.GetHashCode() * 397) ^ ColumnName.GetHashCode(); }
         }
+
+        internal static SqlColumn GetTargetColumn(SqlExpression target)
+        {
+            return target switch
+            {
+                SqlColumn column => column,
+                SqlExpressionIndexerOperator indexer => GetTargetColumn(indexer.Operand),
+                SqlExpressionSliceOperator slice => GetTargetColumn(slice.Operand),
+                SqlExpressionFieldOperator field => GetTargetColumn(field.Operand),
+                null => throw new ArgumentNullException(nameof(target)),
+                _ => throw new ArgumentException("Target must be a column followed only by indexes, slices or fields.", nameof(target))
+            };
+        }
     }
 }

@@ -21,7 +21,7 @@ namespace TagBites.Sql
 
         #region IList<T>
 
-        private readonly List<T> _list = new List<T>();
+        private protected IList<T> _list = new List<T>();
 
         public int Count => _list.Count;
 
